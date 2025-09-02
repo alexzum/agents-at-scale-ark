@@ -13,6 +13,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"trpc.group/trpc-go/trpc-a2a-go/protocol"
+	"trpc.group/trpc-go/trpc-a2a-go/server"
 )
 
 // TaskState represents the current state of a task
@@ -28,7 +30,7 @@ type TaskState struct {
 // Handler handles HTTP requests for the agent
 type Handler struct {
 	weatherClient *weather.Client
-	agentCard     *AgentCard
+	agentCard     *server.AgentCard
 	tasks         map[string]*TaskState
 	tasksMutex    sync.RWMutex
 	httpClient    *http.Client
@@ -52,29 +54,34 @@ func NewHandler() *Handler {
 	}
 
 	// Create agent card with localhost URL for port forwarding
-	agentCard := &AgentCard{
+	streaming := false
+	description := "Weather forecasting that returns task structures instead of messages"
+	protocolVersion := "0.3.0"
+	preferredTransport := "JSONRPC"
+	
+	agentCard := &server.AgentCard{
 		Name:        "go_task_weather_reporter",
 		Description: "Go weather agent that returns task structures using trpc-a2a-go patterns",
 		URL:         "http://localhost:8085/",
 		Version:     "1.0.0",
 		DefaultInputModes:  []string{"text/plain"},
 		DefaultOutputModes: []string{"application/json"},
-		Capabilities: AgentCapabilities{
-			Streaming: false,
+		Capabilities: server.AgentCapabilities{
+			Streaming: &streaming,
 		},
-		Skills: []AgentSkill{
+		Skills: []server.AgentSkill{
 			{
 				ID:          "go_task_weather_forecast",
 				Name:        "Go Task-Based Weather Forecast",
-				Description: "Weather forecasting that returns task structures instead of messages",
+				Description: &description,
 				Tags:        []string{"weather", "forecast", "task", "go", "debug"},
 				Examples:    []string{"weather in London", "how is the weather in Tokyo", "forecast for Paris"},
 				InputModes:  []string{"text/plain"},
 				OutputModes: []string{"application/json"},
 			},
 		},
-		ProtocolVersion:    "0.3.0",
-		PreferredTransport: "JSONRPC",
+		ProtocolVersion:    &protocolVersion,
+		PreferredTransport: &preferredTransport,
 	}
 
 	return &Handler{
@@ -608,53 +615,54 @@ func (h *Handler) extractLastUserMessage(fullText string) string {
 }
 
 // createTaskResponseWithState creates a task response with specific state
-func (h *Handler) createTaskResponseWithState(taskID, messageID, state, messageText string) *TaskResponse {
+func (h *Handler) createTaskResponseWithState(taskID, messageID, state, messageText string) *protocol.Task {
 	contextID := uuid.New().String()
 
-	var artifacts []TaskArtifact
+	var artifacts []protocol.Artifact
 	
 	// Only populate artifacts for completed tasks
 	if state == "completed" {
 		artifactID := uuid.New().String()
-		artifacts = []TaskArtifact{
+		artifacts = []protocol.Artifact{
 			{
 				ArtifactID: artifactID,
-				Parts: []TaskPart{
-					{
-						Kind: "text",
-						Text: messageText,
-					},
+				Parts: []protocol.Part{
+					protocol.NewTextPart(messageText),
 				},
 			},
 		}
 	}
 
-	return &TaskResponse{
+	// Map state string to protocol.TaskState
+	var taskState protocol.TaskState
+	switch state {
+	case "submitted":
+		taskState = protocol.TaskStateSubmitted
+	case "working":
+		taskState = protocol.TaskStateWorking
+	case "completed":
+		taskState = protocol.TaskStateCompleted
+	default:
+		taskState = protocol.TaskStateUnknown
+	}
+
+	return &protocol.Task{
 		Kind:      "task",
 		ID:        taskID,
 		ContextID: contextID,
 		Artifacts: artifacts,
-		Status: TaskStatus{
-			State:     state,
-			Timestamp: time.Now(),
+		Status: protocol.TaskStatus{
+			State:     taskState,
+			Timestamp: time.Now().Format(time.RFC3339),
 		},
-		History: []HistoryMessage{
-			{
-				ContextID: contextID,
-				Kind:      "message",
-				MessageID: fmt.Sprintf("msg-%d-%s", time.Now().UnixMilli(), uuid.New().String()[:8]),
-				Metadata:  map[string]interface{}{"user_id": ""},
-				Parts: []TaskPart{
-					{
-						Kind: "text",
-						Text: "weather query",
-					},
+		History: []protocol.Message{
+			protocol.NewMessage(
+				protocol.MessageRoleUser,
+				[]protocol.Part{
+					protocol.NewTextPart("weather query"),
 				},
-				Role:   "user",
-				TaskID: taskID,
-			},
+			),
 		},
-		ValidationErrors: []interface{}{},
 	}
 }
 
