@@ -20,6 +20,11 @@ type A2AMessageSendParams struct {
 	Message A2AMessageWithID `json:"message"`
 }
 
+// Task/submit params for long-running operations
+type A2ATaskSubmitParams struct {
+	Message A2AMessageWithID `json:"message"`
+}
+
 type A2AMessageWithID struct {
 	MessageID string     `json:"messageId"`
 	Role      a2a.Role   `json:"role"`
