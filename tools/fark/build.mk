@@ -27,27 +27,27 @@ CLEAN_TARGETS += $(FARK_SERVICE_DIR)/vendor
 # Test target
 $(FARK_SERVICE_NAME)-test: $(FARK_STAMP_TEST)
 $(FARK_STAMP_TEST): $(FARK_SERVICE_DIR)/go.mod $(FARK_SERVICE_DIR)/go.sum | $(OUT)
-	@mkdir -p $(dir $@)
-	cd $(FARK_SERVICE_DIR) && go fmt ./... && go vet ./... && go test ./... -coverprofile cover.out
-	@touch $@
+	@mkdir -p "$(dir $@)"
+	cd "$(FARK_SERVICE_DIR)" && go fmt ./... && go vet ./... && go test ./... -coverprofile cover.out
+	@touch "$@"
 
 # Build binary
 $(FARK_BINARY): $(FARK_STAMP_TEST) | $(OUT)
-	@mkdir -p $(dir $@)
-	cd $(FARK_SERVICE_DIR) && go mod vendor && go build -o $@ ./cmd/fark
+	@mkdir -p "$(dir $@)"
+	cd "$(FARK_SERVICE_DIR)" && go mod vendor && go build -o "$@" ./cmd/fark
 
 # Build target (Docker)
 $(FARK_SERVICE_NAME)-build: $(FARK_STAMP_BUILD)
 $(FARK_STAMP_BUILD): $(FARK_BINARY)
-	cd $(FARK_SERVICE_DIR) && docker build -t $(FARK_IMAGE):$(FARK_TAG) .
-	@touch $@
+	cd "$(FARK_SERVICE_DIR)" && docker build -t "$(FARK_IMAGE):$(FARK_TAG)" .
+	@touch "$@"
 
 # Install target
 $(FARK_SERVICE_NAME)-install: $(FARK_STAMP_INSTALL)
 $(FARK_STAMP_INSTALL): $(FARK_BINARY)
 	@mkdir -p "$(HOME)/.local/bin" 2>/dev/null || true
 	@echo "Installing fark to $(HOME)/.local/bin..."
-	@if cp $(FARK_BINARY) "$(HOME)/.local/bin/fark" 2>/dev/null && chmod +x "$(HOME)/.local/bin/fark" 2>/dev/null; then \
+	@if cp "$(FARK_BINARY)" "$(HOME)/.local/bin/fark" 2>/dev/null && chmod +x "$(HOME)/.local/bin/fark" 2>/dev/null; then \
 		echo "fark installed to $(HOME)/.local/bin/fark"; \
 		if ! echo "$$PATH" | grep -q "$(HOME)/.local/bin"; then \
 			echo ""; \
@@ -57,11 +57,11 @@ $(FARK_STAMP_INSTALL): $(FARK_BINARY)
 	else \
 		echo "Failed to install fark to $(HOME)/.local/bin"; \
 		echo "Attempting with /usr/local/bin..."; \
-		if cp $(FARK_BINARY) /usr/local/bin/fark 2>/dev/null && chmod +x /usr/local/bin/fark 2>/dev/null; then \
+		if cp "$(FARK_BINARY)" /usr/local/bin/fark 2>/dev/null && chmod +x /usr/local/bin/fark 2>/dev/null; then \
 			echo "fark installed to /usr/local/bin/fark"; \
 		else \
 			echo "Attempting with sudo..."; \
-			sudo cp $(FARK_BINARY) /usr/local/bin/fark && \
+			sudo cp "$(FARK_BINARY)" /usr/local/bin/fark && \
 			sudo chmod +x /usr/local/bin/fark && \
 			echo "fark installed to /usr/local/bin/fark (with sudo)"; \
 		fi \
