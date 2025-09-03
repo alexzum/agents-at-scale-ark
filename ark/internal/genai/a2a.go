@@ -11,16 +11,16 @@ import (
 	"strings"
 	"time"
 
-	"github.com/a2aserver/a2a-go"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
+	"trpc.group/trpc-go/trpc-a2a-go/protocol"
 
 	arkv1prealpha1 "mckinsey.com/ark/api/v1prealpha1"
 	"mckinsey.com/ark/internal/telemetry"
 )
 
 const (
-	textKind = "text"
+	textKind = protocol.KindText
 )
 
 // DiscoverA2AAgents discovers agents from an A2A server using the official library types
@@ -90,11 +90,13 @@ func ExecuteA2AAgent(ctx context.Context, k8sClient client.Client, address strin
 	logf.FromContext(ctx).Info("calling A2A server", "url", rpcURL)
 
 	// Create the message using official library types
-	message := a2a.Message{
-		Role: a2a.RoleUser,
-		Parts: []a2a.Part{
-			a2a.TextPart{Text: input},
+	message := protocol.Message{
+		Role: protocol.MessageRoleUser,
+		Parts: []protocol.Part{
+			protocol.NewTextPart(input),
 		},
+		MessageID: protocol.GenerateMessageID(),
+		Kind:      "message",
 	}
 
 	// Always use message/send by default
@@ -103,7 +105,7 @@ func ExecuteA2AAgent(ctx context.Context, k8sClient client.Client, address strin
 		Method:  "message/send",
 		Params: A2AMessageSendParams{
 			Message: A2AMessageWithID{
-				MessageID: "msg-" + fmt.Sprintf("%d", time.Now().UnixNano()),
+				MessageID: message.MessageID,
 				Role:      message.Role,
 				Parts:     message.Parts,
 			},
@@ -354,8 +356,8 @@ func processTaskStatus(taskMap map[string]interface{}) (string, bool, error) {
 		return "", false, fmt.Errorf("task status missing state field")
 	}
 
-	switch state {
-	case "completed":
+	switch protocol.TaskState(state) {
+	case protocol.TaskStateCompleted:
 		// Task completed, extract artifacts
 		if artifacts, ok := taskMap["artifacts"].([]interface{}); ok && len(artifacts) > 0 {
 			result, err := extractTextFromArtifacts(artifacts)
@@ -363,12 +365,12 @@ func processTaskStatus(taskMap map[string]interface{}) (string, bool, error) {
 		}
 		return "", false, fmt.Errorf("completed task has no artifacts")
 
-	case "failed":
+	case protocol.TaskStateFailed:
 		// Task failed, extract error message
 		errorMsg := extractTaskFailureMessage(status)
 		return "", false, fmt.Errorf("task failed: %s", errorMsg)
 
-	case "submitted", "working":
+	case protocol.TaskStateSubmitted, protocol.TaskStateWorking:
 		// Task is still in progress
 		return "", true, nil
 
