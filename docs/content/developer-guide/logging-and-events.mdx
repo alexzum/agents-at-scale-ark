@@ -85,3 +85,14 @@ import (
 r.Recorder.Event(&query, corev1.EventTypeNormal, "QueryLLMCallComplete", eventData)
 r.Recorder.Event(&query, corev1.EventTypeWarning, "QueryExecutionFailed", fmt.Sprintf("Error: %v", err))
 ```
+
+## Log Verbosity Configuration
+
+The ARK controller supports configurable log verbosity levels (0-3, default 0):
+
+- Level 0: Production monitoring - only query/model resolution events  
+- Level 1: Standard operations - includes all agent/team execution
+- Level 2: Detailed debugging - adds LLM call tracking
+- Level 3: Full debugging - includes response content
+
+Configure via `ZAPLOGLEVEL` environment variable, `--zap-log-level` argument, or Helm chart `logLevel` value.

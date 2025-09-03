@@ -9,7 +9,7 @@ description: Required secrets and environment variables for ARK CI/CD pipelines
 
 ### CI/CD
 
-The CI/CD pipeline builds and tests all ARK components, services, and documentation on every push. It includes library builds, single-platform container builds (AMD64) for testing, E2E testing, and release preparation.
+The CI/CD pipeline builds and tests all ARK components, services, and documentation on every push. It includes library builds, single-platform container builds (AMD64) for testing, E2E testing, SonarQube code quality scanning, and release preparation.
 
 ![CI/CD Pipeline](./images/cicd-pipeline.png)
 
@@ -115,8 +115,9 @@ GitHub variables and secrets for ARK build and deployment workflows. All configu
 | **NPM Registry (CLI Deployment)** | | |
 | `NPM_TOKEN` | Secret (Optional) | NPM authentication token with publish permissions for CLI deployment | |
 | **Code Quality and Analysis** | | |
-| `SONAR_TOKEN` | Secret | SonarQube authentication token |
-| `SONAR_HOST_URL` | Secret | SonarQube server URL |
+| `SONARQUBE_TOKEN` | Secret | SonarQube authentication token |
+| `SONARQUBE_PROJECT_KEY` | Secret | SonarQube project identifier |
+| `SONARQUBE_HOST_URL` | Variable | SonarQube server URL | `https://sonarqube-dev.mckinsey.com/` |
 | `ARTIFACTORY_USER` | Secret | Artifactory username for dependency resolution |
 | `ARTIFACTORY_PASS` | Secret | Artifactory password for dependency resolution |
 

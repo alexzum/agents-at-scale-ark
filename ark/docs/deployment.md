@@ -1,12 +1,5 @@
 # Deployment Guide
 
-## Prerequisites
-- Go v1.24.0+
-- Docker v17.03+
-- kubectl v1.11.3+
-- Kubernetes v1.11.3+ cluster
-- LLM service with API keys and endpoint (Azure OpenAI supported)
-
 ## Deploy to cluster
 
 Deploy operator (builds containers locally and installs CRDs + controller via Helm):
@@ -49,7 +42,6 @@ Remove ARK controller and CRDs:
 ```sh
 helm uninstall ark-controller -n ark-system
 ```
-
 
 ## Configuration
 
@@ -104,22 +96,6 @@ spec:
 | `ZAPLOGLEVEL` | Log verbosity level (0-3) | `0` |
 
 ### Monitoring and Troubleshooting
-
-#### Viewing Events
-
-Monitor system activity through Kubernetes events:
-
-```bash
-# View all operator events
-kubectl get events -n ark-system
-
-# Monitor query execution
-kubectl get events --watch --field-selector involvedObject.kind=Query
-
-# Debug agent execution
-kubectl describe agent my-agent
-kubectl logs -n ark-system deployment/ark-controller
-```
 
 #### Verbosity Level Guide
 
