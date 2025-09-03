@@ -37,7 +37,7 @@ spec:
         # Using A2A agent card endpoint for probes
         startupProbe:
           httpGet:
-            path: /health
+            path: /.well-known/agent.json
             port: {{ .Values.service.targetPort }}
           initialDelaySeconds: 1
           periodSeconds: 10
@@ -54,7 +54,7 @@ spec:
           failureThreshold: 3
         livenessProbe:
           httpGet:
-            path: /health
+            path: /.well-known/agent.json
             port: {{ .Values.service.targetPort }}
           initialDelaySeconds: 0
           periodSeconds: 30
