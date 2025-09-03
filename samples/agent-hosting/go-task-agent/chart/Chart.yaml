@@ -1,6 +1,0 @@
-apiVersion: v2
-name: go-task-agent
-description: Go Task-Based A2A Agent for debugging task structure responses
-type: application
-version: 0.1.0
-appVersion: "1.0"
