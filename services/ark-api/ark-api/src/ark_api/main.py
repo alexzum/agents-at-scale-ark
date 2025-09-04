@@ -6,6 +6,7 @@ from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from kubernetes_asyncio import client
+from middleware.authentication import AuthenticationMiddleware
 
 from .api import router
 from .core.config import setup_logging
@@ -38,6 +39,23 @@ app = FastAPI(
     openapi_url=None,  # Disable default openapi, we'll use custom one
     docs_url=None  # Disable default docs, we'll use custom one
 )
+
+UNPROTECTED_ROUTES = ["/health", "/api/auth/redirect"]
+
+# Add the authentication middleware
+app.add_middleware(
+    AuthenticationMiddleware,
+    secret_key="your-secret-key",  # Replace with your actual secret key
+    unprotected_routes=UNPROTECTED_ROUTES,
+)
+
+@app.get("/health")
+async def health_check():
+    return {"status": "ok"}
+
+@app.get("/secure-endpoint")
+async def secure_endpoint():
+    return {"message": "This is a secure endpoint"}
 
 # Custom docs endpoint that respects X-Forwarded-Prefix header
 # The dashboard middleware and ingresses set this header to indicate the external path prefix
