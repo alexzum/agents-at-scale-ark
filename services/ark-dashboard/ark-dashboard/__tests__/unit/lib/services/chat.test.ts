@@ -162,7 +162,7 @@ describe('chatService', () => {
       expect(result).toEqual({
         status: 'running',
         terminal: false,
-        response: 'No response',
+        response: undefined,
       })
     })
 

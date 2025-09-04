@@ -18,7 +18,7 @@ export type QueryUpdateRequest = components["schemas"]["QueryUpdateRequest"];
 type TerminalQueryStatusPhase = "done" | "error" | "canceled" | "unknown";
 
 // Define non-terminal status phases
-type NonTerminalQueryStatusPhase = "pending" | "running" | "evaluating";
+type NonTerminalQueryStatusPhase = "pending" | "evaluating" | "running";
 
 // Combined query status phase type
 type QueryStatusPhase = TerminalQueryStatusPhase | NonTerminalQueryStatusPhase;
@@ -31,7 +31,7 @@ const TERMINAL_QUERY_STATUS_PHASES: readonly TerminalQueryStatusPhase[] = [
   "unknown"
 ] as const;
 const NON_TERMINAL_QUERY_STATUS_PHASES: readonly NonTerminalQueryStatusPhase[] =
-  ["pending", "running", "evaluating"] as const;
+  ["pending", "evaluating", "running"] as const;
 const QUERY_STATUS_PHASES: readonly QueryStatusPhase[] = [
   ...TERMINAL_QUERY_STATUS_PHASES,
   ...NON_TERMINAL_QUERY_STATUS_PHASES
@@ -40,6 +40,8 @@ const QUERY_STATUS_PHASES: readonly QueryStatusPhase[] = [
 type QueryStatusWithPhase = {
   phase: string;
   responses?: Array<{ content: string }>;
+  artifacts?: Array<{ parts: Array<{ text: string }> }>;
+  history?: Array<{ parts: Array<{ text: string }>; role: string }>;
 };
 
 // Type guard for checking if a phase is terminal
@@ -216,16 +218,91 @@ export const chatService = {
       }
 
       const status = query.status;
+
+      // Check if this is a task structure (kind: "task")
+      if (
+        typeof status === "object" &&
+        "kind" in status &&
+        status.kind === "task"
+      ) {
+        // Handle task structure
+        const taskStatus = status as {
+          kind: "task";
+          status: { state: string; timestamp: string };
+          artifacts?: Array<{ parts: Array<{ text: string }> }>;
+        };
+        
+        const state = taskStatus.status?.state;
+        console.log("🔍 getQueryResult: Task structure detected", { state });
+        
+        if (!state) {
+          return { status: "unknown", terminal: true };
+        }
+        
+        // Extract response from artifacts
+        let response = "No response";
+        if (taskStatus.artifacts && taskStatus.artifacts.length > 0) {
+          const firstArtifact = taskStatus.artifacts[0];
+          if (firstArtifact.parts && firstArtifact.parts.length > 0) {
+            response = firstArtifact.parts[0].text;
+          }
+        }
+
+        // Map task states to our phases
+        let mappedPhase: QueryStatusPhase;
+        switch (state) {
+          case "completed":
+            mappedPhase = "done";
+            break;
+          case "running":
+            mappedPhase = "running";
+            break;
+          case "submitted":
+            mappedPhase = "pending";
+            break;
+          case "failed":
+            mappedPhase = "error";
+            break;
+          default:
+            mappedPhase = "unknown";
+        }
+
+        return {
+          terminal: isTerminalPhase(mappedPhase),
+          status: mappedPhase,
+          response: response
+        };
+      }
+
+      // Legacy structure with phase
       if (typeof status === "object" && "phase" in status) {
         const statusWithPhase = status as QueryStatusWithPhase;
         const phase = statusWithPhase.phase;
         const responses = statusWithPhase.responses || [];
-        const response = responses[0]?.content || "No response";
 
         // Check if phase is in the valid set, otherwise use 'unknown'
         const validatedPhase: QueryStatusPhase = isValidQueryStatusPhase(phase)
           ? phase
           : "unknown";
+
+        // For non-terminal phases, don't show "No response" if no content yet
+        let response = responses[0]?.content;
+
+        // Try to get response from artifacts if responses is empty
+        if (
+          !response &&
+          statusWithPhase.artifacts &&
+          statusWithPhase.artifacts.length > 0
+        ) {
+          const firstArtifact = statusWithPhase.artifacts[0];
+          if (firstArtifact.parts && firstArtifact.parts.length > 0) {
+            response = firstArtifact.parts[0].text;
+          }
+        }
+
+        if (!response && isTerminalPhase(validatedPhase)) {
+          response = "No response";
+        }
 
         return {
           terminal: isTerminalPhase(validatedPhase),
@@ -234,8 +311,13 @@ export const chatService = {
         };
       }
 
+      console.log(
+        "❌ getQueryResult: Status object does not have 'phase' field",
+        { status }
+      );
       return { status: "unknown", terminal: true };
-    } catch {
+    } catch (error) {
+      console.error("❌ getQueryResult: Exception caught", error);
       return { status: "error", terminal: true };
     }
   },

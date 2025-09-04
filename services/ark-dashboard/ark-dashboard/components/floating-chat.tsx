@@ -1,163 +1,232 @@
-"use client"
+"use client";
 
-import { useState, useEffect, useRef } from "react"
-import { Send, X, AlertCircle, Expand, Shrink, MessageCircle } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Separator } from "@/components/ui/separator"
-import { 
+import { ChatMessage } from "@/components/chat/chat-message";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
+import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger
-} from "@/components/ui/tooltip"
-import { chatService } from "@/lib/services"
-import { ChatMessage } from "@/components/chat/chat-message"
-import type { ChatMessageData } from "@/lib/types/chat"
+} from "@/components/ui/tooltip";
+import { chatService } from "@/lib/services";
+import type { ChatMessageData } from "@/lib/types/chat";
+import {
+  AlertCircle,
+  Expand,
+  MessageCircle,
+  Send,
+  Shrink,
+  X
+} from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 
-type ChatType = "model" | "team" | "agent"
+type ChatType = "model" | "team" | "agent";
 
 interface FloatingChatProps {
-  id: string
-  name: string
-  type: ChatType
-  namespace: string
-  position: number
-  onClose: () => void
+  id: string;
+  name: string;
+  type: ChatType;
+  namespace: string;
+  position: number;
+  onClose: () => void;
 }
 
+export default function FloatingChat({
+  name,
+  type,
+  namespace,
+  position,
+  onClose
+}: FloatingChatProps) {
+  const [chatMessages, setChatMessages] = useState<ChatMessageData[]>([]);
+  const [currentMessage, setCurrentMessage] = useState("");
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isMaximized, setIsMaximized] = useState(false);
+  const [viewMode, setViewMode] = useState<"text" | "markdown">("markdown");
+  const [sessionId] = useState(() => `session-${Date.now()}`);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const stopPollingRef = useRef<(() => void) | null>(null);
 
-export default function FloatingChat({ name, type, namespace, position, onClose }: FloatingChatProps) {
-  const [chatMessages, setChatMessages] = useState<ChatMessageData[]>([])
-  const [currentMessage, setCurrentMessage] = useState("")
-  const [isProcessing, setIsProcessing] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [isMaximized, setIsMaximized] = useState(false)
-  const [viewMode, setViewMode] = useState<'text' | 'markdown'>('markdown')
-  const [sessionId] = useState(() => `session-${Date.now()}`)
-  const inputRef = useRef<HTMLInputElement>(null)
-  const stopPollingRef = useRef<(() => void) | null>(null)
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const messagesEndRef = useRef<HTMLDivElement>(null)
-  
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-  }
-
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
 
   useEffect(() => {
     // Focus input when chat opens
-    setTimeout(() => inputRef.current?.focus(), 100)
-    
+    setTimeout(() => inputRef.current?.focus(), 100);
+
     // Cleanup: stop polling when component unmounts
     return () => {
       if (stopPollingRef.current) {
-        stopPollingRef.current()
+        stopPollingRef.current();
       }
-    }
-  }, [])
+    };
+  }, []);
 
   useEffect(() => {
     // Focus input when processing completes
     if (!isProcessing) {
-      inputRef.current?.focus()
+      inputRef.current?.focus();
     }
-  }, [isProcessing])
+  }, [isProcessing]);
 
   useEffect(() => {
     // Scroll to bottom when messages change
-    setTimeout(scrollToBottom, 100)
-  }, [chatMessages])
+    setTimeout(scrollToBottom, 100);
+  }, [chatMessages]);
 
   const pollQueryStatus = async (queryName: string) => {
-    let pollingStopped = false
-    stopPollingRef.current = () => { pollingStopped = true }
-    
+    let pollingStopped = false;
+    let assistantMessageAdded = false;
+
+    stopPollingRef.current = () => {
+      pollingStopped = true;
+    };
+
     while (!pollingStopped) {
       try {
-        const result = await chatService.getQueryResult(namespace, queryName)
+        const result = await chatService.getQueryResult(namespace, queryName);
 
-        // Check if terminal state with response
-        if (result.terminal) {
-          // Add assistant message with the result
+        // Add or update assistant message for any response
+        if (
+          result.response &&
+          result.response.trim() &&
+          !assistantMessageAdded
+        ) {
           const assistantMessage: ChatMessageData = {
             role: "assistant",
-            content: "",
+            content: result.response,
             queryName: queryName,
-            status: "completed"
+            status: result.terminal ? "completed" : "running"
+          };
+
+          setChatMessages((prev) => [...prev, assistantMessage]);
+          assistantMessageAdded = true;
+        } else if (
+          result.response &&
+          result.response.trim() &&
+          assistantMessageAdded
+        ) {
+          // Update existing message
+          setChatMessages((prev) =>
+            prev.map((msg) =>
+              msg.queryName === queryName && msg.role === "assistant"
+                ? {
+                    ...msg,
+                    content: result.response!,
+                    status: result.terminal ? "completed" : "running"
+                  }
+                : msg
+            )
+          );
+        }
+
+        // Check if terminal state
+        if (result.terminal) {
+          // Update final status if message exists
+          if (assistantMessageAdded) {
+            setChatMessages((prev) =>
+              prev.map((msg) =>
+                msg.queryName === queryName && msg.role === "assistant"
+                  ? {
+                      ...msg,
+                      status: result.status === "done" ? "completed" : "failed",
+                      content:
+                        result.response ||
+                        msg.content ||
+                        (result.status === "error"
+                          ? "Query failed"
+                          : "Query status unknown")
+                    }
+                  : msg
+              )
+            );
+          } else if (!assistantMessageAdded) {
+            // Add message if none exists yet
+            const assistantMessage: ChatMessageData = {
+              role: "assistant",
+              content:
+                result.response ||
+                (result.status === "error"
+                  ? "Query failed"
+                  : "Query status unknown"),
+              queryName: queryName,
+              status: result.status === "done" ? "completed" : "failed"
+            };
+            setChatMessages((prev) => [...prev, assistantMessage]);
           }
-          
-          if (result.status === 'done' && result.response) {
-            assistantMessage.content = result.response
-            assistantMessage.status = "completed"
-          } else if (result.status === 'error') {
-            assistantMessage.content = result.response || 'Query failed'
-            assistantMessage.status = "failed"
-          } else if (result.status === 'unknown') {
-            assistantMessage.content = 'Query status unknown'
-            assistantMessage.status = "failed"
-          }
-          
-          setChatMessages((prev) => [...prev, assistantMessage])
-          
-          pollingStopped = true
-          break
+
+          pollingStopped = true;
+          break;
         }
       } catch (error) {
-        console.error('Error polling query status:', error)
-        
+        console.error("Error polling query status:", error);
+
         // Add error message
         const errorMessage: ChatMessageData = {
           role: "assistant",
           content: "Error while processing query",
           queryName: queryName,
           status: "failed"
-        }
-        setChatMessages((prev) => [...prev, errorMessage])
-        
-        pollingStopped = true
+        };
+        setChatMessages((prev) => [...prev, errorMessage]);
+
+        pollingStopped = true;
       }
-      
+
       if (!pollingStopped) {
-        await new Promise(resolve => setTimeout(resolve, 1000))
+        await new Promise((resolve) => setTimeout(resolve, 1000));
       }
     }
-  }
+  };
 
-  const buildChatHistory = (messages: ChatMessageData[], currentMsg: string): string => {
+  const buildChatHistory = (
+    messages: ChatMessageData[],
+    currentMsg: string
+  ): string => {
     const history = messages
-      .filter(msg => msg.content) // Only include messages with content
-      .map(msg => {
-        const prefix = msg.role === "user" ? "User" : "Agent"
-        return `${prefix}: ${msg.content}`
+      .filter((msg) => msg.content) // Only include messages with content
+      .map((msg) => {
+        const prefix = msg.role === "user" ? "User" : "Agent";
+        return `${prefix}: ${msg.content}`;
       })
-      .join("\n\n")
-    
+      .join("\n\n");
+
     // Add the current message
-    const fullQuery = history ? `${history}\n\nUser: ${currentMsg}` : `User: ${currentMsg}`
-    return fullQuery
-  }
+    const fullQuery = history
+      ? `${history}\n\nUser: ${currentMsg}`
+      : `User: ${currentMsg}`;
+    return fullQuery;
+  };
 
   const handleSendMessage = async () => {
-    if (!currentMessage.trim() || isProcessing) return
+    if (!currentMessage.trim() || isProcessing) return;
 
-    const userMessage = currentMessage.trim()
-    setCurrentMessage("")
-    setError(null)
+    const userMessage = currentMessage.trim();
+    setCurrentMessage("");
+    setError(null);
 
     // Add user message
-    setChatMessages((prev) => [...prev, { role: "user", content: userMessage }])
+    setChatMessages((prev) => [
+      ...prev,
+      { role: "user", content: userMessage }
+    ]);
 
     // Keep focus on input
-    inputRef.current?.focus()
+    inputRef.current?.focus();
 
-    setIsProcessing(true)
+    setIsProcessing(true);
 
     try {
       // Build the full query with chat history
-      const fullQuery = buildChatHistory(chatMessages, userMessage)
-      
+      const fullQuery = buildChatHistory(chatMessages, userMessage);
+
       // Submit the query with history
       const query = await chatService.submitChatQuery(
         namespace,
@@ -165,47 +234,47 @@ export default function FloatingChat({ name, type, namespace, position, onClose 
         type,
         name,
         sessionId
-      )
+      );
 
       // Poll for query status updates
-      await pollQueryStatus(query.name)
-      
+      await pollQueryStatus(query.name);
     } catch (err) {
-      console.error('Error sending message:', err)
-      let errorMessage = 'Failed to send message'
-      
+      console.error("Error sending message:", err);
+      let errorMessage = "Failed to send message";
+
       if (err instanceof Error) {
-        if (err.message.includes('Failed to fetch')) {
-          errorMessage = 'Unable to connect to the ARK API. Please ensure the backend service is running on port 8000.'
+        if (err.message.includes("Failed to fetch")) {
+          errorMessage =
+            "Unable to connect to the ARK API. Please ensure the backend service is running on port 8000.";
         } else {
-          errorMessage = err.message
+          errorMessage = err.message;
         }
       }
-      
-      setError(errorMessage)
-      setIsProcessing(false)
+
+      setError(errorMessage);
+      setIsProcessing(false);
     } finally {
-      setIsProcessing(false)
+      setIsProcessing(false);
     }
-  }
+  };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault()
-      handleSendMessage()
+      e.preventDefault();
+      handleSendMessage();
     }
-  }
+  };
 
   // Calculate position - each window is 420px wide (400px + 20px gap)
-  const rightPosition = 16 + (position * 420)
+  const rightPosition = 16 + position * 420;
 
   // Handle maximize/minimize styling
-  const cardStyles = isMaximized 
+  const cardStyles = isMaximized
     ? "fixed inset-4 shadow-2xl z-50 transition-all duration-300"
-    : "fixed bottom-4 shadow-2xl z-50 w-[400px] h-[500px] transition-all duration-300"
+    : "fixed bottom-4 shadow-2xl z-50 w-[400px] h-[500px] transition-all duration-300";
 
   return (
-    <Card 
+    <Card
       className={`${cardStyles} p-0`}
       style={isMaximized ? {} : { right: `${rightPosition}px` }}
     >
@@ -219,9 +288,7 @@ export default function FloatingChat({ name, type, namespace, position, onClose 
                 <TooltipTrigger asChild>
                   <div className="flex items-center gap-2 min-w-0 flex-1">
                     <MessageCircle className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                    <span className="font-medium truncate">
-                      {name}
-                    </span>
+                    <span className="font-medium truncate">{name}</span>
                   </div>
                 </TooltipTrigger>
                 <TooltipContent>
@@ -229,16 +296,20 @@ export default function FloatingChat({ name, type, namespace, position, onClose 
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
-            
+
             <div className="flex items-center gap-1 ml-2">
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setIsMaximized(!isMaximized)}
                 className="h-6 w-6 p-0"
-                title={isMaximized ? 'Minimize chat' : 'Maximize chat'}
+                title={isMaximized ? "Minimize chat" : "Maximize chat"}
               >
-                {isMaximized ? <Shrink className="h-3 w-3" /> : <Expand className="h-3 w-3" />}
+                {isMaximized ? (
+                  <Shrink className="h-3 w-3" />
+                ) : (
+                  <Expand className="h-3 w-3" />
+                )}
               </Button>
               <Button
                 variant="ghost"
@@ -251,29 +322,29 @@ export default function FloatingChat({ name, type, namespace, position, onClose 
               </Button>
             </div>
           </div>
-          
+
           <Separator />
-          
+
           {/* Controls Row */}
           <div className="flex justify-end px-3 py-1.5">
             <div className="flex items-center gap-1 text-xs">
-              <button 
+              <button
                 className={`px-2 py-1 rounded transition-colors ${
-                  viewMode === 'text' 
-                    ? 'bg-secondary text-secondary-foreground font-medium' 
-                    : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                  viewMode === "text"
+                    ? "bg-secondary text-secondary-foreground font-medium"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
                 }`}
-                onClick={() => setViewMode('text')}
+                onClick={() => setViewMode("text")}
               >
                 Text
               </button>
-              <button 
+              <button
                 className={`px-2 py-1 rounded transition-colors ${
-                  viewMode === 'markdown' 
-                    ? 'bg-secondary text-secondary-foreground font-medium' 
-                    : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                  viewMode === "markdown"
+                    ? "bg-secondary text-secondary-foreground font-medium"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
                 }`}
-                onClick={() => setViewMode('markdown')}
+                onClick={() => setViewMode("markdown")}
               >
                 Markdown
               </button>
@@ -289,14 +360,14 @@ export default function FloatingChat({ name, type, namespace, position, onClose 
                 <span>{error}</span>
               </div>
             )}
-            
+
             {chatMessages.length === 0 && !error && (
               <div className="text-center text-muted-foreground py-8">
                 Start a conversation with the {type}
               </div>
             )}
 
-            {chatMessages.map((message, index) => (
+            {chatMessages.map((message, index) =>
               message.content ? (
                 <ChatMessage
                   key={index}
@@ -304,15 +375,13 @@ export default function FloatingChat({ name, type, namespace, position, onClose 
                   content={message.content}
                   status={message.status}
                   viewMode={viewMode}
-                  queryName={message.queryName}
-                  namespace={namespace}
                 />
               ) : null
-            ))}
-            
+            )}
+
             {/* Show typing indicator when processing */}
             {isProcessing && (
-              <div className="flex justify-start">
+              <div className="flex justify-start flex-col items-start">
                 <div className="max-w-[80%] rounded-lg px-3 py-2 bg-muted">
                   <div className="flex space-x-1">
                     <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
@@ -335,16 +404,18 @@ export default function FloatingChat({ name, type, namespace, position, onClose 
         <div className="flex gap-2 p-4 border-t flex-shrink-0">
           <Input
             ref={inputRef}
-            placeholder={isProcessing ? "Processing..." : "Type your message..."}
+            placeholder={
+              isProcessing ? "Processing..." : "Type your message..."
+            }
             value={currentMessage}
             onChange={(e) => setCurrentMessage(e.target.value)}
-            onKeyPress={handleKeyPress}
+            onKeyDown={handleKeyPress}
             disabled={isProcessing}
           />
-          <Button 
-            onClick={handleSendMessage} 
-            disabled={!currentMessage.trim() || isProcessing} 
-            size="sm" 
+          <Button
+            onClick={handleSendMessage}
+            disabled={!currentMessage.trim() || isProcessing}
+            size="sm"
             variant="default"
           >
             <Send className="h-4 w-4" />
@@ -352,5 +423,5 @@ export default function FloatingChat({ name, type, namespace, position, onClose 
         </div>
       </div>
     </Card>
-  )
+  );
 }
