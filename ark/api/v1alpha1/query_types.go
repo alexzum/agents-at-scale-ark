@@ -65,11 +65,6 @@ type QuerySpec struct {
 	Cancel bool `json:"cancel,omitempty"`
 }
 
-type Response struct {
-	Target  QueryTarget `json:"target,omitempty"`
-	Content string      `json:"content,omitempty"`
-}
-
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Phase",type=string,JSONPath=`.status.phase`
@@ -118,4 +113,10 @@ type QueryList struct {
 
 func init() {
 	SchemeBuilder.Register(&Query{}, &QueryList{})
+}
+
+type Response struct {
+    Target      QueryTarget `json:"target,omitempty"`
+    Content     string      `json:"content,omitempty"`
+    RawResponse string      `json:"rawResponse,omitempty"` // Changed from "raw" to "rawResponse"
 }

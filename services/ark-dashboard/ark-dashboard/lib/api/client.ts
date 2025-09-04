@@ -15,6 +15,14 @@ interface RequestOptions extends RequestInit {
   params?: Record<string, string | number | boolean>;
 }
 
+export interface ApiResultWithRaw<T> {
+  data: T;
+  status: number;
+  headers: Record<string, string>;
+  rawJson?: unknown;   // parsed JSON if available, or undefined
+  rawText?: string;    // exact original response string
+}
+
 class APIClient {
   private baseURL: string;
   private defaultHeaders: HeadersInit;
@@ -60,7 +68,7 @@ class APIClient {
       if (!response.ok) {
         const errorData = isJSON ? await response.json() : await response.text();
         throw new APIError(
-          errorData.message || `HTTP error! status: ${response.status}`,
+          (errorData as any)?.message || `HTTP error! status: ${response.status}`,
           response.status,
           errorData
         );
@@ -83,6 +91,80 @@ class APIClient {
       }
       
       // Network errors or other fetch errors
+      throw new APIError(
+        error instanceof Error ? error.message : 'An unknown error occurred'
+      );
+    }
+  }
+
+  // NEW: like request<T> but also returns raw JSON/text plus headers/status
+  async requestWithRaw<T>(
+    endpoint: string,
+    options: RequestOptions = {}
+  ): Promise<ApiResultWithRaw<T>> {
+    const { params, headers, ...requestOptions } = options;
+
+    let url = `${this.baseURL}${endpoint}`;
+    if (params) {
+      const searchParams = new URLSearchParams();
+      Object.entries(params).forEach(([key, value]) =>
+        searchParams.append(key, String(value))
+      );
+      url += `?${searchParams.toString()}`;
+    }
+
+    try {
+      const response = await fetch(url, {
+        ...requestOptions,
+        headers: { ...this.defaultHeaders, ...headers }
+      });
+
+      const headersObj = Object.fromEntries(response.headers.entries());
+      const contentType =
+        headersObj['content-type'] || headersObj['Content-Type'] || '';
+      const isJSON = contentType.includes('application/json');
+
+      const rawText = await response.text(); // read once
+
+      if (!response.ok) {
+        let errorData: unknown = rawText;
+        try {
+          errorData = JSON.parse(rawText);
+        } catch {}
+        throw new APIError(
+          (errorData as any)?.message || `HTTP error! status: ${response.status}`,
+          response.status,
+          errorData
+        );
+      }
+
+      if (response.status === 204) {
+        return {
+          data: undefined as T,
+          status: 204,
+          headers: headersObj,
+          rawText
+        };
+      }
+
+      let parsed: unknown = rawText;
+      if (isJSON) {
+        try {
+          parsed = JSON.parse(rawText);
+        } catch {
+          // leave as string
+        }
+      }
+
+      return {
+        data: parsed as T,
+        status: response.status,
+        headers: headersObj,
+        rawJson: parsed,
+        rawText
+      };
+    } catch (error) {
+      if (error instanceof APIError) throw error;
       throw new APIError(
         error instanceof Error ? error.message : 'An unknown error occurred'
       );

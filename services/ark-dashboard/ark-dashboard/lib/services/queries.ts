@@ -1,4 +1,4 @@
-import { apiClient } from "@/lib/api/client";
+import { apiClient, type ApiResultWithRaw } from "@/lib/api/client";
 import type { components } from "@/lib/api/generated/types";
 
 type QueryListResponse = components["schemas"]["QueryListResponse"];
@@ -108,5 +108,15 @@ export const queriesService = {
 
       pollStatus();
     });
+  },
+
+  // NEW: raw-aware getter (optional)
+  async getWithRaw(
+    namespace: string,
+    queryName: string
+  ): Promise<ApiResultWithRaw<QueryDetailResponse>> {
+    return apiClient.requestWithRaw<QueryDetailResponse>(
+      `/api/v1/namespaces/${namespace}/queries/${queryName}`
+    );
   }
 };

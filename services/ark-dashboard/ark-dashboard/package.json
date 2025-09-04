@@ -38,6 +38,7 @@
     "react-dnd-html5-backend": "^16.0.1",
     "react-dom": "^19.0.0",
     "react-markdown": "^9.1.0",
+    "react-syntax-highlighter": "^15.6.6",
     "rehype-highlight": "^7.0.2",
     "rehype-react": "^8.0.0",
     "remark-gfm": "^4.0.1",

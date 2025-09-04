@@ -399,9 +399,13 @@ func (r *QueryReconciler) reconcileQueue(ctx context.Context, query arkv1alpha1.
 		if result.err != nil {
 			return nil, result.err
 		}
-		// Skip targets that were delegated to external execution engines (messages == nil)
 		if result.messages != nil {
-			allResponses = append(allResponses, arkv1alpha1.Response{Target: result.target, Content: makeResponse(result.messages)})
+			rawBytes, _ := json.Marshal(result.messages) // full original message array
+			allResponses = append(allResponses, arkv1alpha1.Response{
+				Target:  result.target,
+				Content: makeResponse(result.messages),
+				RawResponse:     string(rawBytes), // or RawResponse if you renamed it
+			})
 		}
 	}
 

@@ -332,6 +332,8 @@ spec:
                   properties:
                     content:
                       type: string
+                    rawResponse:
+                      type: string
                     target:
                       properties:
                         name:
