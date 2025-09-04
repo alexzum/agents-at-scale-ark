@@ -1,0 +1,131 @@
+# Memory
+
+The `Memory` resource represents persistent storage for converations with agents. It is designed to be agnostic of the backend implementation, meaning that a database, queue or other system can be used.
+
+The backend for a memory resource is an HTTP server that implements the [Memory API Specification](#memory-api-specification).
+
+In time, this resource will also configure how operations such as compaction can be performed. A reference implementation [PostgreSQL Memory](#postgresql-memory) is available.
+
+## Specification
+
+```yaml
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Memory
+metadata:
+  name: postgres-memory
+spec:
+  # The address of the service that handles memory API calls.
+  address:
+    # A 'value' can be provided to give a specific URL, or a service ref to
+    # point to a specific service in the cluster.
+    valueFrom:
+      # In this example, we point to a deployment of the "Postgres Memory".
+      serviceRef:
+        name: postgres-memory
+        port: 8080
+```
+
+## Usage
+
+Memory can be specified in a query resource:
+
+```yaml
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Query
+metadata:
+  name: chat-with-memory
+spec:
+  input: "What did we discuss earlier?"
+  targets:
+    - name: my-agent
+  memory:
+    name: postgres-memory
+  # Optional: specify session ID to group related queries
+  # If not provided, the query UID is used as session ID
+  sessionId: "my-conversation-session"
+```
+
+Memory can also be specified via the `fark` CLI:
+
+```bash
+fark query --input "Continue our conversation" --session-id "my-conversation-session" my-agent
+```
+
+When creating a query in the dashboard it is also possible to specify the memory resource. Note that in the dashbhoard 'chat' window, no memory is used, messages are simply stored client-side as is common for chat applications.
+
+
+## Memory API Specification
+
+Memory is implemented as a simple HTTP server:
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/messages` | Store multiple messages |
+| GET | `/messages` | Retrieve messages with optional filtering |
+| GET | `/sessions` | List all session IDs |
+| GET | `/health` | Health check |
+
+### Store Messages
+
+**POST** `/messages`
+
+Request body includes session/query context and message array:
+
+```json
+{
+  "session_id": "uuid-string",
+  "query_id": "query-uuid", 
+  "messages": [
+    {
+      "role": "user",
+      "content": "What is the weather like?"
+    },
+    {
+      "role": "assistant", 
+      "content": "I don't have access to real-time weather data."
+    }
+  ]
+}
+```
+
+### Retrieve Messages
+
+**GET** `/messages?session_id={id}&query_id={id}`
+
+Returns timestamped message records:
+
+```json
+{
+  "messages": [
+    {
+      "timestamp": "2024-01-01T12:00:00Z",
+      "session_id": "uuid-string",
+      "query_id": "query-uuid",
+      "message": {
+        "role": "user",
+        "content": "What is the weather like?"
+      }
+    }
+  ]
+}
+```
+
+### List Sessions
+
+**GET** `/sessions`
+
+Returns array of session IDs:
+
+```json
+["session-1", "session-2", "session-3"]
+```
+
+## PostgreSQL Memory
+
+The PostgreSQL memory service can be installed with:
+
+```bash
+make postgres-memory-install
+```
+
+Crunchy PGO is used to simplfy PostgresSQL management.

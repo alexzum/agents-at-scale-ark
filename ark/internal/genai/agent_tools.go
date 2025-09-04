@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -39,6 +38,20 @@ func (p *MCPClientPool) GetOrCreateClient(ctx context.Context, serverName, serve
 	return mcpClient, nil
 }
 
+// Close closes all MCP client connections in the pool
+func (p *MCPClientPool) Close() error {
+	var lastErr error
+	for key, mcpClient := range p.clients {
+		if mcpClient != nil && mcpClient.client != nil {
+			if err := mcpClient.client.Close(); err != nil {
+				lastErr = fmt.Errorf("failed to close MCP client %s: %w", key, err)
+			}
+		}
+		delete(p.clients, key)
+	}
+	return lastErr
+}
+
 func (r *ToolRegistry) registerTools(ctx context.Context, k8sClient client.Client, agent *arkv1alpha1.Agent) error {
 	for _, agentTool := range agent.Spec.Tools {
 		if err := r.registerTool(ctx, k8sClient, agentTool, agent.Namespace); err != nil {
@@ -57,61 +70,35 @@ func (r *ToolRegistry) getToolCRD(ctx context.Context, k8sClient client.Client, 
 	return obj, nil
 }
 
-func (r *ToolRegistry) getToolsBySelector(ctx context.Context, k8sClient client.Client, labelSelector *labels.Selector, namespace string) ([]arkv1alpha1.Tool, error) {
-	toolList := &arkv1alpha1.ToolList{}
-
-	if err := k8sClient.List(ctx, toolList, client.InNamespace(namespace), client.MatchingLabelsSelector{Selector: *labelSelector}); err != nil {
-		return nil, fmt.Errorf("failed to list tools with label selector: %w", err)
-	}
-
-	return toolList.Items, nil
-}
-
 func (r *ToolRegistry) registerCustomTool(ctx context.Context, k8sClient client.Client, agentTool arkv1alpha1.AgentTool, namespace string) error {
-	var tools []arkv1alpha1.Tool
-
-	switch {
-	case agentTool.Name != "":
-		tool, err := r.getToolCRD(ctx, k8sClient, agentTool.Name, namespace)
-		if err != nil {
-			return err
-		}
-		tools = []arkv1alpha1.Tool{*tool}
-	case agentTool.LabelSelector != nil:
-		selector, err := labels.ValidatedSelectorFromSet(agentTool.LabelSelector.MatchLabels)
-		if err != nil {
-			return fmt.Errorf("invalid label selector: %w", err)
-		}
-		foundTools, err := r.getToolsBySelector(ctx, k8sClient, &selector, namespace)
-		if err != nil {
-			return err
-		}
-		tools = foundTools
-	default:
-		return fmt.Errorf("either name or labelSelector must be specified for custom tool")
+	if agentTool.Name == "" {
+		return fmt.Errorf("name must be specified for custom tool")
 	}
 
-	for _, tool := range tools {
-		if err := r.registerSingleCustomTool(ctx, k8sClient, tool, namespace, agentTool.Functions); err != nil {
-			return fmt.Errorf("failed to register tool %s: %w", tool.Name, err)
-		}
+	tool, err := r.getToolCRD(ctx, k8sClient, agentTool.Name, namespace)
+	if err != nil {
+		return err
+	}
+
+	if err := r.registerSingleCustomTool(ctx, k8sClient, *tool, namespace, agentTool.Functions); err != nil {
+		return fmt.Errorf("failed to register tool %s: %w", tool.Name, err)
 	}
 
 	return nil
 }
 
-func CreateToolExecutor(ctx context.Context, k8sClient client.Client, tool *arkv1alpha1.Tool, namespace string) (ToolExecutor, error) {
+func CreateToolExecutor(ctx context.Context, k8sClient client.Client, tool *arkv1alpha1.Tool, namespace string, mcpPool *MCPClientPool) (ToolExecutor, error) {
 	switch tool.Spec.Type {
-	case "fetcher":
-		if tool.Spec.Fetcher == nil {
-			return nil, fmt.Errorf("fetcher spec is required for tool %s", tool.Name)
+	case ToolTypeHTTP:
+		if tool.Spec.HTTP == nil {
+			return nil, fmt.Errorf("http spec is required for tool %s", tool.Name)
 		}
-		return &FetcherExecutor{
+		return &HTTPExecutor{
 			K8sClient:     k8sClient,
 			ToolName:      tool.Name,
 			ToolNamespace: namespace,
 		}, nil
-	case "mcp":
+	case ToolTypeMCP:
 		if tool.Spec.MCP == nil {
 			return nil, fmt.Errorf("mcp spec is required for tool %s", tool.Name)
 		}
@@ -144,9 +131,17 @@ func CreateToolExecutor(ctx context.Context, k8sClient client.Client, tool *arkv
 			headers[header.Name] = value
 		}
 
-		mcpClient, err := NewMCPClient(ctx, mcpURL, headers, mcpServerCRD.Spec.Transport)
+		// Use the MCP client pool to get or create the client
+		mcpClient, err := mcpPool.GetOrCreateClient(
+			ctx,
+			tool.Spec.MCP.MCPServerRef.Name,
+			mcpServerNamespace,
+			mcpURL,
+			headers,
+			mcpServerCRD.Spec.Transport,
+		)
 		if err != nil {
-			return nil, fmt.Errorf("failed to create MCP client for tool %s: %w", tool.Name, err)
+			return nil, fmt.Errorf("failed to get or create MCP client for tool %s: %w", tool.Name, err)
 		}
 
 		return &MCPExecutor{
@@ -160,7 +155,7 @@ func CreateToolExecutor(ctx context.Context, k8sClient client.Client, tool *arkv
 
 func (r *ToolRegistry) registerSingleCustomTool(ctx context.Context, k8sClient client.Client, tool arkv1alpha1.Tool, namespace string, functions []arkv1alpha1.ToolFunction) error {
 	toolDef := CreateToolFromCRD(&tool)
-	executor, err := CreateToolExecutor(ctx, k8sClient, &tool, namespace)
+	executor, err := CreateToolExecutor(ctx, k8sClient, &tool, namespace, r.mcpPool)
 	if err != nil {
 		return err
 	}
@@ -178,7 +173,7 @@ func (r *ToolRegistry) registerSingleCustomTool(ctx context.Context, k8sClient c
 
 func (r *ToolRegistry) registerTool(ctx context.Context, k8sClient client.Client, agentTool arkv1alpha1.AgentTool, namespace string) error {
 	switch agentTool.Type {
-	case "built-in":
+	case AgentToolTypeBuiltIn:
 		switch agentTool.Name {
 		case "noop":
 			r.RegisterTool(GetNoopTool(), &NoopExecutor{})
@@ -187,7 +182,7 @@ func (r *ToolRegistry) registerTool(ctx context.Context, k8sClient client.Client
 		default:
 			return fmt.Errorf("unsupported built-in tool %s", agentTool.Name)
 		}
-	case "custom":
+	case AgentToolTypeCustom:
 		if err := r.registerCustomTool(ctx, k8sClient, agentTool, namespace); err != nil {
 			return err
 		}

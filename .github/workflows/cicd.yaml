@@ -506,7 +506,6 @@ jobs:
             tar xz -C /tmp
           sudo mv /tmp/chainsaw /usr/local/bin/chainsaw
           sudo chmod +x /usr/local/bin/chainsaw
-
       - name: Run evaluated E2E tests
         env:
           E2E_TEST_AZURE_OPENAI_KEY: ${{ secrets.CICD_AZURE_OPENAI_KEY }}
@@ -517,7 +516,8 @@ jobs:
         run: |
           cd tests
           mkdir -p /tmp/chainsaw-report
-          chainsaw test --config .chainsaw.yaml --selector 'evaluated=true'
+          # Use special config for evaluated tests with longer timeouts and sequential execution
+          chainsaw test --config .chainsaw-evaluated.yaml --selector 'evaluated=true'
 
       - uses: ./.github/actions/collect-coverage-e2e
         with:
@@ -739,6 +739,8 @@ jobs:
     runs-on: ubuntu-24.04
     if: ${{ needs.check-release.outputs.released && github.ref == 'refs/heads/main' }}
     steps:
+      - uses: actions/checkout@v4
+      
       - name: Download library artifacts
         uses: actions/download-artifact@v4
         with:
@@ -759,7 +761,7 @@ jobs:
             if [ -f "$wheel" ]; then
               filename=$(basename "$wheel")
               echo "Uploading $wheel as $filename"
-              gh release upload "$RELEASE_TAG" "$wheel" || echo "Failed to upload $wheel (may already exist)"
+              gh release upload "$RELEASE_TAG" "$wheel" || { echo "Failed to upload $wheel"; exit 1; }
             fi
           done
         env:
@@ -846,6 +848,7 @@ jobs:
             --field ark_version="${{ needs.check-release.outputs.tag }}" \
             --field deploy_containers=true \
             --field deploy_to_pages=true \
-            --field deploy_to_npm=true
+            --field deploy_to_npm=true \
+            --field deploy_helm_chart=true
         env:
           GH_TOKEN: ${{ github.token }}
