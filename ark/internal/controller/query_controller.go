@@ -546,7 +546,7 @@ func (r *QueryReconciler) executeAgent(ctx context.Context, query arkv1alpha1.Qu
 
 	// Save new messages to memory (user message + response messages)
 	newMessages := append([]genai.Message{userMessage}, responseMessages...)
-	if err := memory.AddMessages(ctx, newMessages); err != nil {
+	if err := memory.AddMessages(ctx, query.Name, newMessages); err != nil {
 		return nil, fmt.Errorf("failed to save new messages to memory: %w", err)
 	}
 
@@ -584,7 +584,7 @@ func (r *QueryReconciler) executeTeam(ctx context.Context, query arkv1alpha1.Que
 		return nil, err
 	}
 
-	if err := memory.AddMessages(ctx, responseMessages); err != nil {
+	if err := memory.AddMessages(ctx, query.Name, responseMessages); err != nil {
 		return nil, fmt.Errorf("failed to save new messages to memory: %w", err)
 	}
 
@@ -653,7 +653,7 @@ func (r *QueryReconciler) executeModel(ctx context.Context, query arkv1alpha1.Qu
 
 	// Save new messages to memory (user message + response messages)
 	newMessages := append([]genai.Message{userMessage}, responseMessages...)
-	if err := memory.AddMessages(ctx, newMessages); err != nil {
+	if err := memory.AddMessages(ctx, query.Name, newMessages); err != nil {
 		return nil, fmt.Errorf("failed to save new messages to memory: %w", err)
 	}
 
@@ -662,6 +662,8 @@ func (r *QueryReconciler) executeModel(ctx context.Context, query arkv1alpha1.Qu
 
 func (r *QueryReconciler) executeTool(ctx context.Context, query arkv1alpha1.Query, toolName string, impersonatedClient client.Client, tokenCollector *genai.TokenUsageCollector) ([]genai.Message, error) { //nolint:unparam
 	// tokenCollector parameter is kept for consistency with other execute methods but not used since tools don't consume tokens
+	log := logf.FromContext(ctx)
+
 	var toolCRD arkv1alpha1.Tool
 	toolKey := types.NamespacedName{Name: toolName, Namespace: query.Namespace}
 
@@ -693,8 +695,17 @@ func (r *QueryReconciler) executeTool(ctx context.Context, query arkv1alpha1.Que
 	}
 
 	toolRegistry := genai.NewToolRegistry()
+	defer func() {
+		if err := toolRegistry.Close(); err != nil {
+			// Log the error but don't fail the request since tool execution already succeeded
+			log.Error(err, "Failed to close MCP client connections in tool registry")
+		}
+		log.Info("MCP client connections closed successfully")
+	}()
+
 	toolDefinition := genai.CreateToolFromCRD(&toolCRD)
-	executor, err := genai.CreateToolExecutor(ctx, impersonatedClient, &toolCRD, query.Namespace)
+	// Pass the tool registry's MCP pool to CreateToolExecutor
+	executor, err := genai.CreateToolExecutor(ctx, impersonatedClient, &toolCRD, query.Namespace, toolRegistry.GetMCPPool())
 	if err != nil {
 		return nil, fmt.Errorf("failed to create tool executor: %w", err)
 	}
