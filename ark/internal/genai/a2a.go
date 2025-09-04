@@ -180,7 +180,9 @@ func extractTextFromMessageResult(result *protocol.MessageResult) (string, error
 
 	switch r := result.Result.(type) {
 	case *protocol.Message:
-		return extractTextFromParts(r.Parts), nil
+		text := extractTextFromParts(r.Parts)
+		logf.Log.Info("A2A message extracted", "text", text, "parts_count", len(r.Parts))
+		return text, nil
 	case *protocol.Task:
 		return "", fmt.Errorf("received task response, streaming not yet supported")
 	default:
@@ -191,9 +193,16 @@ func extractTextFromMessageResult(result *protocol.MessageResult) (string, error
 // extractTextFromParts extracts text from message parts in a type-safe way
 func extractTextFromParts(parts []protocol.Part) string {
 	var text strings.Builder
-	for _, part := range parts {
+	for i, part := range parts {
+		logf.Log.Info("A2A part debug", "index", i, "part_type", fmt.Sprintf("%T", part))
 		if textPart, ok := part.(protocol.TextPart); ok {
+			logf.Log.Info("A2A text part found", "text", textPart.Text)
 			text.WriteString(textPart.Text)
+		} else if textPartPtr, ok := part.(*protocol.TextPart); ok {
+			logf.Log.Info("A2A text part pointer found", "text", textPartPtr.Text)
+			text.WriteString(textPartPtr.Text)
+		} else {
+			logf.Log.Info("A2A non-text part skipped", "part_type", fmt.Sprintf("%T", part))
 		}
 	}
 	return text.String()
