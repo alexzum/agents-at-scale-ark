@@ -89,7 +89,7 @@ func (r *A2ATaskReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 
 	// Requeue for non-terminal tasks
 	if !isTerminalPhase(a2aTask.Status.Phase) {
-		return ctrl.Result{RequeueAfter: time.Second * 10}, nil
+		return ctrl.Result{RequeueAfter: time.Second * 3}, nil
 	}
 
 	return ctrl.Result{}, nil
@@ -173,7 +173,11 @@ func (r *A2ATaskReconciler) createA2AClient(ctx context.Context, a2aTask *arkv1a
 
 // queryTaskStatus queries the A2A server for task status
 func (r *A2ATaskReconciler) queryTaskStatus(ctx context.Context, a2aClient *a2aclient.A2AClient, taskID string) (*protocol.Task, error) {
-	params := protocol.TaskQueryParams{ID: taskID}
+	historyLength := 100
+	params := protocol.TaskQueryParams{
+		ID:            taskID,
+		HistoryLength: &historyLength,
+	}
 	task, err := a2aClient.GetTasks(ctx, params)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get task status from A2A server: %w", err)
@@ -190,8 +194,61 @@ func (r *A2ATaskReconciler) updateTaskStatus(ctx context.Context, a2aTask *arkv1
 	log := logf.FromContext(ctx)
 	log.Info("received updated task status", "taskId", task.ID, "state", task.Status.State)
 
-	a2aTaskTask := arkv1alpha1.ConvertTaskFromProtocol(task)
-	a2aTask.Status.Task = &a2aTaskTask
+	// Convert new task data
+	newTaskData := arkv1alpha1.ConvertTaskFromProtocol(task)
+	
+	// Merge with existing task data instead of overwriting
+	if a2aTask.Status.Task == nil {
+		// First time - use new data directly
+		a2aTask.Status.Task = &newTaskData
+	} else {
+		// Merge artifacts (append new ones that don't already exist)
+		existingTask := a2aTask.Status.Task
+		existingArtifactIds := make(map[string]bool)
+		for _, artifact := range existingTask.Artifacts {
+			existingArtifactIds[artifact.ArtifactID] = true
+		}
+		
+		for _, newArtifact := range newTaskData.Artifacts {
+			if !existingArtifactIds[newArtifact.ArtifactID] {
+				existingTask.Artifacts = append(existingTask.Artifacts, newArtifact)
+				log.Info("added new artifact", "taskId", task.ID, "artifactId", newArtifact.ArtifactID)
+			}
+		}
+		
+		// Merge history - add current status message if it's different from the last one
+		if newTaskData.Status.Message != nil {
+			// Check if this message is different from the last one in history
+			shouldAddMessage := true
+			if len(existingTask.History) > 0 {
+				lastHistory := existingTask.History[len(existingTask.History)-1]
+				// Simple comparison - if same text content, don't add duplicate
+				if len(lastHistory.Parts) > 0 && len(newTaskData.Status.Message.Parts) > 0 {
+					lastPart := lastHistory.Parts[0]
+					newPart := newTaskData.Status.Message.Parts[0]
+					if lastPart.Text == newPart.Text {
+						shouldAddMessage = false
+					}
+				}
+			}
+			
+			if shouldAddMessage {
+				// Convert status message to history entry
+				historyEntry := arkv1alpha1.A2ATaskMessage{
+					Role: newTaskData.Status.Message.Role,
+					Parts: newTaskData.Status.Message.Parts,
+					Metadata: newTaskData.Status.Message.Metadata,
+				}
+				existingTask.History = append(existingTask.History, historyEntry)
+				log.Info("added new history message from status", "taskId", task.ID, "totalHistory", len(existingTask.History))
+			}
+		}
+		
+		// Update other fields (status, metadata, etc.)
+		existingTask.Status = newTaskData.Status
+		existingTask.Metadata = newTaskData.Metadata
+		existingTask.SessionID = newTaskData.SessionID
+	}
 
 	newPhase := convertA2AStateToPhase(string(task.Status.State))
 	if newPhase != a2aTask.Status.Phase {
@@ -240,3 +297,4 @@ func convertA2AStateToPhase(state string) string {
 		return statusRunning
 	}
 }
+// Force devspace reload ven  5 set 2025 14:30:15 CEST - Added HistoryLength to TaskQueryParams
