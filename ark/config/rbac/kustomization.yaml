@@ -7,6 +7,7 @@ resources:
 - service_account.yaml
 - ark_controller_role.yaml
 - ark_controller_role_binding.yaml
+- a2atask_rbac.yaml
 - leader_election_role.yaml
 - leader_election_role_binding.yaml
 - webhook_role.yaml

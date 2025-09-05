@@ -175,6 +175,52 @@ spec:
                       - parts
                       type: object
                     type: array
+                  history:
+                    items:
+                      description: A2ATaskMessage represents messages from A2A protocol
+                      properties:
+                        metadata:
+                          additionalProperties:
+                            type: string
+                          type: object
+                        parts:
+                          items:
+                            description: A2ATaskPart represents content parts compatible
+                              with A2A protocol
+                            properties:
+                              data:
+                                type: string
+                              kind:
+                                enum:
+                                - text
+                                - file
+                                - data
+                                type: string
+                              metadata:
+                                additionalProperties:
+                                  type: string
+                                type: object
+                              mimeType:
+                                type: string
+                              text:
+                                type: string
+                              uri:
+                                type: string
+                            required:
+                            - kind
+                            type: object
+                          type: array
+                        role:
+                          enum:
+                          - user
+                          - agent
+                          - system
+                          type: string
+                      required:
+                      - parts
+                      - role
+                      type: object
+                    type: array
                   id:
                     minLength: 1
                     type: string

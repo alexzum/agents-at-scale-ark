@@ -156,23 +156,30 @@ func (h *customA2ARequestHandler) Handle(ctx context.Context, httpClient *http.C
 
 // extractResponseFromMessageResult extracts response from MessageResult and handles both messages and tasks
 func extractResponseFromMessageResult(ctx context.Context, k8sClient client.Client, result *protocol.MessageResult, agentName, namespace string, recorder record.EventRecorder, obj client.Object) (string, error) {
+	log := logf.FromContext(ctx)
 	if result == nil {
 		return "", fmt.Errorf("result is nil")
 	}
 
+	log.Info("A2A response received", "result_type", fmt.Sprintf("%T", result.Result), "agent", agentName)
+
 	switch r := result.Result.(type) {
 	case *protocol.Message:
 		text := extractTextFromParts(r.Parts)
-		logf.Log.Info("A2A message extracted", "text", text, "parts_count", len(r.Parts))
+		log.Info("A2A message extracted", "text", text, "parts_count", len(r.Parts))
 		return text, nil
 	case *protocol.Task:
+		log.Info("A2A task response detected", "taskId", r.ID, "state", r.Status.State, "agent", agentName)
 		// Create A2ATask resource for task tracking
 		taskResult, err := handleA2ATaskResponse(ctx, k8sClient, r, agentName, namespace, recorder, obj)
 		if err != nil {
+			log.Error(err, "failed to handle A2A task response", "taskId", r.ID, "agent", agentName)
 			return "", fmt.Errorf("failed to handle A2A task response: %w", err)
 		}
+		log.Info("A2A task response handled successfully", "taskId", r.ID, "agent", agentName)
 		return taskResult, nil
 	default:
+		log.Error(nil, "unexpected A2A result type", "type", fmt.Sprintf("%T", result.Result), "agent", agentName)
 		return "", fmt.Errorf("unexpected result type: %T", result.Result)
 	}
 }
@@ -309,7 +316,7 @@ func resolveA2AHeaders(ctx context.Context, k8sClient client.Client, headers []a
 // handleA2ATaskResponse handles A2A task responses by creating A2ATask resources and returning initial status
 func handleA2ATaskResponse(ctx context.Context, k8sClient client.Client, task *protocol.Task, agentName, namespace string, recorder record.EventRecorder, obj client.Object) (string, error) {
 	log := logf.FromContext(ctx)
-	log.Info("handling A2A task response", "taskId", task.ID, "agent", agentName)
+	log.Info("handling A2A task response", "taskId", task.ID, "agent", agentName, "namespace", namespace)
 
 	// Get A2A server information from context or object (if available)
 	var a2aServerAddress, a2aServerName string
@@ -318,6 +325,11 @@ func handleA2ATaskResponse(ctx context.Context, k8sClient client.Client, task *p
 	if a2aServer, ok := obj.(*arkv1prealpha1.A2AServer); ok {
 		a2aServerName = a2aServer.Name
 		a2aServerAddress = a2aServer.Status.LastResolvedAddress
+		log.Info("extracted A2A server info from A2AServer object", "serverName", a2aServerName, "serverAddress", a2aServerAddress)
+	} else {
+		log.Info("source object is not A2AServer", "object_type", fmt.Sprintf("%T", obj))
+		// Fallback: try to derive server info from context (we could enhance this later)
+		log.Info("will create A2ATask without server polling info - manual intervention needed")
 	}
 
 	// Convert protocol task to K8s resource
@@ -329,19 +341,26 @@ func handleA2ATaskResponse(ctx context.Context, k8sClient client.Client, task *p
 		"ark.mckinsey.com/agent":   agentName,
 	}
 
-	// Add server info to labels if available for polling
+	annotations := make(map[string]string)
+
+	// Add server info to annotations if available for polling (URLs can't be in labels)
 	if a2aServerAddress != "" {
-		labels["ark.mckinsey.com/a2a-server-address"] = a2aServerAddress
+		annotations["ark.mckinsey.com/a2a-server-address"] = a2aServerAddress
+		log.Info("added A2A server address to annotations", "address", a2aServerAddress)
 	}
 	if a2aServerName != "" {
-		labels["ark.mckinsey.com/a2a-server-name"] = a2aServerName
+		annotations["ark.mckinsey.com/a2a-server-name"] = a2aServerName
+		log.Info("added A2A server name to annotations", "name", a2aServerName)
 	}
+
+	log.Info("creating A2ATask with labels and annotations", "labels", labels, "annotations", annotations)
 
 	a2aTask := &arkv1alpha1.A2ATask{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("a2a-task-%s", task.ID),
-			Namespace: namespace,
-			Labels:    labels,
+			Name:        fmt.Sprintf("a2a-task-%s", task.ID),
+			Namespace:   namespace,
+			Labels:      labels,
+			Annotations: annotations,
 		},
 		Spec: arkv1alpha1.A2ATaskSpec{
 			TaskID: task.ID,

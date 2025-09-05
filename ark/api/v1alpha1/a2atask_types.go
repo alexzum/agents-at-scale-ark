@@ -82,6 +82,8 @@ type A2ATaskTask struct {
 	// +kubebuilder:validation:Optional
 	Artifacts []A2ATaskArtifact `json:"artifacts,omitempty"`
 	// +kubebuilder:validation:Optional
+	History []A2ATaskMessage `json:"history,omitempty"`
+	// +kubebuilder:validation:Optional
 	Metadata map[string]string `json:"metadata,omitempty"`
 }
 
@@ -227,18 +229,46 @@ func ConvertTaskFromProtocol(task *protocol.Task) A2ATaskTask {
 			metadata[k] = fmt.Sprintf("%v", v)
 		}
 
-		taskArtifact := A2ATaskArtifact{
-			ArtifactID: artifact.ArtifactID,
-			Parts:      parts,
-			Metadata:   metadata,
+		// Only include artifacts that have at least one part (CRD validation requirement)
+		if len(parts) > 0 {
+			taskArtifact := A2ATaskArtifact{
+				ArtifactID: artifact.ArtifactID,
+				Parts:      parts,
+				Metadata:   metadata,
+			}
+			if artifact.Name != nil {
+				taskArtifact.Name = *artifact.Name
+			}
+			if artifact.Description != nil {
+				taskArtifact.Description = *artifact.Description
+			}
+			artifacts = append(artifacts, taskArtifact)
 		}
-		if artifact.Name != nil {
-			taskArtifact.Name = *artifact.Name
+	}
+
+	// Convert history messages
+	history := make([]A2ATaskMessage, 0, len(task.History))
+	for _, msg := range task.History {
+		var msgParts []A2ATaskPart
+		for _, part := range msg.Parts {
+			msgParts = append(msgParts, ConvertPartFromProtocol(part))
 		}
-		if artifact.Description != nil {
-			taskArtifact.Description = *artifact.Description
+
+		// Convert message metadata
+		msgMetadata := make(map[string]string)
+		for k, v := range msg.Metadata {
+			msgMetadata[k] = fmt.Sprintf("%v", v)
 		}
-		artifacts = append(artifacts, taskArtifact)
+
+		// Only include messages that have at least one part (similar to artifacts validation)
+		if len(msgParts) > 0 {
+			historyMessage := A2ATaskMessage{
+				Role:     string(msg.Role),
+				Parts:    msgParts,
+				Metadata: msgMetadata,
+			}
+			history = append(history, historyMessage)
+		}
 	}
 
 	// Convert task metadata
@@ -276,6 +306,7 @@ func ConvertTaskFromProtocol(task *protocol.Task) A2ATaskTask {
 			Timestamp: task.Status.Timestamp,
 		},
 		Artifacts: artifacts,
+		History:   history,
 		Metadata:  taskMetadata,
 	}
 }

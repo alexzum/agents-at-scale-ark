@@ -129,14 +129,23 @@ func (r *A2ATaskReconciler) pollA2ATaskStatus(ctx context.Context, a2aTask *arkv
 
 // createA2AClient creates an A2A client for the task
 func (r *A2ATaskReconciler) createA2AClient(ctx context.Context, a2aTask *arkv1alpha1.A2ATask) (*a2aclient.A2AClient, error) {
-	a2aServerAddress, hasAddress := a2aTask.Labels["ark.mckinsey.com/a2a-server-address"]
+	// Try annotations first (URLs can't be in labels due to special characters)
+	a2aServerAddress, hasAddress := a2aTask.Annotations["ark.mckinsey.com/a2a-server-address"]
 	if !hasAddress {
-		return nil, fmt.Errorf("A2ATask missing required label ark.mckinsey.com/a2a-server-address")
+		// Fallback to labels for compatibility
+		a2aServerAddress, hasAddress = a2aTask.Labels["ark.mckinsey.com/a2a-server-address"]
+		if !hasAddress {
+			return nil, fmt.Errorf("A2ATask missing required annotation/label ark.mckinsey.com/a2a-server-address")
+		}
 	}
 
-	a2aServerName, hasServerName := a2aTask.Labels["ark.mckinsey.com/a2a-server-name"]
+	a2aServerName, hasServerName := a2aTask.Annotations["ark.mckinsey.com/a2a-server-name"]
 	if !hasServerName {
-		return nil, fmt.Errorf("A2ATask missing required label ark.mckinsey.com/a2a-server-name")
+		// Fallback to labels for compatibility
+		a2aServerName, hasServerName = a2aTask.Labels["ark.mckinsey.com/a2a-server-name"]
+		if !hasServerName {
+			return nil, fmt.Errorf("A2ATask missing required annotation/label ark.mckinsey.com/a2a-server-name")
+		}
 	}
 
 	var a2aServer arkv1prealpha1.A2AServer
