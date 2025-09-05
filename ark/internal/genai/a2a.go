@@ -11,12 +11,14 @@ import (
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	a2aclient "trpc.group/trpc-go/trpc-a2a-go/client"
 	"trpc.group/trpc-go/trpc-a2a-go/protocol"
 
+	arkv1alpha1 "mckinsey.com/ark/api/v1alpha1"
 	arkv1prealpha1 "mckinsey.com/ark/api/v1prealpha1"
 	"mckinsey.com/ark/internal/telemetry"
 )
@@ -63,7 +65,7 @@ func ExecuteA2AAgentWithRecorder(ctx context.Context, k8sClient client.Client, a
 	}
 
 	// Execute agent and get response
-	return executeA2AAgentMessage(ctx, a2aClient, input, agentName, rpcURL, recorder, obj)
+	return executeA2AAgentMessage(ctx, k8sClient, a2aClient, input, agentName, rpcURL, namespace, recorder, obj)
 }
 
 // createA2AClientForExecution creates and configures A2A client for agent execution
@@ -96,7 +98,7 @@ func createA2AClientForExecution(ctx context.Context, k8sClient client.Client, r
 }
 
 // executeA2AAgentMessage sends message to A2A agent and processes response
-func executeA2AAgentMessage(ctx context.Context, a2aClient *a2aclient.A2AClient, input, agentName, rpcURL string, recorder record.EventRecorder, obj client.Object) (string, error) {
+func executeA2AAgentMessage(ctx context.Context, k8sClient client.Client, a2aClient *a2aclient.A2AClient, input, agentName, rpcURL, namespace string, recorder record.EventRecorder, obj client.Object) (string, error) {
 	message := protocol.NewMessage(protocol.MessageRoleUser, []protocol.Part{
 		protocol.NewTextPart(input),
 	})
@@ -114,7 +116,7 @@ func executeA2AAgentMessage(ctx context.Context, a2aClient *a2aclient.A2AClient,
 		return "", fmt.Errorf("A2A server call failed: %w", err)
 	}
 
-	response, err := extractTextFromMessageResult(result)
+	response, err := extractResponseFromMessageResult(ctx, k8sClient, result, agentName, namespace, recorder, obj)
 	if err != nil {
 		if recorder != nil && obj != nil {
 			recorder.Event(obj, corev1.EventTypeWarning, "A2AResponseParseError", fmt.Sprintf("Failed to parse response from agent %s: %v", agentName, err))
@@ -152,8 +154,8 @@ func (h *customA2ARequestHandler) Handle(ctx context.Context, httpClient *http.C
 	return httpClient.Do(req)
 }
 
-// extractTextFromMessageResult extracts text from MessageResult using type-safe methods
-func extractTextFromMessageResult(result *protocol.MessageResult) (string, error) {
+// extractResponseFromMessageResult extracts response from MessageResult and handles both messages and tasks
+func extractResponseFromMessageResult(ctx context.Context, k8sClient client.Client, result *protocol.MessageResult, agentName, namespace string, recorder record.EventRecorder, obj client.Object) (string, error) {
 	if result == nil {
 		return "", fmt.Errorf("result is nil")
 	}
@@ -164,7 +166,12 @@ func extractTextFromMessageResult(result *protocol.MessageResult) (string, error
 		logf.Log.Info("A2A message extracted", "text", text, "parts_count", len(r.Parts))
 		return text, nil
 	case *protocol.Task:
-		return "", fmt.Errorf("received task response, streaming not yet supported")
+		// Create A2ATask resource for task tracking
+		taskResult, err := handleA2ATaskResponse(ctx, k8sClient, r, agentName, namespace, recorder, obj)
+		if err != nil {
+			return "", fmt.Errorf("failed to handle A2A task response: %w", err)
+		}
+		return taskResult, nil
 	default:
 		return "", fmt.Errorf("unexpected result type: %T", result.Result)
 	}
@@ -297,4 +304,107 @@ func resolveA2AHeaders(ctx context.Context, k8sClient client.Client, headers []a
 	}
 	logf.FromContext(ctx).Info("a2a headers resolved", "headers_count", len(resolvedHeaders))
 	return resolvedHeaders, nil
+}
+
+// handleA2ATaskResponse handles A2A task responses by creating A2ATask resources and returning initial status
+func handleA2ATaskResponse(ctx context.Context, k8sClient client.Client, task *protocol.Task, agentName, namespace string, recorder record.EventRecorder, obj client.Object) (string, error) {
+	log := logf.FromContext(ctx)
+	log.Info("handling A2A task response", "taskId", task.ID, "agent", agentName)
+
+	// Get A2A server information from context or object (if available)
+	var a2aServerAddress, a2aServerName string
+
+	// Try to extract A2A server info from the source object if it's an A2AServer
+	if a2aServer, ok := obj.(*arkv1prealpha1.A2AServer); ok {
+		a2aServerName = a2aServer.Name
+		a2aServerAddress = a2aServer.Status.LastResolvedAddress
+	}
+
+	// Convert protocol task to K8s resource
+	a2aTaskTask := arkv1alpha1.ConvertTaskFromProtocol(task)
+
+	// Create A2ATask resource
+	labels := map[string]string{
+		"ark.mckinsey.com/task-id": task.ID,
+		"ark.mckinsey.com/agent":   agentName,
+	}
+
+	// Add server info to labels if available for polling
+	if a2aServerAddress != "" {
+		labels["ark.mckinsey.com/a2a-server-address"] = a2aServerAddress
+	}
+	if a2aServerName != "" {
+		labels["ark.mckinsey.com/a2a-server-name"] = a2aServerName
+	}
+
+	a2aTask := &arkv1alpha1.A2ATask{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      fmt.Sprintf("a2a-task-%s", task.ID),
+			Namespace: namespace,
+			Labels:    labels,
+		},
+		Spec: arkv1alpha1.A2ATaskSpec{
+			TaskID: task.ID,
+			QueryRef: arkv1alpha1.QueryRef{
+				Name:      "auto-generated-query",
+				Namespace: namespace,
+			},
+		},
+		Status: arkv1alpha1.A2ATaskStatus{
+			Phase: convertProtocolStateToPhase(string(task.Status.State)),
+			Task:  &a2aTaskTask,
+			AssignedAgent: &arkv1alpha1.AgentRef{
+				Name:      agentName,
+				Namespace: namespace,
+			},
+		},
+	}
+
+	// Set start time
+	now := metav1.NewTime(time.Now())
+	a2aTask.Status.StartTime = &now
+
+	// Create the resource
+	if err := k8sClient.Create(ctx, a2aTask); err != nil {
+		log.Error(err, "failed to create A2ATask resource", "taskId", task.ID)
+		if recorder != nil && obj != nil {
+			recorder.Event(obj, corev1.EventTypeWarning, "A2ATaskCreationFailed", fmt.Sprintf("Failed to create A2ATask resource for task %s: %v", task.ID, err))
+		}
+		return "", fmt.Errorf("failed to create A2ATask resource: %w", err)
+	}
+
+	log.Info("created A2ATask resource", "taskId", task.ID, "name", a2aTask.Name)
+	if recorder != nil && obj != nil {
+		recorder.Event(obj, corev1.EventTypeNormal, "A2ATaskCreated", fmt.Sprintf("Created A2ATask resource %s for task %s", a2aTask.Name, task.ID))
+	}
+
+	// Return a response indicating task is being tracked
+	return fmt.Sprintf("Task %s created and is being tracked. Current status: %s. Check A2ATask resource %s for progress.",
+		task.ID, task.Status.State, a2aTask.Name), nil
+}
+
+const (
+	protocolStateFailed = "failed"
+)
+
+// convertProtocolStateToPhase converts A2A protocol task states to K8s A2ATask phases
+func convertProtocolStateToPhase(state string) string {
+	switch state {
+	case "submitted":
+		return "assigned"
+	case "working":
+		return "running"
+	case "completed":
+		return "completed"
+	case protocolStateFailed:
+		return protocolStateFailed
+	case "canceled", "cancelled":
+		return "cancelled"
+	case "rejected":
+		return protocolStateFailed
+	case "input-required", "auth-required":
+		return "running" // Keep running until resolved
+	default:
+		return "pending"
+	}
 }
