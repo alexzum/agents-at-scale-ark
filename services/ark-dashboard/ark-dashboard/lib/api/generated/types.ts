@@ -673,6 +673,64 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/namespaces/{namespace}/a2atasks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List A2Atasks
+         * @description List all A2ATasks in a namespace with optional filtering.
+         *
+         *     Args:
+         *         namespace: The namespace to list A2ATasks from
+         *         phase: Filter by task phase (assigned, running, completed, failed, cancelled)
+         *         agent: Filter by agent name
+         *         task_id: Filter by task ID
+         *         limit: Maximum number of A2ATasks to return (default: 200)
+         *         page: Page number for pagination (1-based, default: 1)
+         *
+         *     Returns:
+         *         A2ATaskListResponse: List of A2ATasks in the namespace
+         */
+        get: operations["list_a2atasks_v1_namespaces__namespace__a2atasks_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/namespaces/{namespace}/a2atasks/{a2atask_name}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get A2Atask
+         * @description Get a specific A2ATask by name with full details including history and artifacts.
+         *
+         *     Args:
+         *         namespace: The namespace containing the A2ATask
+         *         a2atask_name: The name of the A2ATask to retrieve
+         *
+         *     Returns:
+         *         A2ATaskDetailResponse: The requested A2ATask with full details
+         */
+        get: operations["get_a2atask_v1_namespaces__namespace__a2atasks__a2atask_name__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/namespaces/{namespace}/memories": {
         parameters: {
             query?: never;
@@ -1075,6 +1133,177 @@ export interface components {
             discovering?: boolean | null;
             /** Status Message */
             status_message?: string | null;
+        };
+        /**
+         * A2ATaskArtifact
+         * @description Artifact in an A2ATask.
+         */
+        A2ATaskArtifact: {
+            /** Artifact Id */
+            artifact_id: string;
+            /** Name */
+            name?: string | null;
+            /** Description */
+            description?: string | null;
+            /** Parts */
+            parts: components["schemas"]["A2ATaskPart"][];
+            /** Metadata */
+            metadata?: {
+                [key: string]: string;
+            } | null;
+        };
+        /**
+         * A2ATaskAssignedAgent
+         * @description Assigned agent information.
+         */
+        A2ATaskAssignedAgent: {
+            /** Name */
+            name: string;
+            /** Namespace */
+            namespace: string;
+        };
+        /**
+         * A2ATaskDetailResponse
+         * @description Detailed response model for a single A2ATask with full task data.
+         */
+        A2ATaskDetailResponse: {
+            /** Name */
+            name: string;
+            /** Namespace */
+            namespace: string;
+            /** Task Id */
+            task_id: string;
+            /** Phase */
+            phase: string;
+            /** Priority */
+            priority: number;
+            /** Timeout */
+            timeout?: string | null;
+            query_ref?: components["schemas"]["A2ATaskQueryRef"] | null;
+            assigned_agent?: components["schemas"]["A2ATaskAssignedAgent"] | null;
+            /** Start Time */
+            start_time?: string | null;
+            /** Completion Time */
+            completion_time?: string | null;
+            /** Creation Timestamp */
+            creation_timestamp?: string | null;
+            /** Progress */
+            progress?: number | null;
+            task?: components["schemas"]["A2ATaskTask"] | null;
+        };
+        /**
+         * A2ATaskListResponse
+         * @description Response model for listing A2ATasks.
+         */
+        A2ATaskListResponse: {
+            /** Items */
+            items: components["schemas"]["A2ATaskResponse"][];
+            /** Total */
+            total: number;
+        };
+        /**
+         * A2ATaskMessage
+         * @description Message in A2ATask history.
+         */
+        A2ATaskMessage: {
+            /** Role */
+            role: string;
+            /** Parts */
+            parts: components["schemas"]["A2ATaskPart"][];
+            /** Metadata */
+            metadata?: {
+                [key: string]: string;
+            } | null;
+        };
+        /**
+         * A2ATaskPart
+         * @description Part of an A2ATask artifact or message.
+         */
+        A2ATaskPart: {
+            /** Kind */
+            kind: string;
+            /** Text */
+            text?: string | null;
+            /** Data */
+            data?: string | null;
+            /** Uri */
+            uri?: string | null;
+            /** Mime Type */
+            mime_type?: string | null;
+        };
+        /**
+         * A2ATaskQueryRef
+         * @description Reference to the originating query.
+         */
+        A2ATaskQueryRef: {
+            /** Name */
+            name: string;
+            /** Namespace */
+            namespace: string;
+        };
+        /**
+         * A2ATaskResponse
+         * @description Response model for a single A2ATask.
+         */
+        A2ATaskResponse: {
+            /** Name */
+            name: string;
+            /** Namespace */
+            namespace: string;
+            /** Task Id */
+            task_id: string;
+            /** Phase */
+            phase: string;
+            /** Priority */
+            priority: number;
+            /** Timeout */
+            timeout?: string | null;
+            query_ref?: components["schemas"]["A2ATaskQueryRef"] | null;
+            assigned_agent?: components["schemas"]["A2ATaskAssignedAgent"] | null;
+            /** Start Time */
+            start_time?: string | null;
+            /** Completion Time */
+            completion_time?: string | null;
+            /** Creation Timestamp */
+            creation_timestamp?: string | null;
+            /** Progress */
+            progress?: number | null;
+        };
+        /**
+         * A2ATaskStatus
+         * @description Status message of an A2ATask.
+         */
+        A2ATaskStatus: {
+            /** State */
+            state: string;
+            message?: components["schemas"]["A2ATaskMessage"] | null;
+            /** Timestamp */
+            timestamp?: string | null;
+        };
+        /**
+         * A2ATaskTask
+         * @description Task details in A2ATask status.
+         */
+        A2ATaskTask: {
+            /** Id */
+            id: string;
+            /** Session Id */
+            session_id?: string | null;
+            status: components["schemas"]["A2ATaskStatus"];
+            /**
+             * Artifacts
+             * @default []
+             */
+            artifacts: components["schemas"]["A2ATaskArtifact"][];
+            /**
+             * History
+             * @default []
+             */
+            history: components["schemas"]["A2ATaskMessage"][];
+            /** Metadata */
+            metadata?: {
+                [key: string]: string;
+            } | null;
         };
         /**
          * AgentCreateRequest
@@ -4297,6 +4526,80 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_a2atasks_v1_namespaces__namespace__a2atasks_get: {
+        parameters: {
+            query?: {
+                /** @description Filter by task phase (assigned, running, completed, failed, cancelled) */
+                phase?: string | null;
+                /** @description Filter by agent name */
+                agent?: string | null;
+                /** @description Filter by task ID */
+                taskId?: string | null;
+                /** @description Maximum number of A2ATasks to return */
+                limit?: number | null;
+                /** @description Page number for pagination (1-based) */
+                page?: number | null;
+            };
+            header?: never;
+            path: {
+                namespace: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["A2ATaskListResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_a2atask_v1_namespaces__namespace__a2atasks__a2atask_name__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                namespace: string;
+                a2atask_name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["A2ATaskDetailResponse"];
+                };
             };
             /** @description Validation Error */
             422: {

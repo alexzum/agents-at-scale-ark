@@ -36,3 +36,12 @@ func getSessionID(ctx context.Context) string {
 	}
 	return ""
 }
+
+func getQueryName(ctx context.Context) string {
+	if val := ctx.Value(queryNameKey); val != nil {
+		if queryName, ok := val.(string); ok {
+			return queryName
+		}
+	}
+	return ""
+}

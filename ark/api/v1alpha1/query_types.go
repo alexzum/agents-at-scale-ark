@@ -98,6 +98,12 @@ type TokenUsage struct {
 	TotalTokens      int64 `json:"totalTokens,omitempty"`
 }
 
+// A2ATaskReference represents a reference to an associated A2ATask
+type A2ATaskReference struct {
+	// TaskID from the A2A protocol
+	TaskID string `json:"taskId"`
+}
+
 type QueryStatus struct {
 	// +kubebuilder:default="pending"
 	// +kubebuilder:validation:Enum=pending;running;evaluating;error;done;canceled
@@ -107,6 +113,9 @@ type QueryStatus struct {
 	TokenUsage  TokenUsage         `json:"tokenUsage,omitempty"`
 	// +kubebuilder:validation:Optional
 	Duration *metav1.Duration `json:"duration,omitempty"`
+	// +kubebuilder:validation:Optional
+	// AssociatedTask tracks the A2ATask created for this query
+	AssociatedTask A2ATaskReference `json:"associatedTask,omitempty"`
 }
 
 // +kubebuilder:object:root=true

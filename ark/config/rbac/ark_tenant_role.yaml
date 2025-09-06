@@ -90,6 +90,7 @@ rules:
   - tools
   - a2aservers
   - executionengines
+  - a2atasks
   - agents/status
   - evaluations/status
   - evaluators/status
@@ -101,6 +102,7 @@ rules:
   - tools/status
   - a2aservers/status
   - executionengines/status
+  - a2atasks/status
   - agents/finalizers
   - evaluators/finalizers
   - evaluations/finalizers
@@ -112,6 +114,7 @@ rules:
   - tools/finalizers
   - a2aservers/finalizers
   - executionengines/finalizers
+  - a2atasks/finalizers
   verbs:
   - create
   - delete

@@ -555,7 +555,9 @@ func (r *QueryReconciler) executeAgent(ctx context.Context, query arkv1alpha1.Qu
 
 	userMessage := genai.NewUserMessage(resolvedInput)
 
-	responseMessages, err := agent.Execute(ctx, userMessage, messages)
+	// Add query context for A2A task reference tracking
+	ctxWithQuery := genai.WithQueryContext(ctx, string(query.UID), "", query.Name)
+	responseMessages, err := agent.Execute(ctxWithQuery, userMessage, messages)
 	if err != nil {
 		return nil, err
 	}
