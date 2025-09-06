@@ -4,7 +4,10 @@ package controller
 
 import (
 	"context"
+	"crypto/sha256"
 	"fmt"
+	"slices"
+	"strings"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -104,12 +107,7 @@ func (r *A2ATaskReconciler) SetupWithManager(mgr ctrl.Manager) error {
 // isTerminalPhase returns true if the task phase represents a terminal state
 func isTerminalPhase(phase string) bool {
 	terminalPhases := []string{statusCompleted, statusFailed, statusCancelled}
-	for _, terminalPhase := range terminalPhases {
-		if phase == terminalPhase {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(terminalPhases, phase)
 }
 
 // pollA2ATaskStatus queries the A2A server for the current task status and updates the A2ATask
@@ -196,7 +194,7 @@ func (r *A2ATaskReconciler) updateTaskStatus(ctx context.Context, a2aTask *arkv1
 
 	// Convert new task data
 	newTaskData := arkv1alpha1.ConvertTaskFromProtocol(task)
-	
+
 	// Merge with existing task data instead of overwriting
 	if a2aTask.Status.Task == nil {
 		// First time - use new data directly
@@ -208,42 +206,34 @@ func (r *A2ATaskReconciler) updateTaskStatus(ctx context.Context, a2aTask *arkv1
 		for _, artifact := range existingTask.Artifacts {
 			existingArtifactIds[artifact.ArtifactID] = true
 		}
-		
+
 		for _, newArtifact := range newTaskData.Artifacts {
 			if !existingArtifactIds[newArtifact.ArtifactID] {
 				existingTask.Artifacts = append(existingTask.Artifacts, newArtifact)
 				log.Info("added new artifact", "taskId", task.ID, "artifactId", newArtifact.ArtifactID)
 			}
 		}
-		
-		// Merge history - add current status message if it's different from the last one
-		if newTaskData.Status.Message != nil {
-			// Check if this message is different from the last one in history
-			shouldAddMessage := true
-			if len(existingTask.History) > 0 {
-				lastHistory := existingTask.History[len(existingTask.History)-1]
-				// Simple comparison - if same text content, don't add duplicate
-				if len(lastHistory.Parts) > 0 && len(newTaskData.Status.Message.Parts) > 0 {
-					lastPart := lastHistory.Parts[0]
-					newPart := newTaskData.Status.Message.Parts[0]
-					if lastPart.Text == newPart.Text {
-						shouldAddMessage = false
-					}
-				}
+
+		// Merge history - reconcile messages by comparing content
+		if len(newTaskData.History) > 0 {
+			// Create a map of existing messages for fast lookup
+			existingMessages := make(map[string]bool)
+			for _, existingMsg := range existingTask.History {
+				msgKey := r.generateMessageKey(existingMsg)
+				existingMessages[msgKey] = true
 			}
-			
-			if shouldAddMessage {
-				// Convert status message to history entry
-				historyEntry := arkv1alpha1.A2ATaskMessage{
-					Role: newTaskData.Status.Message.Role,
-					Parts: newTaskData.Status.Message.Parts,
-					Metadata: newTaskData.Status.Message.Metadata,
+
+			// Add only new messages that don't already exist
+			for _, newMsg := range newTaskData.History {
+				msgKey := r.generateMessageKey(newMsg)
+				if !existingMessages[msgKey] {
+					existingTask.History = append(existingTask.History, newMsg)
+					existingMessages[msgKey] = true
+					log.Info("added new history message", "taskId", task.ID, "messageKey", msgKey[:8], "totalHistory", len(existingTask.History))
 				}
-				existingTask.History = append(existingTask.History, historyEntry)
-				log.Info("added new history message from status", "taskId", task.ID, "totalHistory", len(existingTask.History))
 			}
 		}
-		
+
 		// Update other fields (status, metadata, etc.)
 		existingTask.Status = newTaskData.Status
 		existingTask.Metadata = newTaskData.Metadata
@@ -297,4 +287,37 @@ func convertA2AStateToPhase(state string) string {
 		return statusRunning
 	}
 }
+
+// generateMessageKey creates a unique key for a message based on its content
+// This key is used to determine if a message already exists in the history
+func (r *A2ATaskReconciler) generateMessageKey(msg arkv1alpha1.A2ATaskMessage) string {
+	var content strings.Builder
+
+	// Include role
+	content.WriteString(msg.Role)
+	content.WriteString("|")
+
+	// Include all text parts content
+	for i, part := range msg.Parts {
+		if i > 0 {
+			content.WriteString("||")
+		}
+		content.WriteString(part.Kind)
+		content.WriteString(":")
+		switch part.Kind {
+		case "text":
+			content.WriteString(part.Text)
+		case "data":
+			content.WriteString(part.Data)
+		case "file":
+			content.WriteString(part.URI)
+			content.WriteString(part.MimeType)
+		}
+	}
+
+	// Create a hash of the content to keep the key manageable
+	hash := sha256.Sum256([]byte(content.String()))
+	return fmt.Sprintf("%x", hash)
+}
+
 // Force devspace reload ven  5 set 2025 14:30:15 CEST - Added HistoryLength to TaskQueryParams

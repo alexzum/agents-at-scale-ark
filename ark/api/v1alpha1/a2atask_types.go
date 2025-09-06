@@ -277,7 +277,7 @@ func ConvertTaskFromProtocol(task *protocol.Task) A2ATaskTask {
 		taskMetadata[k] = fmt.Sprintf("%v", v)
 	}
 
-	// Convert status message if present
+	// Convert status message if present and add it to history
 	var message *A2ATaskMessage
 	if task.Status.Message != nil {
 		var msgParts []A2ATaskPart
@@ -294,6 +294,11 @@ func ConvertTaskFromProtocol(task *protocol.Task) A2ATaskTask {
 			Role:     string(task.Status.Message.Role),
 			Parts:    msgParts,
 			Metadata: msgMetadata,
+		}
+
+		// Add status message to history if it has parts (follows same validation as history messages)
+		if len(msgParts) > 0 {
+			history = append(history, *message)
 		}
 	}
 

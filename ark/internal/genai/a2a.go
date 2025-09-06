@@ -370,7 +370,7 @@ func handleA2ATaskResponse(ctx context.Context, k8sClient client.Client, task *p
 		Spec: arkv1alpha1.A2ATaskSpec{
 			TaskID: task.ID,
 			QueryRef: arkv1alpha1.QueryRef{
-				Name:      func() string {
+				Name: func() string {
 					if queryName != "" {
 						return queryName
 					}
@@ -412,7 +412,7 @@ func handleA2ATaskResponse(ctx context.Context, k8sClient client.Client, task *p
 		log.Error(err, "failed to update Query with A2ATask reference", "taskId", task.ID, "a2aTaskName", a2aTask.Name)
 		// Don't fail the whole operation if we can't update the query
 	}
-	
+
 	// Return a response indicating task is being tracked
 	return "", nil
 }
@@ -420,15 +420,14 @@ func handleA2ATaskResponse(ctx context.Context, k8sClient client.Client, task *p
 // updateQueryWithA2ATaskReference updates a Query's status to include reference to the created A2ATask
 func updateQueryWithA2ATaskReference(ctx context.Context, k8sClient client.Client, a2aTask *arkv1alpha1.A2ATask, task *protocol.Task) error {
 	log := logf.FromContext(ctx)
-	
+
 	// Get the query reference from the A2ATask
 	queryRef := a2aTask.Spec.QueryRef
 	if queryRef.Name == "" {
 		log.Info("A2ATask has no query reference, skipping query update", "taskId", task.ID)
 		return nil
 	}
-	
-	
+
 	// Fetch the Query
 	var query arkv1alpha1.Query
 	queryKey := client.ObjectKey{Name: queryRef.Name, Namespace: queryRef.Namespace}
@@ -439,7 +438,7 @@ func updateQueryWithA2ATaskReference(ctx context.Context, k8sClient client.Clien
 		}
 		return fmt.Errorf("failed to get query %s/%s: %w", queryRef.Namespace, queryRef.Name, err)
 	}
-	
+
 	// Create A2ATask reference
 	a2aTaskRef := arkv1alpha1.A2ATaskReference{
 		TaskID: a2aTask.Spec.TaskID,
@@ -448,12 +447,11 @@ func updateQueryWithA2ATaskReference(ctx context.Context, k8sClient client.Clien
 	query.Status.Phase = "done"
 	log.Info("Added A2ATask reference to Query", "queryName", queryRef.Name, "taskId", task.ID)
 
-	
 	// Update the Query status
 	if err := k8sClient.Status().Update(ctx, &query); err != nil {
 		return fmt.Errorf("failed to update query status: %w", err)
 	}
-	
+
 	return nil
 }
 
