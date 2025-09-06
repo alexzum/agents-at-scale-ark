@@ -48,23 +48,14 @@ dev:
     devImage: golang:1.24-bookworm
     command: ["sh", "-c", "cd /app && go run main.go"]
     namespace: default
-    # Stream logs instead of terminal
-    logs:
-      lastLines: 50
     # File synchronization for hot reload
     sync:
       - path: ./:/app
         startContainer: true
-        excludePaths:
-          - .git/
-          - .devspace/
-          - Dockerfile
-          - devspace.yaml
-          - chart/
-          - "*.log"
-    # Restart container when Go files change
-    restartHelper:
-      inject: true
+        disableDownload: true
+        uploadExcludeFile: .dockerignore
+        onUpload:
+          restartContainer: true
     # Enable SSH for IDE integration
     ssh:
       enabled: true

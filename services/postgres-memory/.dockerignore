@@ -1,0 +1,6 @@
+.git/
+.devspace/
+*.log
+.DS_Store
+chart/
+devspace.yaml

@@ -2,9 +2,9 @@
 version: v2beta1
 
 # Dependencies - include other DevSpace configurations
-# dependencies:
-#   postgres-memory:
-#     path: ./services/postgres-memory
+dependencies:
+  postgres-memory:
+    path: ./services/postgres-memory
 
 # Hooks for pre-build setup
 hooks:
@@ -39,6 +39,7 @@ images:
     image: controller
     dockerfile: ./ark/Dockerfile
     context: ./ark
+
 
 # Kubernetes deployments
 deployments:
@@ -102,6 +103,7 @@ deployments:
           # Override security context for development
           securityContext:
             runAsNonRoot: false
+
 
 # Development configuration - active during 'devspace dev'
 dev:
