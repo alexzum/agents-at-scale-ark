@@ -71,3 +71,8 @@ export {
   type Event,
   type EventFilters
 } from "./events";
+export {
+  a2aTaskService,
+  type A2ATaskDetailResponse,
+  type A2ATaskListResponse
+} from "./a2a-tasks";

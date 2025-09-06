@@ -1,6 +1,7 @@
 "use client";
 
 import { ChatMessage } from "@/components/chat/chat-message";
+import { TaskMessage } from "@/components/chat/task-message";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -50,6 +51,7 @@ export default function FloatingChat({
   const [sessionId] = useState(() => `session-${Date.now()}`);
   const inputRef = useRef<HTMLInputElement>(null);
   const stopPollingRef = useRef<(() => void) | null>(null);
+  const addedTasksRef = useRef<Set<string>>(new Set());
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -92,6 +94,32 @@ export default function FloatingChat({
     while (!pollingStopped) {
       try {
         const result = await chatService.getQueryResult(namespace, queryName);
+
+        // Check for associatedTask first
+        const query = await chatService.getQuery(namespace, queryName);
+        if (
+          query?.status &&
+          typeof query.status === "object" &&
+          "associatedTask" in query.status &&
+          query.status.associatedTask &&
+          typeof query.status.associatedTask === "object" &&
+          "taskId" in query.status.associatedTask
+        ) {
+          // Add task message if not already added
+          const taskId = (query.status.associatedTask as { taskId: string }).taskId;
+          
+          if (!addedTasksRef.current.has(taskId)) {
+            const taskMessage: ChatMessageData = {
+              role: "task",
+              content: "", // Content will be managed by TaskMessage component
+              queryName: queryName,
+              taskId: taskId,
+              status: "running"
+            };
+            setChatMessages((prev) => [...prev, taskMessage]);
+            addedTasksRef.current.add(taskId);
+          }
+        }
 
         // Add or update assistant message for any response
         if (
@@ -368,7 +396,14 @@ export default function FloatingChat({
             )}
 
             {chatMessages.map((message, index) =>
-              message.content ? (
+              message.role === "task" ? (
+                <TaskMessage
+                  key={index}
+                  taskId={message.taskId!}
+                  namespace={namespace}
+                  viewMode={viewMode}
+                />
+              ) : message.content ? (
                 <ChatMessage
                   key={index}
                   role={message.role}
