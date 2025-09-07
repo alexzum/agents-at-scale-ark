@@ -26,8 +26,8 @@ export {
   type MemoryUpdateRequest
 } from "./memories";
 export { namespacesService, type Namespace } from "./namespaces";
-export { 
-  evaluationsService, 
+export {
+  evaluationsService,
   type Evaluation,
   type EvaluationDetailResponse,
   type EvaluationFilter,
@@ -66,13 +66,15 @@ export {
   type A2AServer,
   type A2AServerConfiguration
 } from "./a2a-servers";
-export {
-  eventsService,
-  type Event,
-  type EventFilters
-} from "./events";
+export { eventsService, type Event, type EventFilters } from "./events";
 export {
   a2aTaskService,
   type A2ATaskDetailResponse,
   type A2ATaskListResponse
 } from "./a2a-tasks";
+export {
+  memoryService,
+  type MemoryMessage,
+  type MemoryResource,
+  type MemoryFilters
+} from "./memory";
