@@ -12,6 +12,7 @@ import {
   TooltipProvider,
   TooltipTrigger
 } from "@/components/ui/tooltip";
+import { TypingLoader } from "@/components/ui/typing-loader";
 import { chatService } from "@/lib/services";
 import type { ChatMessageData } from "@/lib/types/chat";
 import {
@@ -118,6 +119,10 @@ export default function FloatingChat({
             };
             setChatMessages((prev) => [...prev, taskMessage]);
             addedTasksRef.current.add(taskId);
+            
+            // Stop polling when task message is found
+            pollingStopped = true;
+            setIsProcessing(false);
           }
         }
 
@@ -415,23 +420,7 @@ export default function FloatingChat({
             )}
 
             {/* Show typing indicator when processing */}
-            {isProcessing && (
-              <div className="flex justify-start flex-col items-start">
-                <div className="max-w-[80%] rounded-lg px-3 py-2 bg-muted">
-                  <div className="flex space-x-1">
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                    <div
-                      className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                      style={{ animationDelay: "0.1s" }}
-                    ></div>
-                    <div
-                      className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                      style={{ animationDelay: "0.2s" }}
-                    ></div>
-                  </div>
-                </div>
-              </div>
-            )}
+            {isProcessing && <TypingLoader />}
             <div ref={messagesEndRef} />
           </div>
         </div>

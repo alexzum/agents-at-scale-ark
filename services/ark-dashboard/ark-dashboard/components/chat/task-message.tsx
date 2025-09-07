@@ -5,14 +5,19 @@ import { a2aTaskService } from "@/lib/services";
 import type { A2ATaskDetailResponse } from "@/lib/services";
 import { useMarkdownProcessor } from "@/lib/hooks/use-markdown-processor";
 import { AlertCircle, Clock, CheckCircle2, XCircle } from "lucide-react";
+import { TypingLoader } from "../ui/typing-loader";
 
 interface TaskMessageProps {
   taskId: string;
   namespace: string;
-  viewMode?: 'text' | 'markdown';
+  viewMode?: "text" | "markdown";
 }
 
-export function TaskMessage({ taskId, namespace, viewMode = 'text' }: TaskMessageProps) {
+export function TaskMessage({
+  taskId,
+  namespace,
+  viewMode = "text"
+}: TaskMessageProps) {
   const [task, setTask] = useState<A2ATaskDetailResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -20,7 +25,8 @@ export function TaskMessage({ taskId, namespace, viewMode = 'text' }: TaskMessag
 
   const getLatestArtifact = (task: A2ATaskDetailResponse): string => {
     if (task.task?.artifacts && task.task.artifacts.length > 0) {
-      const latestArtifact = task.task.artifacts[task.task.artifacts.length - 1];
+      const latestArtifact =
+        task.task.artifacts[task.task.artifacts.length - 1];
       if (latestArtifact.parts && latestArtifact.parts.length > 0) {
         return latestArtifact.parts[0].text || "";
       }
@@ -38,12 +44,14 @@ export function TaskMessage({ taskId, namespace, viewMode = 'text' }: TaskMessag
     return "";
   };
 
-  const content = task ? getLatestArtifact(task) || getLatestHistory(task) || "Task in progress..." : "Loading task...";
+  const content = task
+    ? getLatestArtifact(task) || getLatestHistory(task) || "Task in progress..."
+    : "Loading task...";
   const markdownContent = useMarkdownProcessor(content);
 
   const getStatusIcon = () => {
     if (loading || !task) return <Clock className="h-4 w-4 animate-spin" />;
-    
+
     switch (task.phase) {
       case "completed":
         return <CheckCircle2 className="h-4 w-4 text-green-600" />;
@@ -58,7 +66,7 @@ export function TaskMessage({ taskId, namespace, viewMode = 'text' }: TaskMessag
 
   const getStatusColor = () => {
     if (loading || !task) return "bg-muted";
-    
+
     switch (task.phase) {
       case "completed":
         return "bg-green-50 border-l-4 border-l-green-500";
@@ -77,9 +85,13 @@ export function TaskMessage({ taskId, namespace, viewMode = 'text' }: TaskMessag
       if (taskData) {
         setTask(taskData);
         setError(null);
-        
+
         // Stop polling if task is in terminal state
-        if (taskData.phase === "completed" || taskData.phase === "failed" || taskData.phase === "cancelled") {
+        if (
+          taskData.phase === "completed" ||
+          taskData.phase === "failed" ||
+          taskData.phase === "cancelled"
+        ) {
           if (intervalRef.current) {
             clearInterval(intervalRef.current);
             intervalRef.current = null;
@@ -98,7 +110,7 @@ export function TaskMessage({ taskId, namespace, viewMode = 'text' }: TaskMessag
 
   useEffect(() => {
     fetchTask();
-    
+
     // Start polling every 2 seconds
     intervalRef.current = setInterval(fetchTask, 2000);
 
@@ -126,18 +138,24 @@ export function TaskMessage({ taskId, namespace, viewMode = 'text' }: TaskMessag
     <div className="flex justify-start">
       <div className={`max-w-[80%] rounded-lg px-3 py-2 ${getStatusColor()}`}>
         <div className="flex items-start gap-2">
-          <div className="flex-shrink-0 mt-1">
-            {getStatusIcon()}
-          </div>
+          <div className="flex-shrink-0 mt-1">{getStatusIcon()}</div>
           <div className="flex-1">
-            <div className="text-xs text-muted-foreground mb-1">
-              Task {task?.phase || "loading"}
-              {task?.progress && ` • ${Math.round(task.progress * 100)}%`}
-            </div>
-            {viewMode === 'markdown' ? (
-              <div className="text-sm">
-                {markdownContent}
+            <div className="w-full flex flex-row items-center">
+              <div className="text-xs text-muted-foreground mb-1">
+                Task {task?.phase || "loading"}
+                {task?.progress && ` • ${Math.round(task.progress * 100)}%`}
               </div>
+              {task?.phase !== "completed" && (
+                <div>
+                  <TypingLoader
+                    className=" w-[80px] scale-[0.75]"
+                    transparent={true}
+                  />
+                </div>
+              )}
+            </div>
+            {viewMode === "markdown" ? (
+              <div className="text-sm">{markdownContent}</div>
             ) : (
               <pre className="text-sm whitespace-pre-wrap font-mono bg-transparent p-0 m-0 border-0">
                 {content}
