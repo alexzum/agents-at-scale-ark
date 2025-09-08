@@ -16,6 +16,7 @@ dependencies = [
     "pyhelm3>=0.4.0",
     "coverage>=7.10.4",
     "ark-sdk",
+    "ark-auth",
 ]
 
 [tool.uv]
@@ -23,6 +24,7 @@ package = true
 
 [tool.uv.sources]
 ark-sdk = { path = "../../../out/ark-sdk/py-sdk/dist/ark_sdk-0.1.31-py3-none-any.whl" }
+ark-auth = { path = "../ark-auth" }
 
 [tool.coverage.run]
 data_file = "coverage/.coverage"
