@@ -214,22 +214,16 @@ func ConvertPartToProtocol(part A2ATaskPart) protocol.Part {
 	}
 }
 
-// ConvertTaskFromProtocol converts a protocol.Task to A2ATaskTask
-func ConvertTaskFromProtocol(task *protocol.Task) A2ATaskTask {
-	artifacts := make([]A2ATaskArtifact, 0, len(task.Artifacts))
-	for _, artifact := range task.Artifacts {
+func convertArtifactsFromProtocol(protocolArtifacts []protocol.Artifact) []A2ATaskArtifact {
+	artifacts := make([]A2ATaskArtifact, 0, len(protocolArtifacts))
+	for _, artifact := range protocolArtifacts {
 		var parts []A2ATaskPart
 		for _, part := range artifact.Parts {
 			parts = append(parts, ConvertPartFromProtocol(part))
 		}
 
-		// Convert metadata
-		metadata := make(map[string]string)
-		for k, v := range artifact.Metadata {
-			metadata[k] = fmt.Sprintf("%v", v)
-		}
+		metadata := convertMetadataToStringMap(artifact.Metadata)
 
-		// Only include artifacts that have at least one part (CRD validation requirement)
 		if len(parts) > 0 {
 			taskArtifact := A2ATaskArtifact{
 				ArtifactID: artifact.ArtifactID,
@@ -245,22 +239,19 @@ func ConvertTaskFromProtocol(task *protocol.Task) A2ATaskTask {
 			artifacts = append(artifacts, taskArtifact)
 		}
 	}
+	return artifacts
+}
 
-	// Convert history messages
-	history := make([]A2ATaskMessage, 0, len(task.History))
-	for _, msg := range task.History {
+func convertHistoryFromProtocol(protocolHistory []protocol.Message) []A2ATaskMessage {
+	history := make([]A2ATaskMessage, 0, len(protocolHistory))
+	for _, msg := range protocolHistory {
 		var msgParts []A2ATaskPart
 		for _, part := range msg.Parts {
 			msgParts = append(msgParts, ConvertPartFromProtocol(part))
 		}
 
-		// Convert message metadata
-		msgMetadata := make(map[string]string)
-		for k, v := range msg.Metadata {
-			msgMetadata[k] = fmt.Sprintf("%v", v)
-		}
+		msgMetadata := convertMetadataToStringMap(msg.Metadata)
 
-		// Only include messages that have at least one part (similar to artifacts validation)
 		if len(msgParts) > 0 {
 			historyMessage := A2ATaskMessage{
 				Role:     string(msg.Role),
@@ -270,41 +261,52 @@ func ConvertTaskFromProtocol(task *protocol.Task) A2ATaskTask {
 			history = append(history, historyMessage)
 		}
 	}
+	return history
+}
 
-	// Convert task metadata
-	taskMetadata := make(map[string]string)
-	for k, v := range task.Metadata {
-		taskMetadata[k] = fmt.Sprintf("%v", v)
+func convertStatusMessageFromProtocol(statusMessage *protocol.Message) (*A2ATaskMessage, []A2ATaskPart) {
+	if statusMessage == nil {
+		return nil, nil
 	}
 
-	// Convert status message if present and add it to history
-	var message *A2ATaskMessage
-	if task.Status.Message != nil {
-		var msgParts []A2ATaskPart
-		for _, part := range task.Status.Message.Parts {
-			msgParts = append(msgParts, ConvertPartFromProtocol(part))
-		}
+	var msgParts []A2ATaskPart
+	for _, part := range statusMessage.Parts {
+		msgParts = append(msgParts, ConvertPartFromProtocol(part))
+	}
 
-		msgMetadata := make(map[string]string)
-		for k, v := range task.Status.Message.Metadata {
-			msgMetadata[k] = fmt.Sprintf("%v", v)
-		}
+	msgMetadata := convertMetadataToStringMap(statusMessage.Metadata)
 
-		message = &A2ATaskMessage{
-			Role:     string(task.Status.Message.Role),
-			Parts:    msgParts,
-			Metadata: msgMetadata,
-		}
+	message := &A2ATaskMessage{
+		Role:     string(statusMessage.Role),
+		Parts:    msgParts,
+		Metadata: msgMetadata,
+	}
 
-		// Add status message to history if it has parts (follows same validation as history messages)
-		if len(msgParts) > 0 {
-			history = append(history, *message)
-		}
+	return message, msgParts
+}
+
+func convertMetadataToStringMap(metadata map[string]any) map[string]string {
+	result := make(map[string]string)
+	for k, v := range metadata {
+		result[k] = fmt.Sprintf("%v", v)
+	}
+	return result
+}
+
+// ConvertTaskFromProtocol converts a protocol.Task to A2ATaskTask
+func ConvertTaskFromProtocol(task *protocol.Task) A2ATaskTask {
+	artifacts := convertArtifactsFromProtocol(task.Artifacts)
+	history := convertHistoryFromProtocol(task.History)
+	taskMetadata := convertMetadataToStringMap(task.Metadata)
+
+	message, msgParts := convertStatusMessageFromProtocol(task.Status.Message)
+	if len(msgParts) > 0 {
+		history = append(history, *message)
 	}
 
 	return A2ATaskTask{
 		ID:        task.ID,
-		SessionID: task.ContextID, // Using ContextID as SessionID
+		SessionID: task.ContextID,
 		Status: A2ATaskTaskStatus{
 			State:     string(task.Status.State),
 			Message:   message,

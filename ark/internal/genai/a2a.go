@@ -176,13 +176,13 @@ func extractResponseFromMessageResult(ctx context.Context, k8sClient client.Clie
 	case *protocol.Task:
 		log.Info("A2A task response detected", "taskId", r.ID, "state", r.Status.State, "agent", agentName)
 		// Create A2ATask resource for task tracking
-		taskResult, err := handleA2ATaskResponse(ctx, k8sClient, r, agentName, namespace, queryName, recorder, obj)
+		err := handleA2ATaskResponse(ctx, k8sClient, r, agentName, namespace, queryName, recorder, obj)
 		if err != nil {
 			log.Error(err, "failed to handle A2A task response", "taskId", r.ID, "agent", agentName)
 			return "", fmt.Errorf("failed to handle A2A task response: %w", err)
 		}
 		log.Info("A2A task response handled successfully", "taskId", r.ID, "agent", agentName)
-		return taskResult, nil
+		return fmt.Sprintf("A2A task %s is being tracked", r.ID), nil
 	default:
 		log.Error(nil, "unexpected A2A result type", "type", fmt.Sprintf("%T", result.Result), "agent", agentName)
 		return "", fmt.Errorf("unexpected result type: %T", result.Result)
@@ -318,8 +318,8 @@ func resolveA2AHeaders(ctx context.Context, k8sClient client.Client, headers []a
 	return resolvedHeaders, nil
 }
 
-// handleA2ATaskResponse handles A2A task responses by creating A2ATask resources and returning initial status
-func handleA2ATaskResponse(ctx context.Context, k8sClient client.Client, task *protocol.Task, agentName, namespace, queryName string, recorder record.EventRecorder, obj client.Object) (string, error) {
+// handleA2ATaskResponse handles A2A task responses by creating A2ATask resources
+func handleA2ATaskResponse(ctx context.Context, k8sClient client.Client, task *protocol.Task, agentName, namespace, queryName string, recorder record.EventRecorder, obj client.Object) error {
 	log := logf.FromContext(ctx)
 	log.Info("handling A2A task response", "taskId", task.ID, "agent", agentName, "namespace", namespace, "queryName", queryName)
 
@@ -399,7 +399,7 @@ func handleA2ATaskResponse(ctx context.Context, k8sClient client.Client, task *p
 		if recorder != nil && obj != nil {
 			recorder.Event(obj, corev1.EventTypeWarning, "A2ATaskCreationFailed", fmt.Sprintf("Failed to create A2ATask resource for task %s: %v", task.ID, err))
 		}
-		return "", fmt.Errorf("failed to create A2ATask resource: %w", err)
+		return fmt.Errorf("failed to create A2ATask resource: %w", err)
 	}
 
 	log.Info("created A2ATask resource", "taskId", task.ID, "name", a2aTask.Name)
@@ -413,8 +413,8 @@ func handleA2ATaskResponse(ctx context.Context, k8sClient client.Client, task *p
 		// Don't fail the whole operation if we can't update the query
 	}
 
-	// Return a response indicating task is being tracked
-	return "", nil
+	// Task is being tracked
+	return nil
 }
 
 // updateQueryWithA2ATaskReference updates a Query's status to include reference to the created A2ATask

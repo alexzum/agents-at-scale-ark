@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-logr/logr"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/record"
@@ -183,63 +184,42 @@ func (r *A2ATaskReconciler) queryTaskStatus(ctx context.Context, a2aClient *a2ac
 	return task, nil
 }
 
-// updateTaskStatus updates the A2ATask status with information from the A2A server
-func (r *A2ATaskReconciler) updateTaskStatus(ctx context.Context, a2aTask *arkv1alpha1.A2ATask, task *protocol.Task) error {
-	if task == nil {
-		return nil
+func (r *A2ATaskReconciler) mergeArtifacts(existingTask, newTaskData *arkv1alpha1.A2ATaskTask, taskID string, log logr.Logger) {
+	existingArtifactIds := make(map[string]bool)
+	for _, artifact := range existingTask.Artifacts {
+		existingArtifactIds[artifact.ArtifactID] = true
 	}
 
-	log := logf.FromContext(ctx)
-	log.Info("received updated task status", "taskId", task.ID, "state", task.Status.State)
-
-	// Convert new task data
-	newTaskData := arkv1alpha1.ConvertTaskFromProtocol(task)
-
-	// Merge with existing task data instead of overwriting
-	if a2aTask.Status.Task == nil {
-		// First time - use new data directly
-		a2aTask.Status.Task = &newTaskData
-	} else {
-		// Merge artifacts (append new ones that don't already exist)
-		existingTask := a2aTask.Status.Task
-		existingArtifactIds := make(map[string]bool)
-		for _, artifact := range existingTask.Artifacts {
-			existingArtifactIds[artifact.ArtifactID] = true
+	for _, newArtifact := range newTaskData.Artifacts {
+		if !existingArtifactIds[newArtifact.ArtifactID] {
+			existingTask.Artifacts = append(existingTask.Artifacts, newArtifact)
+			log.Info("added new artifact", "taskId", taskID, "artifactId", newArtifact.ArtifactID)
 		}
+	}
+}
 
-		for _, newArtifact := range newTaskData.Artifacts {
-			if !existingArtifactIds[newArtifact.ArtifactID] {
-				existingTask.Artifacts = append(existingTask.Artifacts, newArtifact)
-				log.Info("added new artifact", "taskId", task.ID, "artifactId", newArtifact.ArtifactID)
-			}
-		}
-
-		// Merge history - reconcile messages by comparing content
-		if len(newTaskData.History) > 0 {
-			// Create a map of existing messages for fast lookup
-			existingMessages := make(map[string]bool)
-			for _, existingMsg := range existingTask.History {
-				msgKey := r.generateMessageKey(existingMsg)
-				existingMessages[msgKey] = true
-			}
-
-			// Add only new messages that don't already exist
-			for _, newMsg := range newTaskData.History {
-				msgKey := r.generateMessageKey(newMsg)
-				if !existingMessages[msgKey] {
-					existingTask.History = append(existingTask.History, newMsg)
-					existingMessages[msgKey] = true
-					log.Info("added new history message", "taskId", task.ID, "messageKey", msgKey[:8], "totalHistory", len(existingTask.History))
-				}
-			}
-		}
-
-		// Update other fields (status, metadata, etc.)
-		existingTask.Status = newTaskData.Status
-		existingTask.Metadata = newTaskData.Metadata
-		existingTask.SessionID = newTaskData.SessionID
+func (r *A2ATaskReconciler) mergeHistory(existingTask, newTaskData *arkv1alpha1.A2ATaskTask, taskID string, log logr.Logger) {
+	if len(newTaskData.History) == 0 {
+		return
 	}
 
+	existingMessages := make(map[string]bool)
+	for _, existingMsg := range existingTask.History {
+		msgKey := r.generateMessageKey(existingMsg)
+		existingMessages[msgKey] = true
+	}
+
+	for _, newMsg := range newTaskData.History {
+		msgKey := r.generateMessageKey(newMsg)
+		if !existingMessages[msgKey] {
+			existingTask.History = append(existingTask.History, newMsg)
+			existingMessages[msgKey] = true
+			log.Info("added new history message", "taskId", taskID, "messageKey", msgKey[:8], "totalHistory", len(existingTask.History))
+		}
+	}
+}
+
+func (r *A2ATaskReconciler) updateTaskPhase(a2aTask *arkv1alpha1.A2ATask, task *protocol.Task, log logr.Logger) {
 	newPhase := convertA2AStateToPhase(string(task.Status.State))
 	if newPhase != a2aTask.Status.Phase {
 		log.Info("task phase changed", "taskId", task.ID, "oldPhase", a2aTask.Status.Phase, "newPhase", newPhase)
@@ -252,16 +232,54 @@ func (r *A2ATaskReconciler) updateTaskStatus(ctx context.Context, a2aTask *arkv1
 				fmt.Sprintf("A2A task completed with status: %s", newPhase))
 		}
 	}
+}
 
-	if progressValue, hasProgress := task.Metadata["progress"]; hasProgress {
-		if progressStr, ok := progressValue.(string); ok {
-			var progress int32
-			if _, parseErr := fmt.Sscanf(progressStr, "%d", &progress); parseErr == nil {
-				a2aTask.Status.Progress = progress
-				log.Info("updated task progress", "taskId", task.ID, "progress", progress)
-			}
-		}
+func (r *A2ATaskReconciler) updateTaskProgress(a2aTask *arkv1alpha1.A2ATask, task *protocol.Task, log logr.Logger) {
+	progressValue, hasProgress := task.Metadata["progress"]
+	if !hasProgress {
+		return
 	}
+
+	progressStr, ok := progressValue.(string)
+	if !ok {
+		return
+	}
+
+	var progress int32
+	if _, parseErr := fmt.Sscanf(progressStr, "%d", &progress); parseErr == nil {
+		a2aTask.Status.Progress = progress
+		log.Info("updated task progress", "taskId", task.ID, "progress", progress)
+	}
+}
+
+// updateTaskStatus updates the A2ATask status with information from the A2A server
+func (r *A2ATaskReconciler) updateTaskStatus(ctx context.Context, a2aTask *arkv1alpha1.A2ATask, task *protocol.Task) error {
+	if task == nil {
+		return nil
+	}
+
+	log := logf.FromContext(ctx)
+	log.Info("received updated task status", "taskId", task.ID, "state", task.Status.State)
+
+	newTaskData := arkv1alpha1.ConvertTaskFromProtocol(task)
+
+	if a2aTask.Status.Task == nil {
+		a2aTask.Status.Task = &newTaskData
+		r.updateTaskPhase(a2aTask, task, log)
+		r.updateTaskProgress(a2aTask, task, log)
+		return nil
+	}
+
+	existingTask := a2aTask.Status.Task
+	r.mergeArtifacts(existingTask, &newTaskData, task.ID, log)
+	r.mergeHistory(existingTask, &newTaskData, task.ID, log)
+
+	existingTask.Status = newTaskData.Status
+	existingTask.Metadata = newTaskData.Metadata
+	existingTask.SessionID = newTaskData.SessionID
+
+	r.updateTaskPhase(a2aTask, task, log)
+	r.updateTaskProgress(a2aTask, task, log)
 
 	return nil
 }
