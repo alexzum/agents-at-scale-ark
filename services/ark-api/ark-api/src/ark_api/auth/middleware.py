@@ -6,6 +6,7 @@ except those explicitly marked as public.
 """
 
 import logging
+import os
 from fastapi import Request, HTTPException, APIRouter
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -26,6 +27,12 @@ class AuthMiddleware(BaseHTTPMiddleware):
         # Get the path from the request
         path = request.url.path
         
+        # Skip authentication if ARK_SKIP_AUTH is set
+        skip_auth = os.getenv("ARK_SKIP_AUTH", "false").lower() == "true"
+        if skip_auth:
+            response = await call_next(request)
+            return response
+        
         # Check if this route should be authenticated
         if is_route_authenticated(path):
             try:
@@ -38,12 +45,9 @@ class AuthMiddleware(BaseHTTPMiddleware):
                         content={"detail": "Missing or invalid authorization header"}
                     )
                 
-                # Extract the token
-                token = auth_header.split(" ")[1]
-                
                 # Validate the token by calling the validate_token function
-                # Call the validate_token function directly
-                await validate_token(token)
+                # Pass the full authorization header
+                await validate_token(auth_header)
                 
             except HTTPException as e:
                 return JSONResponse(

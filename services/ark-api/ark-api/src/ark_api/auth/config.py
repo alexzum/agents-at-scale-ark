@@ -7,6 +7,7 @@ import re
 # All other routes will be protected by default
 PUBLIC_ROUTES: Set[str] = {
     "/health",
+    "/ready",
     "/docs",
     "/openapi.json",
     "/redoc",

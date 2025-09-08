@@ -1,18 +1,18 @@
 """Tests for health check endpoints."""
+import os
+# Set environment variable to skip authentication during tests
+os.environ["ARK_SKIP_AUTH"] = "true"
+
 import unittest
 from unittest.mock import patch, AsyncMock
 from fastapi.testclient import TestClient
 from kubernetes_asyncio.client.rest import ApiException
 
-from ark_api.main import app
+from .test_base import BaseTestCase
 
 
-class TestHealthEndpoints(unittest.TestCase):
+class TestHealthEndpoints(BaseTestCase):
     """Test cases for health check endpoints."""
-    
-    def setUp(self):
-        """Set up test client."""
-        self.client = TestClient(app)
     
     def test_health_check_success(self):
         """Test successful health check."""
