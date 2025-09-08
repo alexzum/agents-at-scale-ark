@@ -24,7 +24,7 @@ export const useMarkdownProcessor = (content: string) => {
     <ReactMarkdown
       remarkPlugins={[remarkGfm]}
       components={{
-        a: ({ href, children, ...props }) => (
+        a: ({ href, children, ...props }: any) => (
           <a 
             href={href} 
             target="_blank" 
@@ -35,46 +35,46 @@ export const useMarkdownProcessor = (content: string) => {
             {children}
           </a>
         ),
-        h1: ({ children, ...props }) => (
+        h1: ({ children, ...props }: any) => (
           <h1 className="text-2xl font-bold mt-6 mb-4 first:mt-0" {...props}>
             {children}
           </h1>
         ),
-        h2: ({ children, ...props }) => (
+        h2: ({ children, ...props }: any) => (
           <h2 className="text-xl font-bold mt-5 mb-3 first:mt-0" {...props}>
             {children}
           </h2>
         ),
-        h3: ({ children, ...props }) => (
+        h3: ({ children, ...props }: any) => (
           <h3 className="text-lg font-bold mt-4 mb-2 first:mt-0" {...props}>
             {children}
           </h3>
         ),
-        h4: ({ children, ...props }) => (
+        h4: ({ children, ...props }: any) => (
           <h4 className="text-base font-bold mt-3 mb-2 first:mt-0" {...props}>
             {children}
           </h4>
         ),
-        h5: ({ children, ...props }) => (
+        h5: ({ children, ...props }: any) => (
           <h5 className="text-sm font-bold mt-3 mb-2 first:mt-0" {...props}>
             {children}
           </h5>
         ),
-        h6: ({ children, ...props }) => (
+        h6: ({ children, ...props }: any) => (
           <h6 className="text-xs font-bold mt-3 mb-2 first:mt-0" {...props}>
             {children}
           </h6>
         ),
-        p: ({ children, ...props }) => (
+        p: ({ children, ...props }: any) => (
           <p className="mb-4 last:mb-0" {...props}>{children}</p>
         ),
-        strong: ({ children, ...props }) => (
+        strong: ({ children, ...props }: any) => (
           <strong className="font-bold" {...props}>{children}</strong>
         ),
-        em: ({ children, ...props }) => (
+        em: ({ children, ...props }: any) => (
           <em className="italic" {...props}>{children}</em>
         ),
-        code: (props) => {
+        code: (props: any) => {
           const { className, children } = props
           const inline = !className?.includes('language-')
           const match = /language-(\w+)/.exec(className || '')
@@ -105,30 +105,30 @@ export const useMarkdownProcessor = (content: string) => {
             </code>
           )
         },
-        ul: ({ children, ...props }) => (
+        ul: ({ children, ...props }: any) => (
           <ul className="list-disc list-inside mb-4 pl-4 space-y-1" {...props}>
             {children}
           </ul>
         ),
-        ol: ({ children, ...props }) => (
+        ol: ({ children, ...props }: any) => (
           <ol className="list-decimal list-inside mb-4 pl-4 space-y-1" {...props}>
             {children}
           </ol>
         ),
-        li: ({ children, ...props }) => (
+        li: ({ children, ...props }: any) => (
           <li className="text-sm" {...props}>{children}</li>
         ),
-        table: ({ children, ...props }) => (
+        table: ({ children, ...props }: any) => (
           <div className="my-4 overflow-x-auto border rounded-md">
             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700" {...props}>
               {children}
             </table>
           </div>
         ),
-        thead: ({ children, ...props }) => (
+        thead: ({ children, ...props }: any) => (
           <thead className="bg-gray-50 dark:bg-gray-800" {...props}>{children}</thead>
         ),
-        th: ({ children, ...props }) => (
+        th: ({ children, ...props }: any) => (
           <th 
             className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider" 
             {...props}
@@ -136,7 +136,7 @@ export const useMarkdownProcessor = (content: string) => {
             {children}
           </th>
         ),
-        td: ({ children, ...props }) => (
+        td: ({ children, ...props }: any) => (
           <td 
             className="px-4 py-2 text-sm text-gray-900 dark:text-gray-100 border-t border-gray-200 dark:border-gray-700" 
             {...props}
@@ -144,7 +144,7 @@ export const useMarkdownProcessor = (content: string) => {
             {children}
           </td>
         ),
-        blockquote: ({ children, ...props }) => (
+        blockquote: ({ children, ...props }: any) => (
           <blockquote 
             className="border-l-4 border-gray-300 dark:border-gray-600 pl-4 my-4 italic text-gray-600 dark:text-gray-400" 
             {...props}
@@ -152,7 +152,7 @@ export const useMarkdownProcessor = (content: string) => {
             {children}
           </blockquote>
         ),
-        hr: (props) => (
+        hr: (props: any) => (
           <hr className="my-6 border-gray-200 dark:border-gray-700" {...props} />
         )
       }}

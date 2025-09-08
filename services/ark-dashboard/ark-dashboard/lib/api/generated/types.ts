@@ -3,5289 +3,4958 @@
  * Do not make direct changes to the file.
  */
 
+
 export interface paths {
-    "/health": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Health Check
-         * @description This endpoint always returns a healthy status if the service is running.
-         *
-         *     Returns: HealthResponse: Basic health status of the service
-         */
-        get: operations["health_check_health_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/ready": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Readiness Check
-         * @description Verifies that the ARK API service is ready to handle requests by testing
-         *     connectivity to the Kubernetes API.
-         *
-         *     Returns: ReadinessResponse: Readiness status with Kubernetes connectivity check
-         */
-        get: operations["readiness_check_ready_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/namespaces": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * List Namespaces
-         * @description List all available namespaces.
-         *
-         *     Returns:
-         *         NamespaceListResponse: List of all available namespaces
-         */
-        get: operations["list_namespaces_v1_namespaces_get"];
-        put?: never;
-        /**
-         * Create Namespace
-         * @description Create a new Kubernetes namespace.
-         *
-         *     Args:
-         *         body: The namespace creation request
-         *
-         *     Returns:
-         *         NamespaceResponse: The created namespace details
-         */
-        post: operations["create_namespace_v1_namespaces_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/namespaces/{namespace}/secrets": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * List Secrets
-         * @description List all Kubernetes secrets in a namespace.
-         *
-         *     Args:
-         *         namespace: The namespace to list secrets from
-         *
-         *     Returns:
-         *         SecretListResponse: List of all secrets in the namespace
-         */
-        get: operations["list_secrets_v1_namespaces__namespace__secrets_get"];
-        put?: never;
-        /**
-         * Create Secret
-         * @description Create a new Kubernetes secret.
-         *
-         *     Args:
-         *         namespace: The namespace to create the secret in
-         *         body: The secret creation request
-         *
-         *     Returns:
-         *         SecretDetailResponse: The created secret details
-         */
-        post: operations["create_secret_v1_namespaces__namespace__secrets_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/namespaces/{namespace}/secrets/{secret_name}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get Secret
-         * @description Get a specific Kubernetes secret by name.
-         *
-         *     Args:
-         *         namespace: The namespace to get the secret from
-         *         secret_name: The name of the secret
-         *
-         *     Returns:
-         *         SecretDetailResponse: The secret details with total data length
-         */
-        get: operations["get_secret_v1_namespaces__namespace__secrets__secret_name__get"];
-        /**
-         * Update Secret
-         * @description Update a Kubernetes secret by name.
-         *
-         *     Args:
-         *         namespace: The namespace containing the secret
-         *         secret_name: The name of the secret
-         *         body: The secret update request
-         *
-         *     Returns:
-         *         SecretDetailResponse: The updated secret details
-         */
-        put: operations["update_secret_v1_namespaces__namespace__secrets__secret_name__put"];
-        post?: never;
-        /**
-         * Delete Secret
-         * @description Delete a Kubernetes secret by name.
-         *
-         *     Args:
-         *         namespace: The namespace containing the secret
-         *         secret_name: The name of the secret
-         */
-        delete: operations["delete_secret_v1_namespaces__namespace__secrets__secret_name__delete"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/namespaces/{namespace}/agents": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * List Agents
-         * @description List all Agent CRs in a namespace.
-         *
-         *     Args:
-         *         namespace: The namespace to list agents from
-         *
-         *     Returns:
-         *         AgentListResponse: List of all agents in the namespace
-         */
-        get: operations["list_agents_v1_namespaces__namespace__agents_get"];
-        put?: never;
-        /**
-         * Create Agent
-         * @description Create a new Agent CR.
-         *
-         *     Args:
-         *         namespace: The namespace to create the agent in
-         *         body: The agent creation request
-         *
-         *     Returns:
-         *         AgentDetailResponse: The created agent details
-         */
-        post: operations["create_agent_v1_namespaces__namespace__agents_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/namespaces/{namespace}/agents/{agent_name}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get Agent
-         * @description Get a specific Agent CR by name.
-         *
-         *     Args:
-         *         namespace: The namespace to get the agent from
-         *         agent_name: The name of the agent
-         *
-         *     Returns:
-         *         AgentDetailResponse: The agent details
-         */
-        get: operations["get_agent_v1_namespaces__namespace__agents__agent_name__get"];
-        /**
-         * Update Agent
-         * @description Update an Agent CR by name.
-         *
-         *     Args:
-         *         namespace: The namespace containing the agent
-         *         agent_name: The name of the agent
-         *         body: The agent update request
-         *
-         *     Returns:
-         *         AgentDetailResponse: The updated agent details
-         */
-        put: operations["update_agent_v1_namespaces__namespace__agents__agent_name__put"];
-        post?: never;
-        /**
-         * Delete Agent
-         * @description Delete an Agent CR by name.
-         *
-         *     Args:
-         *         namespace: The namespace containing the agent
-         *         agent_name: The name of the agent
-         */
-        delete: operations["delete_agent_v1_namespaces__namespace__agents__agent_name__delete"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/namespaces/{namespace}/models": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * List Models
-         * @description List all Model CRs in a namespace.
-         *
-         *     Args:
-         *         namespace: The namespace to list models from
-         *
-         *     Returns:
-         *         ModelListResponse: List of all models in the namespace
-         */
-        get: operations["list_models_v1_namespaces__namespace__models_get"];
-        put?: never;
-        /**
-         * Create Model
-         * @description Create a new Model CR.
-         *
-         *     Args:
-         *         namespace: The namespace to create the model in
-         *         body: The model creation request
-         *
-         *     Returns:
-         *         ModelDetailResponse: The created model details
-         */
-        post: operations["create_model_v1_namespaces__namespace__models_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/namespaces/{namespace}/models/{model_name}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get Model
-         * @description Get a specific Model CR by name.
-         *
-         *     Args:
-         *         namespace: The namespace to get the model from
-         *         model_name: The name of the model
-         *
-         *     Returns:
-         *         ModelDetailResponse: The model details
-         */
-        get: operations["get_model_v1_namespaces__namespace__models__model_name__get"];
-        /**
-         * Update Model
-         * @description Update a Model CR by name.
-         *
-         *     Args:
-         *         namespace: The namespace containing the model
-         *         model_name: The name of the model
-         *         body: The model update request
-         *
-         *     Returns:
-         *         ModelDetailResponse: The updated model details
-         */
-        put: operations["update_model_v1_namespaces__namespace__models__model_name__put"];
-        post?: never;
-        /**
-         * Delete Model
-         * @description Delete a Model CR by name.
-         *
-         *     Args:
-         *         namespace: The namespace containing the model
-         *         model_name: The name of the model
-         */
-        delete: operations["delete_model_v1_namespaces__namespace__models__model_name__delete"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/namespaces/{namespace}/teams": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * List Teams
-         * @description List all Team CRs in a namespace.
-         *
-         *     Args:
-         *         namespace: The namespace to list teams from
-         *
-         *     Returns:
-         *         TeamListResponse: List of all teams in the namespace
-         */
-        get: operations["list_teams_v1_namespaces__namespace__teams_get"];
-        put?: never;
-        /**
-         * Create Team
-         * @description Create a new Team CR.
-         *
-         *     Args:
-         *         namespace: The namespace to create the team in
-         *         body: The team creation request
-         *
-         *     Returns:
-         *         TeamDetailResponse: The created team details
-         */
-        post: operations["create_team_v1_namespaces__namespace__teams_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/namespaces/{namespace}/teams/{team_name}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get Team
-         * @description Get a specific Team CR by name.
-         *
-         *     Args:
-         *         namespace: The namespace to get the team from
-         *         team_name: The name of the team
-         *
-         *     Returns:
-         *         TeamDetailResponse: The team details
-         */
-        get: operations["get_team_v1_namespaces__namespace__teams__team_name__get"];
-        /**
-         * Update Team
-         * @description Update a Team CR by name.
-         *
-         *     Args:
-         *         namespace: The namespace containing the team
-         *         team_name: The name of the team
-         *         body: The team update request
-         *
-         *     Returns:
-         *         TeamDetailResponse: The updated team details
-         */
-        put: operations["update_team_v1_namespaces__namespace__teams__team_name__put"];
-        post?: never;
-        /**
-         * Delete Team
-         * @description Delete a Team CR by name.
-         *
-         *     Args:
-         *         namespace: The namespace containing the team
-         *         team_name: The name of the team
-         */
-        delete: operations["delete_team_v1_namespaces__namespace__teams__team_name__delete"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/namespaces/{namespace}/queries": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * List Queries
-         * @description List all queries in a namespace.
-         */
-        get: operations["list_queries_v1_namespaces__namespace__queries_get"];
-        put?: never;
-        /**
-         * Create Query
-         * @description Create a new query.
-         */
-        post: operations["create_query_v1_namespaces__namespace__queries_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/namespaces/{namespace}/queries/{query_name}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get Query
-         * @description Get a specific query.
-         */
-        get: operations["get_query_v1_namespaces__namespace__queries__query_name__get"];
-        /**
-         * Update Query
-         * @description Update a specific query.
-         */
-        put: operations["update_query_v1_namespaces__namespace__queries__query_name__put"];
-        post?: never;
-        /**
-         * Delete Query
-         * @description Delete a specific query.
-         */
-        delete: operations["delete_query_v1_namespaces__namespace__queries__query_name__delete"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/namespaces/{namespace}/queries/{query_name}/cancel": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        /**
-         * Cancel Query
-         * @description Cancel a specific query by setting spec.cancel to true.
-         */
-        patch: operations["cancel_query_v1_namespaces__namespace__queries__query_name__cancel_patch"];
-        trace?: never;
-    };
-    "/v1/namespaces/{namespace}/tools": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * List Tools
-         * @description List all Tool CRs in a namespace.
-         *
-         *     Args:
-         *         namespace: The namespace to list tools from
-         *
-         *     Returns:
-         *         ToolListResponse: List of all tools in the namespace
-         */
-        get: operations["list_tools_v1_namespaces__namespace__tools_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/namespaces/{namespace}/tools/{tool_name}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get Tool
-         * @description Get a specific Tool CR by name.
-         *
-         *     Args:
-         *         namespace: The namespace to get the tool from
-         *         tool_name: The name of the tool
-         *
-         *     Returns:
-         *         ToolDetailResponse: The tool details
-         */
-        get: operations["get_tool_v1_namespaces__namespace__tools__tool_name__get"];
-        put?: never;
-        post?: never;
-        /**
-         * Delete Tool
-         * @description Delete a Tool CR by name.
-         *
-         *     Args:
-         *         namespace: The namespace containing the tool
-         *         tool_name: The name of the tool
-         */
-        delete: operations["delete_tool_v1_namespaces__namespace__tools__tool_name__delete"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/namespaces/{namespace}/mcp-servers": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * List Mcp Servers
-         * @description List all MCPServer CRs in a namespace.
-         *
-         *     Args:
-         *         namespace: The namespace to list MCP servers from
-         *
-         *     Returns:
-         *         MCPServerListResponse: List of all MCP servers in the namespace
-         */
-        get: operations["list_mcp_servers_v1_namespaces__namespace__mcp_servers_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/namespaces/{namespace}/mcp-servers/{mcp_server_name}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get Mcp Server
-         * @description Get a specific MCPServer CR by name.
-         *
-         *     Args:
-         *         namespace: The namespace to get the MCP server from
-         *         mcp_server_name: The name of the MCP server
-         *
-         *     Returns:
-         *         MCPServerDetailResponse: The MCP server details
-         */
-        get: operations["get_mcp_server_v1_namespaces__namespace__mcp_servers__mcp_server_name__get"];
-        put?: never;
-        post?: never;
-        /**
-         * Delete Mcp Server
-         * @description Delete a MCPServer CR by name.
-         *
-         *     Args:
-         *         namespace: The namespace containing the MCP server
-         *         mcp_server_name: The name of the MCP server
-         */
-        delete: operations["delete_mcp_server_v1_namespaces__namespace__mcp_servers__mcp_server_name__delete"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/namespaces/{namespace}/a2a-servers": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * List A2A Servers
-         * @description List all A2AServer CRs in a namespace.
-         *
-         *     Args:
-         *         namespace: The namespace to list A2A servers from
-         *
-         *     Returns:
-         *         A2AServerListResponse: List of all A2A servers in the namespace
-         */
-        get: operations["list_a2a_servers_v1_namespaces__namespace__a2a_servers_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/namespaces/{namespace}/a2a-servers/{a2a_server_name}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get A2A Server
-         * @description Get a specific A2AServer CR by name.
-         *
-         *     Args:
-         *         namespace: The namespace to get the A2A server from
-         *         a2a_server_name: The name of the A2A server
-         *
-         *     Returns:
-         *         A2AServerDetailResponse: The A2A server details
-         */
-        get: operations["get_a2a_server_v1_namespaces__namespace__a2a_servers__a2a_server_name__get"];
-        put?: never;
-        post?: never;
-        /**
-         * Delete A2A Server
-         * @description Delete a A2AServer CR by name.
-         *
-         *     Args:
-         *         namespace: The namespace containing the A2A server
-         *         a2a_server_name: The name of the A2A server
-         */
-        delete: operations["delete_a2a_server_v1_namespaces__namespace__a2a_servers__a2a_server_name__delete"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/namespaces/{namespace}/memories": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * List Memories
-         * @description List all memories in a namespace.
-         */
-        get: operations["list_memories_v1_namespaces__namespace__memories_get"];
-        put?: never;
-        /**
-         * Create Memory
-         * @description Create a new memory.
-         */
-        post: operations["create_memory_v1_namespaces__namespace__memories_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/namespaces/{namespace}/memories/{name}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get Memory
-         * @description Get a specific memory by name.
-         */
-        get: operations["get_memory_v1_namespaces__namespace__memories__name__get"];
-        /**
-         * Update Memory
-         * @description Update an existing memory.
-         */
-        put: operations["update_memory_v1_namespaces__namespace__memories__name__put"];
-        post?: never;
-        /**
-         * Delete Memory
-         * @description Delete a memory.
-         */
-        delete: operations["delete_memory_v1_namespaces__namespace__memories__name__delete"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/namespaces/{namespace}/memories/{name}/sessions/{session_id}/messages": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get Memory Messages
-         * @description Get messages for a specific session from a memory resource.
-         */
-        get: operations["get_memory_messages_v1_namespaces__namespace__memories__name__sessions__session_id__messages_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/namespaces/{namespace}/memory-messages": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * List Memory Messages
-         * @description List all memory messages with context, optionally filtered.
-         */
-        get: operations["list_memory_messages_v1_namespaces__namespace__memory_messages_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/namespaces/{namespace}/sessions": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * List Sessions
-         * @description List all sessions in a namespace, optionally filtered by memory.
-         */
-        get: operations["list_sessions_v1_namespaces__namespace__sessions_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/system-info": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get System Info */
-        get: operations["get_system_info_v1_system_info_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/namespaces/{namespace}/ark-services": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * List Ark Services
-         * @description List ARK services (Helm releases) in a namespace.
-         *
-         *     Args:
-         *         namespace: The namespace to list ARK services from
-         *         list_all_services: List all Helm releases instead of just ARK services (default: False)
-         *
-         *     Returns:
-         *         ArkServiceListResponse: List of ARK services in the namespace
-         */
-        get: operations["list_ark_services_v1_namespaces__namespace__ark_services_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/namespaces/{namespace}/ark-services/{service_name}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get Ark Service
-         * @description Get a specific ARK service (Helm release) by name.
-         *
-         *     Args:
-         *         namespace: The namespace to get the ARK service from
-         *         service_name: The name of the ARK service (Helm release)
-         *
-         *     Returns:
-         *         ArkService: The ARK service details
-         */
-        get: operations["get_ark_service_v1_namespaces__namespace__ark_services__service_name__get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/namespaces/{namespace}/events": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * List Events
-         * @description List all Kubernetes events in a namespace with optional filtering.
-         *
-         *     Args:
-         *         namespace: The namespace to list events from
-         *         type_filter: Filter by event type (Normal, Warning)
-         *         kind_filter: Filter by involved object kind (Agent, Team, Query, etc.)
-         *         name_filter: Filter by involved object name
-         *         limit: Maximum number of events to return (default: 500)
-         *         page: Page number for pagination (1-based, default: 1)
-         *
-         *     Returns:
-         *         EventListResponse: List of events in the namespace
-         */
-        get: operations["list_events_v1_namespaces__namespace__events_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/namespaces/{namespace}/events/{event_name}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get Event
-         * @description Get a specific Kubernetes event by name.
-         *
-         *     Args:
-         *         namespace: The namespace containing the event
-         *         event_name: The name of the event to retrieve
-         *
-         *     Returns:
-         *         EventResponse: The requested event details
-         */
-        get: operations["get_event_v1_namespaces__namespace__events__event_name__get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/namespaces/{namespace}/evaluations": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * List Evaluations
-         * @description List all evaluations in a namespace.
-         */
-        get: operations["list_evaluations_v1_namespaces__namespace__evaluations_get"];
-        put?: never;
-        /**
-         * Create Evaluation
-         * @description Create a new evaluation.
-         */
-        post: operations["create_evaluation_v1_namespaces__namespace__evaluations_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/namespaces/{namespace}/evaluations/{name}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get Evaluation
-         * @description Get details of a specific evaluation.
-         */
-        get: operations["get_evaluation_v1_namespaces__namespace__evaluations__name__get"];
-        /**
-         * Update Evaluation
-         * @description Update an existing evaluation.
-         */
-        put: operations["update_evaluation_v1_namespaces__namespace__evaluations__name__put"];
-        post?: never;
-        /**
-         * Delete Evaluation
-         * @description Delete an evaluation.
-         */
-        delete: operations["delete_evaluation_v1_namespaces__namespace__evaluations__name__delete"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/namespaces/{namespace}/evaluations/{name}/cancel": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        /**
-         * Cancel Evaluation
-         * @description Cancel a running evaluation.
-         */
-        patch: operations["cancel_evaluation_v1_namespaces__namespace__evaluations__name__cancel_patch"];
-        trace?: never;
-    };
-    "/v1/namespaces/{namespace}/evaluators": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * List Evaluators
-         * @description List all evaluators in a namespace.
-         */
-        get: operations["list_evaluators_v1_namespaces__namespace__evaluators_get"];
-        put?: never;
-        /**
-         * Create Evaluator
-         * @description Create a new evaluator.
-         */
-        post: operations["create_evaluator_v1_namespaces__namespace__evaluators_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/namespaces/{namespace}/evaluators/{name}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get Evaluator
-         * @description Get details of a specific evaluator.
-         */
-        get: operations["get_evaluator_v1_namespaces__namespace__evaluators__name__get"];
-        /**
-         * Update Evaluator
-         * @description Update an existing evaluator.
-         */
-        put: operations["update_evaluator_v1_namespaces__namespace__evaluators__name__put"];
-        post?: never;
-        /**
-         * Delete Evaluator
-         * @description Delete an evaluator.
-         */
-        delete: operations["delete_evaluator_v1_namespaces__namespace__evaluators__name__delete"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/openai/v1/chat/completions": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Chat Completions */
-        post: operations["chat_completions_openai_v1_chat_completions_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/openai/v1/models": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * List Models
-         * @description List available models in OpenAI format, including ARK agents, teams, models, and tools.
-         */
-        get: operations["list_models_openai_v1_models_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
+  "/health": {
+    /**
+     * Health Check
+     * @description This endpoint always returns a healthy status if the service is running.
+     *
+     * Returns: HealthResponse: Basic health status of the service
+     */
+    get: operations["health_check_health_get"];
+  };
+  "/ready": {
+    /**
+     * Readiness Check
+     * @description Verifies that the ARK API service is ready to handle requests by testing
+     * connectivity to the Kubernetes API.
+     *
+     * Returns: ReadinessResponse: Readiness status with Kubernetes connectivity check
+     */
+    get: operations["readiness_check_ready_get"];
+  };
+  "/v1/namespaces": {
+    /**
+     * List Namespaces
+     * @description List all available namespaces.
+     *
+     * Returns:
+     *     NamespaceListResponse: List of all available namespaces
+     */
+    get: operations["list_namespaces_v1_namespaces_get"];
+    /**
+     * Create Namespace
+     * @description Create a new Kubernetes namespace.
+     *
+     * Args:
+     *     body: The namespace creation request
+     *
+     * Returns:
+     *     NamespaceResponse: The created namespace details
+     */
+    post: operations["create_namespace_v1_namespaces_post"];
+  };
+  "/v1/namespaces/{namespace}/secrets": {
+    /**
+     * List Secrets
+     * @description List all Kubernetes secrets in a namespace.
+     *
+     * Args:
+     *     namespace: The namespace to list secrets from
+     *
+     * Returns:
+     *     SecretListResponse: List of all secrets in the namespace
+     */
+    get: operations["list_secrets_v1_namespaces__namespace__secrets_get"];
+    /**
+     * Create Secret
+     * @description Create a new Kubernetes secret.
+     *
+     * Args:
+     *     namespace: The namespace to create the secret in
+     *     body: The secret creation request
+     *
+     * Returns:
+     *     SecretDetailResponse: The created secret details
+     */
+    post: operations["create_secret_v1_namespaces__namespace__secrets_post"];
+  };
+  "/v1/namespaces/{namespace}/secrets/{secret_name}": {
+    /**
+     * Get Secret
+     * @description Get a specific Kubernetes secret by name.
+     *
+     * Args:
+     *     namespace: The namespace to get the secret from
+     *     secret_name: The name of the secret
+     *
+     * Returns:
+     *     SecretDetailResponse: The secret details with total data length
+     */
+    get: operations["get_secret_v1_namespaces__namespace__secrets__secret_name__get"];
+    /**
+     * Update Secret
+     * @description Update a Kubernetes secret by name.
+     *
+     * Args:
+     *     namespace: The namespace containing the secret
+     *     secret_name: The name of the secret
+     *     body: The secret update request
+     *
+     * Returns:
+     *     SecretDetailResponse: The updated secret details
+     */
+    put: operations["update_secret_v1_namespaces__namespace__secrets__secret_name__put"];
+    /**
+     * Delete Secret
+     * @description Delete a Kubernetes secret by name.
+     *
+     * Args:
+     *     namespace: The namespace containing the secret
+     *     secret_name: The name of the secret
+     */
+    delete: operations["delete_secret_v1_namespaces__namespace__secrets__secret_name__delete"];
+  };
+  "/v1/namespaces/{namespace}/agents": {
+    /**
+     * List Agents
+     * @description List all Agent CRs in a namespace.
+     *
+     * Args:
+     *     namespace: The namespace to list agents from
+     *
+     * Returns:
+     *     AgentListResponse: List of all agents in the namespace
+     */
+    get: operations["list_agents_v1_namespaces__namespace__agents_get"];
+    /**
+     * Create Agent
+     * @description Create a new Agent CR.
+     *
+     * Args:
+     *     namespace: The namespace to create the agent in
+     *     body: The agent creation request
+     *
+     * Returns:
+     *     AgentDetailResponse: The created agent details
+     */
+    post: operations["create_agent_v1_namespaces__namespace__agents_post"];
+  };
+  "/v1/namespaces/{namespace}/agents/{agent_name}": {
+    /**
+     * Get Agent
+     * @description Get a specific Agent CR by name.
+     *
+     * Args:
+     *     namespace: The namespace to get the agent from
+     *     agent_name: The name of the agent
+     *
+     * Returns:
+     *     AgentDetailResponse: The agent details
+     */
+    get: operations["get_agent_v1_namespaces__namespace__agents__agent_name__get"];
+    /**
+     * Update Agent
+     * @description Update an Agent CR by name.
+     *
+     * Args:
+     *     namespace: The namespace containing the agent
+     *     agent_name: The name of the agent
+     *     body: The agent update request
+     *
+     * Returns:
+     *     AgentDetailResponse: The updated agent details
+     */
+    put: operations["update_agent_v1_namespaces__namespace__agents__agent_name__put"];
+    /**
+     * Delete Agent
+     * @description Delete an Agent CR by name.
+     *
+     * Args:
+     *     namespace: The namespace containing the agent
+     *     agent_name: The name of the agent
+     */
+    delete: operations["delete_agent_v1_namespaces__namespace__agents__agent_name__delete"];
+  };
+  "/v1/namespaces/{namespace}/models": {
+    /**
+     * List Models
+     * @description List all Model CRs in a namespace.
+     *
+     * Args:
+     *     namespace: The namespace to list models from
+     *
+     * Returns:
+     *     ModelListResponse: List of all models in the namespace
+     */
+    get: operations["list_models_v1_namespaces__namespace__models_get"];
+    /**
+     * Create Model
+     * @description Create a new Model CR.
+     *
+     * Args:
+     *     namespace: The namespace to create the model in
+     *     body: The model creation request
+     *
+     * Returns:
+     *     ModelDetailResponse: The created model details
+     */
+    post: operations["create_model_v1_namespaces__namespace__models_post"];
+  };
+  "/v1/namespaces/{namespace}/models/{model_name}": {
+    /**
+     * Get Model
+     * @description Get a specific Model CR by name.
+     *
+     * Args:
+     *     namespace: The namespace to get the model from
+     *     model_name: The name of the model
+     *
+     * Returns:
+     *     ModelDetailResponse: The model details
+     */
+    get: operations["get_model_v1_namespaces__namespace__models__model_name__get"];
+    /**
+     * Update Model
+     * @description Update a Model CR by name.
+     *
+     * Args:
+     *     namespace: The namespace containing the model
+     *     model_name: The name of the model
+     *     body: The model update request
+     *
+     * Returns:
+     *     ModelDetailResponse: The updated model details
+     */
+    put: operations["update_model_v1_namespaces__namespace__models__model_name__put"];
+    /**
+     * Delete Model
+     * @description Delete a Model CR by name.
+     *
+     * Args:
+     *     namespace: The namespace containing the model
+     *     model_name: The name of the model
+     */
+    delete: operations["delete_model_v1_namespaces__namespace__models__model_name__delete"];
+  };
+  "/v1/namespaces/{namespace}/teams": {
+    /**
+     * List Teams
+     * @description List all Team CRs in a namespace.
+     *
+     * Args:
+     *     namespace: The namespace to list teams from
+     *
+     * Returns:
+     *     TeamListResponse: List of all teams in the namespace
+     */
+    get: operations["list_teams_v1_namespaces__namespace__teams_get"];
+    /**
+     * Create Team
+     * @description Create a new Team CR.
+     *
+     * Args:
+     *     namespace: The namespace to create the team in
+     *     body: The team creation request
+     *
+     * Returns:
+     *     TeamDetailResponse: The created team details
+     */
+    post: operations["create_team_v1_namespaces__namespace__teams_post"];
+  };
+  "/v1/namespaces/{namespace}/teams/{team_name}": {
+    /**
+     * Get Team
+     * @description Get a specific Team CR by name.
+     *
+     * Args:
+     *     namespace: The namespace to get the team from
+     *     team_name: The name of the team
+     *
+     * Returns:
+     *     TeamDetailResponse: The team details
+     */
+    get: operations["get_team_v1_namespaces__namespace__teams__team_name__get"];
+    /**
+     * Update Team
+     * @description Update a Team CR by name.
+     *
+     * Args:
+     *     namespace: The namespace containing the team
+     *     team_name: The name of the team
+     *     body: The team update request
+     *
+     * Returns:
+     *     TeamDetailResponse: The updated team details
+     */
+    put: operations["update_team_v1_namespaces__namespace__teams__team_name__put"];
+    /**
+     * Delete Team
+     * @description Delete a Team CR by name.
+     *
+     * Args:
+     *     namespace: The namespace containing the team
+     *     team_name: The name of the team
+     */
+    delete: operations["delete_team_v1_namespaces__namespace__teams__team_name__delete"];
+  };
+  "/v1/namespaces/{namespace}/queries": {
+    /**
+     * List Queries
+     * @description List all queries in a namespace.
+     */
+    get: operations["list_queries_v1_namespaces__namespace__queries_get"];
+    /**
+     * Create Query
+     * @description Create a new query.
+     */
+    post: operations["create_query_v1_namespaces__namespace__queries_post"];
+  };
+  "/v1/namespaces/{namespace}/queries/{query_name}": {
+    /**
+     * Get Query
+     * @description Get a specific query.
+     */
+    get: operations["get_query_v1_namespaces__namespace__queries__query_name__get"];
+    /**
+     * Update Query
+     * @description Update a specific query.
+     */
+    put: operations["update_query_v1_namespaces__namespace__queries__query_name__put"];
+    /**
+     * Delete Query
+     * @description Delete a specific query.
+     */
+    delete: operations["delete_query_v1_namespaces__namespace__queries__query_name__delete"];
+  };
+  "/v1/namespaces/{namespace}/queries/{query_name}/cancel": {
+    /**
+     * Cancel Query
+     * @description Cancel a specific query by setting spec.cancel to true.
+     */
+    patch: operations["cancel_query_v1_namespaces__namespace__queries__query_name__cancel_patch"];
+  };
+  "/v1/namespaces/{namespace}/tools": {
+    /**
+     * List Tools
+     * @description List all Tool CRs in a namespace.
+     *
+     * Args:
+     *     namespace: The namespace to list tools from
+     *
+     * Returns:
+     *     ToolListResponse: List of all tools in the namespace
+     */
+    get: operations["list_tools_v1_namespaces__namespace__tools_get"];
+  };
+  "/v1/namespaces/{namespace}/tools/{tool_name}": {
+    /**
+     * Get Tool
+     * @description Get a specific Tool CR by name.
+     *
+     * Args:
+     *     namespace: The namespace to get the tool from
+     *     tool_name: The name of the tool
+     *
+     * Returns:
+     *     ToolDetailResponse: The tool details
+     */
+    get: operations["get_tool_v1_namespaces__namespace__tools__tool_name__get"];
+    /**
+     * Delete Tool
+     * @description Delete a Tool CR by name.
+     *
+     * Args:
+     *     namespace: The namespace containing the tool
+     *     tool_name: The name of the tool
+     */
+    delete: operations["delete_tool_v1_namespaces__namespace__tools__tool_name__delete"];
+  };
+  "/v1/namespaces/{namespace}/mcp-servers": {
+    /**
+     * List Mcp Servers
+     * @description List all MCPServer CRs in a namespace.
+     *
+     * Args:
+     *     namespace: The namespace to list MCP servers from
+     *
+     * Returns:
+     *     MCPServerListResponse: List of all MCP servers in the namespace
+     */
+    get: operations["list_mcp_servers_v1_namespaces__namespace__mcp_servers_get"];
+  };
+  "/v1/namespaces/{namespace}/mcp-servers/{mcp_server_name}": {
+    /**
+     * Get Mcp Server
+     * @description Get a specific MCPServer CR by name.
+     *
+     * Args:
+     *     namespace: The namespace to get the MCP server from
+     *     mcp_server_name: The name of the MCP server
+     *
+     * Returns:
+     *     MCPServerDetailResponse: The MCP server details
+     */
+    get: operations["get_mcp_server_v1_namespaces__namespace__mcp_servers__mcp_server_name__get"];
+    /**
+     * Delete Mcp Server
+     * @description Delete a MCPServer CR by name.
+     *
+     * Args:
+     *     namespace: The namespace containing the MCP server
+     *     mcp_server_name: The name of the MCP server
+     */
+    delete: operations["delete_mcp_server_v1_namespaces__namespace__mcp_servers__mcp_server_name__delete"];
+  };
+  "/v1/namespaces/{namespace}/a2a-servers": {
+    /**
+     * List A2A Servers
+     * @description List all A2AServer CRs in a namespace.
+     *
+     * Args:
+     *     namespace: The namespace to list A2A servers from
+     *
+     * Returns:
+     *     A2AServerListResponse: List of all A2A servers in the namespace
+     */
+    get: operations["list_a2a_servers_v1_namespaces__namespace__a2a_servers_get"];
+  };
+  "/v1/namespaces/{namespace}/a2a-servers/{a2a_server_name}": {
+    /**
+     * Get A2A Server
+     * @description Get a specific A2AServer CR by name.
+     *
+     * Args:
+     *     namespace: The namespace to get the A2A server from
+     *     a2a_server_name: The name of the A2A server
+     *
+     * Returns:
+     *     A2AServerDetailResponse: The A2A server details
+     */
+    get: operations["get_a2a_server_v1_namespaces__namespace__a2a_servers__a2a_server_name__get"];
+    /**
+     * Delete A2A Server
+     * @description Delete a A2AServer CR by name.
+     *
+     * Args:
+     *     namespace: The namespace containing the A2A server
+     *     a2a_server_name: The name of the A2A server
+     */
+    delete: operations["delete_a2a_server_v1_namespaces__namespace__a2a_servers__a2a_server_name__delete"];
+  };
+  "/v1/namespaces/{namespace}/a2atasks": {
+    /**
+     * List A2Atasks
+     * @description List all A2ATasks in a namespace with optional filtering.
+     *
+     * Args:
+     *     namespace: The namespace to list A2ATasks from
+     *     phase: Filter by task phase (assigned, running, completed, failed, cancelled)
+     *     agent: Filter by agent name
+     *     task_id: Filter by task ID
+     *     limit: Maximum number of A2ATasks to return (default: 200)
+     *     page: Page number for pagination (1-based, default: 1)
+     *
+     * Returns:
+     *     A2ATaskListResponse: List of A2ATasks in the namespace
+     */
+    get: operations["list_a2atasks_v1_namespaces__namespace__a2atasks_get"];
+  };
+  "/v1/namespaces/{namespace}/a2atasks/{a2atask_name}": {
+    /**
+     * Get A2Atask
+     * @description Get a specific A2ATask by name with full details including history and artifacts.
+     *
+     * Args:
+     *     namespace: The namespace containing the A2ATask
+     *     a2atask_name: The name of the A2ATask to retrieve
+     *
+     * Returns:
+     *     A2ATaskDetailResponse: The requested A2ATask with full details
+     */
+    get: operations["get_a2atask_v1_namespaces__namespace__a2atasks__a2atask_name__get"];
+  };
+  "/v1/namespaces/{namespace}/memories": {
+    /**
+     * List Memories
+     * @description List all memories in a namespace.
+     */
+    get: operations["list_memories_v1_namespaces__namespace__memories_get"];
+    /**
+     * Create Memory
+     * @description Create a new memory.
+     */
+    post: operations["create_memory_v1_namespaces__namespace__memories_post"];
+  };
+  "/v1/namespaces/{namespace}/memories/{name}": {
+    /**
+     * Get Memory
+     * @description Get a specific memory by name.
+     */
+    get: operations["get_memory_v1_namespaces__namespace__memories__name__get"];
+    /**
+     * Update Memory
+     * @description Update an existing memory.
+     */
+    put: operations["update_memory_v1_namespaces__namespace__memories__name__put"];
+    /**
+     * Delete Memory
+     * @description Delete a memory.
+     */
+    delete: operations["delete_memory_v1_namespaces__namespace__memories__name__delete"];
+  };
+  "/v1/namespaces/{namespace}/memories/{name}/sessions/{session_id}/messages": {
+    /**
+     * Get Memory Messages
+     * @description Get messages for a specific session from a memory resource.
+     */
+    get: operations["get_memory_messages_v1_namespaces__namespace__memories__name__sessions__session_id__messages_get"];
+  };
+  "/v1/namespaces/{namespace}/memory-messages": {
+    /**
+     * List Memory Messages
+     * @description List all memory messages with context, optionally filtered.
+     */
+    get: operations["list_memory_messages_v1_namespaces__namespace__memory_messages_get"];
+  };
+  "/v1/namespaces/{namespace}/sessions": {
+    /**
+     * List Sessions
+     * @description List all sessions in a namespace, optionally filtered by memory.
+     */
+    get: operations["list_sessions_v1_namespaces__namespace__sessions_get"];
+  };
+  "/v1/system-info": {
+    /** Get System Info */
+    get: operations["get_system_info_v1_system_info_get"];
+  };
+  "/v1/namespaces/{namespace}/ark-services": {
+    /**
+     * List Ark Services
+     * @description List ARK services (Helm releases) in a namespace.
+     *
+     * Args:
+     *     namespace: The namespace to list ARK services from
+     *     list_all_services: List all Helm releases instead of just ARK services (default: False)
+     *
+     * Returns:
+     *     ArkServiceListResponse: List of ARK services in the namespace
+     */
+    get: operations["list_ark_services_v1_namespaces__namespace__ark_services_get"];
+  };
+  "/v1/namespaces/{namespace}/ark-services/{service_name}": {
+    /**
+     * Get Ark Service
+     * @description Get a specific ARK service (Helm release) by name.
+     *
+     * Args:
+     *     namespace: The namespace to get the ARK service from
+     *     service_name: The name of the ARK service (Helm release)
+     *
+     * Returns:
+     *     ArkService: The ARK service details
+     */
+    get: operations["get_ark_service_v1_namespaces__namespace__ark_services__service_name__get"];
+  };
+  "/v1/namespaces/{namespace}/events": {
+    /**
+     * List Events
+     * @description List all Kubernetes events in a namespace with optional filtering.
+     *
+     * Args:
+     *     namespace: The namespace to list events from
+     *     type_filter: Filter by event type (Normal, Warning)
+     *     kind_filter: Filter by involved object kind (Agent, Team, Query, etc.)
+     *     name_filter: Filter by involved object name
+     *     limit: Maximum number of events to return (default: 500)
+     *     page: Page number for pagination (1-based, default: 1)
+     *
+     * Returns:
+     *     EventListResponse: List of events in the namespace
+     */
+    get: operations["list_events_v1_namespaces__namespace__events_get"];
+  };
+  "/v1/namespaces/{namespace}/events/{event_name}": {
+    /**
+     * Get Event
+     * @description Get a specific Kubernetes event by name.
+     *
+     * Args:
+     *     namespace: The namespace containing the event
+     *     event_name: The name of the event to retrieve
+     *
+     * Returns:
+     *     EventResponse: The requested event details
+     */
+    get: operations["get_event_v1_namespaces__namespace__events__event_name__get"];
+  };
+  "/v1/namespaces/{namespace}/evaluations": {
+    /**
+     * List Evaluations
+     * @description List all evaluations in a namespace.
+     */
+    get: operations["list_evaluations_v1_namespaces__namespace__evaluations_get"];
+    /**
+     * Create Evaluation
+     * @description Create a new evaluation.
+     */
+    post: operations["create_evaluation_v1_namespaces__namespace__evaluations_post"];
+  };
+  "/v1/namespaces/{namespace}/evaluations/{name}": {
+    /**
+     * Get Evaluation
+     * @description Get details of a specific evaluation.
+     */
+    get: operations["get_evaluation_v1_namespaces__namespace__evaluations__name__get"];
+    /**
+     * Update Evaluation
+     * @description Update an existing evaluation.
+     */
+    put: operations["update_evaluation_v1_namespaces__namespace__evaluations__name__put"];
+    /**
+     * Delete Evaluation
+     * @description Delete an evaluation.
+     */
+    delete: operations["delete_evaluation_v1_namespaces__namespace__evaluations__name__delete"];
+  };
+  "/v1/namespaces/{namespace}/evaluations/{name}/cancel": {
+    /**
+     * Cancel Evaluation
+     * @description Cancel a running evaluation.
+     */
+    patch: operations["cancel_evaluation_v1_namespaces__namespace__evaluations__name__cancel_patch"];
+  };
+  "/v1/namespaces/{namespace}/evaluators": {
+    /**
+     * List Evaluators
+     * @description List all evaluators in a namespace.
+     */
+    get: operations["list_evaluators_v1_namespaces__namespace__evaluators_get"];
+    /**
+     * Create Evaluator
+     * @description Create a new evaluator.
+     */
+    post: operations["create_evaluator_v1_namespaces__namespace__evaluators_post"];
+  };
+  "/v1/namespaces/{namespace}/evaluators/{name}": {
+    /**
+     * Get Evaluator
+     * @description Get details of a specific evaluator.
+     */
+    get: operations["get_evaluator_v1_namespaces__namespace__evaluators__name__get"];
+    /**
+     * Update Evaluator
+     * @description Update an existing evaluator.
+     */
+    put: operations["update_evaluator_v1_namespaces__namespace__evaluators__name__put"];
+    /**
+     * Delete Evaluator
+     * @description Delete an evaluator.
+     */
+    delete: operations["delete_evaluator_v1_namespaces__namespace__evaluators__name__delete"];
+  };
+  "/openai/v1/chat/completions": {
+    /** Chat Completions */
+    post: operations["chat_completions_openai_v1_chat_completions_post"];
+  };
+  "/openai/v1/models": {
+    /**
+     * List Models
+     * @description List available models in OpenAI format, including ARK agents, teams, models, and tools.
+     */
+    get: operations["list_models_openai_v1_models_get"];
+  };
 }
+
 export type webhooks = Record<string, never>;
+
 export interface components {
-    schemas: {
-        /** A2AServerDetailResponse */
-        A2AServerDetailResponse: {
-            /** Name */
-            name: string;
-            /** Namespace */
-            namespace: string;
-            /** Description */
-            description?: string | null;
-            /** Labels */
-            labels?: {
-                [key: string]: string;
-            } | null;
-            /** Annotations */
-            annotations?: {
-                [key: string]: string;
-            } | null;
-            /** Spec */
-            spec?: {
-                [key: string]: unknown;
-            } | null;
-            /** Status */
-            status?: {
-                [key: string]: unknown;
-            } | null;
-        };
-        /** A2AServerListResponse */
-        A2AServerListResponse: {
-            /** Items */
-            items: components["schemas"]["A2AServerResponse"][];
-            /** Total */
-            total: number;
-        };
-        /** A2AServerResponse */
-        A2AServerResponse: {
-            /** Name */
-            name: string;
-            /** Namespace */
-            namespace: string;
-            /** Description */
-            description?: string | null;
-            /** Labels */
-            labels?: {
-                [key: string]: string;
-            } | null;
-            /** Address */
-            address?: string | null;
-            /** Annotations */
-            annotations?: {
-                [key: string]: string;
-            } | null;
-            /** Ready */
-            ready?: boolean | null;
-            /** Discovering */
-            discovering?: boolean | null;
-            /** Status Message */
-            status_message?: string | null;
-        };
-        /**
-         * AgentCreateRequest
-         * @description Request model for creating an agent.
-         */
-        AgentCreateRequest: {
-            /** Name */
-            name: string;
-            /** Description */
-            description?: string | null;
-            executionEngine?: components["schemas"]["ExecutionEngineRef"] | null;
-            modelRef?: components["schemas"]["ModelRef"] | null;
-            /** Parameters */
-            parameters?: components["schemas"]["ark_api__models__agents__Parameter-Input"][] | null;
-            /** Prompt */
-            prompt?: string | null;
-            /** Tools */
-            tools?: components["schemas"]["Tool-Input"][] | null;
-        };
-        /**
-         * AgentDetailResponse
-         * @description Detailed agent response model.
-         */
-        AgentDetailResponse: {
-            /** Name */
-            name: string;
-            /** Namespace */
-            namespace: string;
-            /** Description */
-            description?: string | null;
-            executionEngine?: components["schemas"]["ExecutionEngineRef"] | null;
-            modelRef?: components["schemas"]["ModelRef"] | null;
-            /** Parameters */
-            parameters?: components["schemas"]["ark_api__models__agents__Parameter-Output"][] | null;
-            /** Prompt */
-            prompt?: string | null;
-            /** Tools */
-            tools?: components["schemas"]["Tool-Output"][] | null;
-            /** Skills */
-            skills?: components["schemas"]["Skill"][] | null;
-            /**
-             * Isa2A
-             * @default false
-             */
-            isA2A: boolean;
-            /** Status */
-            status?: {
-                [key: string]: unknown;
-            } | null;
-            /** Annotations */
-            annotations?: {
-                [key: string]: string;
-            } | null;
-        };
-        /**
-         * AgentListResponse
-         * @description List of agents response model.
-         */
-        AgentListResponse: {
-            /** Items */
-            items: components["schemas"]["AgentResponse"][];
-            /** Count */
-            count: number;
-        };
-        /**
-         * AgentResponse
-         * @description Agent resource response model.
-         */
-        AgentResponse: {
-            /** Name */
-            name: string;
-            /** Namespace */
-            namespace: string;
-            /** Description */
-            description?: string | null;
-            /** Model Ref */
-            model_ref?: string | null;
-            /** Prompt */
-            prompt?: string | null;
-            /** Status */
-            status?: string | null;
-            /** Annotations */
-            annotations?: {
-                [key: string]: string;
-            } | null;
-        };
-        /**
-         * AgentUpdateRequest
-         * @description Request model for updating an agent.
-         */
-        AgentUpdateRequest: {
-            /** Description */
-            description?: string | null;
-            executionEngine?: components["schemas"]["ExecutionEngineRef"] | null;
-            modelRef?: components["schemas"]["ModelRef"] | null;
-            /** Parameters */
-            parameters?: components["schemas"]["ark_api__models__agents__Parameter-Input"][] | null;
-            /** Prompt */
-            prompt?: string | null;
-            /** Tools */
-            tools?: components["schemas"]["Tool-Input"][] | null;
-        };
-        /** Annotation */
-        Annotation: {
-            /**
-             * Type
-             * @constant
-             */
-            type: "url_citation";
-            url_citation: components["schemas"]["AnnotationURLCitation"];
-        } & {
-            [key: string]: unknown;
-        };
-        /** AnnotationURLCitation */
-        AnnotationURLCitation: {
-            /** End Index */
-            end_index: number;
-            /** Start Index */
-            start_index: number;
-            /** Title */
-            title: string;
-            /** Url */
-            url: string;
-        } & {
-            [key: string]: unknown;
-        };
-        /**
-         * ArkService
-         * @description Response model for a single ARK service.
-         *
-         *     An ARK service is essentially a Helm chart with ARK-specific annotations
-         *     that indicate it provides AI capabilities (agents, models, tools, etc.).
-         */
-        ArkService: {
-            /** Name */
-            name: string;
-            /** Namespace */
-            namespace: string;
-            /** Chart */
-            chart: string;
-            /** Chart Version */
-            chart_version?: string | null;
-            /** App Version */
-            app_version: string;
-            /** Status */
-            status: string;
-            /** Revision */
-            revision: number;
-            /** Updated */
-            updated: string;
-            /** Ark Service Type */
-            ark_service_type?: string | null;
-            /** Description */
-            description?: string | null;
-            /**
-             * Ark Resources
-             * @default []
-             */
-            ark_resources: string[];
-            /**
-             * Httproutes
-             * @default []
-             */
-            httproutes: components["schemas"]["HTTPRouteInfo"][];
-        };
-        /**
-         * ArkServiceListResponse
-         * @description Response model for a list of ARK services.
-         */
-        ArkServiceListResponse: {
-            /** Items */
-            items: components["schemas"]["ArkService"][];
-            /** Count */
-            count: number;
-        };
-        /**
-         * AzureConfig
-         * @description Azure model configuration.
-         */
-        AzureConfig: {
-            /** Apikey */
-            apiKey: string | components["schemas"]["ark_api__models__models__ValueSource"];
-            /** Baseurl */
-            baseUrl: string | components["schemas"]["ark_api__models__models__ValueSource"];
-            /** Apiversion */
-            apiVersion?: string | components["schemas"]["ark_api__models__models__ValueSource"] | null;
-        };
-        /**
-         * BaselineEvaluationMetadata
-         * @description Enhanced metadata for baseline evaluations.
-         */
-        BaselineEvaluationMetadata: {
-            /** Baseline Score */
-            baseline_score?: number | null;
-            /** Current Score */
-            current_score?: number | null;
-            /** Improvement */
-            improvement?: number | null;
-            /** Baseline Passed */
-            baseline_passed?: boolean | null;
-            /** Current Passed */
-            current_passed?: boolean | null;
-            /** Comparison Threshold */
-            comparison_threshold?: number | null;
-            /** Baseline Metadata */
-            baseline_metadata?: {
-                [key: string]: unknown;
-            } | null;
-        };
-        /**
-         * BatchEvaluationMetadata
-         * @description Enhanced metadata for batch evaluations.
-         */
-        BatchEvaluationMetadata: {
-            /** Total Evaluations */
-            total_evaluations?: number | null;
-            /** Completed Evaluations */
-            completed_evaluations?: number | null;
-            /** Failed Evaluations */
-            failed_evaluations?: number | null;
-            /** Pending Evaluations */
-            pending_evaluations?: number | null;
-            /** Average Score */
-            average_score?: number | null;
-            /** Min Score */
-            min_score?: number | null;
-            /** Max Score */
-            max_score?: number | null;
-            /** Batch Passed */
-            batch_passed?: boolean | null;
-            /** Evaluation Results */
-            evaluation_results?: {
-                [key: string]: unknown;
-            }[] | null;
-        };
-        /**
-         * BatchResult
-         * @description Result from batch evaluation.
-         */
-        BatchResult: {
-            /** Evaluatorname */
-            evaluatorName: string;
-            /** Score */
-            score?: number | null;
-            /** Passed */
-            passed?: boolean | null;
-            /** Message */
-            message?: string | null;
-            /** Metadata */
-            metadata?: {
-                [key: string]: unknown;
-            } | null;
-        };
-        /**
-         * BedrockConfig
-         * @description Bedrock model configuration.
-         */
-        BedrockConfig: {
-            /** Region */
-            region?: string | components["schemas"]["ark_api__models__models__ValueSource"] | null;
-            /** Accesskeyid */
-            accessKeyId?: string | components["schemas"]["ark_api__models__models__ValueSource"] | null;
-            /** Secretaccesskey */
-            secretAccessKey?: string | components["schemas"]["ark_api__models__models__ValueSource"] | null;
-            /** Sessiontoken */
-            sessionToken?: string | components["schemas"]["ark_api__models__models__ValueSource"] | null;
-            /** Modelarn */
-            modelArn?: string | components["schemas"]["ark_api__models__models__ValueSource"] | null;
-            /** Maxtokens */
-            maxTokens?: number | null;
-            /** Temperature */
-            temperature?: string | null;
-        };
-        /**
-         * CategoryBreakdown
-         * @description Category-wise breakdown of evaluation results.
-         */
-        CategoryBreakdown: {
-            /** Category */
-            category: string;
-            /** Score */
-            score?: number | null;
-            /** Passed */
-            passed?: boolean | null;
-            /** Weight */
-            weight?: number | null;
-            /** Description */
-            description?: string | null;
-        };
-        /** ChatCompletion */
-        ChatCompletion: {
-            /** Id */
-            id: string;
-            /** Choices */
-            choices: components["schemas"]["Choice"][];
-            /** Created */
-            created: number;
-            /** Model */
-            model: string;
-            /**
-             * Object
-             * @constant
-             */
-            object: "chat.completion";
-            /** Service Tier */
-            service_tier?: ("auto" | "default" | "flex" | "scale" | "priority") | null;
-            /** System Fingerprint */
-            system_fingerprint?: string | null;
-            usage?: components["schemas"]["CompletionUsage"] | null;
-        } & {
-            [key: string]: unknown;
-        };
-        /** ChatCompletionAudio */
-        ChatCompletionAudio: {
-            /** Id */
-            id: string;
-            /** Data */
-            data: string;
-            /** Expires At */
-            expires_at: number;
-            /** Transcript */
-            transcript: string;
-        } & {
-            [key: string]: unknown;
-        };
-        /** ChatCompletionMessage */
-        ChatCompletionMessage: {
-            /** Content */
-            content?: string | null;
-            /** Refusal */
-            refusal?: string | null;
-            /**
-             * Role
-             * @constant
-             */
-            role: "assistant";
-            /** Annotations */
-            annotations?: components["schemas"]["Annotation"][] | null;
-            audio?: components["schemas"]["ChatCompletionAudio"] | null;
-            function_call?: components["schemas"]["FunctionCall"] | null;
-            /** Tool Calls */
-            tool_calls?: (components["schemas"]["ChatCompletionMessageFunctionToolCall"] | components["schemas"]["ChatCompletionMessageCustomToolCall"])[] | null;
-        } & {
-            [key: string]: unknown;
-        };
-        /** ChatCompletionMessageCustomToolCall */
-        ChatCompletionMessageCustomToolCall: {
-            /** Id */
-            id: string;
-            custom: components["schemas"]["Custom"];
-            /**
-             * Type
-             * @constant
-             */
-            type: "custom";
-        } & {
-            [key: string]: unknown;
-        };
-        /** ChatCompletionMessageFunctionToolCall */
-        ChatCompletionMessageFunctionToolCall: {
-            /** Id */
-            id: string;
-            function: components["schemas"]["Function"];
-            /**
-             * Type
-             * @constant
-             */
-            type: "function";
-        } & {
-            [key: string]: unknown;
-        };
-        /** ChatCompletionRequest */
-        ChatCompletionRequest: {
-            /** Model */
-            model: string;
-            /** Messages */
-            messages: components["schemas"]["ChatMessage"][];
-            /**
-             * Temperature
-             * @default 1
-             */
-            temperature: number;
-            /** Max Tokens */
-            max_tokens?: number | null;
-            /**
-             * Stream
-             * @default false
-             */
-            stream: boolean;
-        };
-        /** ChatCompletionTokenLogprob */
-        ChatCompletionTokenLogprob: {
-            /** Token */
-            token: string;
-            /** Bytes */
-            bytes?: number[] | null;
-            /** Logprob */
-            logprob: number;
-            /** Top Logprobs */
-            top_logprobs: components["schemas"]["TopLogprob"][];
-        } & {
-            [key: string]: unknown;
-        };
-        /** ChatMessage */
-        ChatMessage: {
-            /** Role */
-            role: string;
-            /** Content */
-            content: string;
-        };
-        /**
-         * ChildEvaluationStatus
-         * @description Status of child evaluations in batch mode.
-         */
-        ChildEvaluationStatus: {
-            /** Total */
-            total: number;
-            /** Completed */
-            completed: number;
-            /** Failed */
-            failed: number;
-            /** Pending */
-            pending: number;
-        };
-        /** Choice */
-        Choice: {
-            /**
-             * Finish Reason
-             * @enum {string}
-             */
-            finish_reason: "stop" | "length" | "tool_calls" | "content_filter" | "function_call";
-            /** Index */
-            index: number;
-            logprobs?: components["schemas"]["ChoiceLogprobs"] | null;
-            message: components["schemas"]["ChatCompletionMessage"];
-        } & {
-            [key: string]: unknown;
-        };
-        /** ChoiceLogprobs */
-        ChoiceLogprobs: {
-            /** Content */
-            content?: components["schemas"]["ChatCompletionTokenLogprob"][] | null;
-            /** Refusal */
-            refusal?: components["schemas"]["ChatCompletionTokenLogprob"][] | null;
-        } & {
-            [key: string]: unknown;
-        };
-        /** CompletionTokensDetails */
-        CompletionTokensDetails: {
-            /** Accepted Prediction Tokens */
-            accepted_prediction_tokens?: number | null;
-            /** Audio Tokens */
-            audio_tokens?: number | null;
-            /** Reasoning Tokens */
-            reasoning_tokens?: number | null;
-            /** Rejected Prediction Tokens */
-            rejected_prediction_tokens?: number | null;
-        } & {
-            [key: string]: unknown;
-        };
-        /** CompletionUsage */
-        CompletionUsage: {
-            /** Completion Tokens */
-            completion_tokens: number;
-            /** Prompt Tokens */
-            prompt_tokens: number;
-            /** Total Tokens */
-            total_tokens: number;
-            completion_tokens_details?: components["schemas"]["CompletionTokensDetails"] | null;
-            prompt_tokens_details?: components["schemas"]["PromptTokensDetails"] | null;
-        } & {
-            [key: string]: unknown;
-        };
-        /** Custom */
-        Custom: {
-            /** Input */
-            input: string;
-            /** Name */
-            name: string;
-        } & {
-            [key: string]: unknown;
-        };
-        /**
-         * DirectEvaluationMetadata
-         * @description Enhanced metadata for direct evaluations.
-         */
-        DirectEvaluationMetadata: {
-            /** Input Length */
-            input_length?: number | null;
-            /** Output Length */
-            output_length?: number | null;
-            /** Evaluation Duration */
-            evaluation_duration?: number | null;
-            /** Model Used */
-            model_used?: string | null;
-            /** Reasoning Quality */
-            reasoning_quality?: number | null;
-            /** Confidence Score */
-            confidence_score?: number | null;
-        };
-        /**
-         * EnhancedEvaluationDetailResponse
-         * @description Enhanced detailed evaluation response with metadata.
-         */
-        EnhancedEvaluationDetailResponse: {
-            /** Name */
-            name: string;
-            /** Namespace */
-            namespace: string;
-            /** Spec */
-            spec: {
-                [key: string]: unknown;
-            };
-            /** Status */
-            status?: {
-                [key: string]: unknown;
-            } | null;
-            /** Metadata */
-            metadata: {
-                [key: string]: unknown;
-            };
-            tokenUsage?: components["schemas"]["TokenUsage"] | null;
-            /** Batchresults */
-            batchResults?: components["schemas"]["BatchResult"][] | null;
-            childEvaluationStatus?: components["schemas"]["ChildEvaluationStatus"] | null;
-            enhanced_metadata?: components["schemas"]["UnifiedEvaluationMetadata"] | null;
-        };
-        /**
-         * EnhancedEvaluationListResponse
-         * @description Enhanced response for listing evaluations with metadata.
-         */
-        EnhancedEvaluationListResponse: {
-            /** Items */
-            items: components["schemas"]["EnhancedEvaluationResponse"][];
-            /** Count */
-            count: number;
-        };
-        /**
-         * EnhancedEvaluationResponse
-         * @description Enhanced evaluation response with metadata for list operations.
-         */
-        EnhancedEvaluationResponse: {
-            /** Name */
-            name: string;
-            /** Namespace */
-            namespace: string;
-            /** Type */
-            type: string;
-            /** Phase */
-            phase?: string | null;
-            /** Score */
-            score?: string | null;
-            /** Passed */
-            passed?: boolean | null;
-            /** Message */
-            message?: string | null;
-            enhanced_metadata?: components["schemas"]["UnifiedEvaluationMetadata"] | null;
-        };
-        /**
-         * EvaluationConfig
-         * @description Unified evaluation configuration supporting all types.
-         */
-        EvaluationConfig: {
-            /** Input */
-            input?: string | null;
-            /** Output */
-            output?: string | null;
-            queryRef?: components["schemas"]["QueryRef"] | null;
-            /** Evaluations */
-            evaluations?: components["schemas"]["EvaluationRef"][] | null;
-            /** Rules */
-            rules?: {
-                [key: string]: unknown;
-            }[] | null;
-        };
-        /**
-         * EvaluationCreateRequest
-         * @description Request body for creating an evaluation.
-         */
-        EvaluationCreateRequest: {
-            /** Name */
-            name: string;
-            /** @default direct */
-            type: components["schemas"]["EvaluationType"] | null;
-            config: components["schemas"]["EvaluationConfig"];
-            evaluator: components["schemas"]["EvaluatorReference"];
-            /**
-             * Ttl
-             * @default 720h
-             */
-            ttl: string | null;
-            /**
-             * Timeout
-             * @default 5m
-             */
-            timeout: string | null;
-        };
-        /**
-         * EvaluationDetailResponse
-         * @description Detailed evaluation response model.
-         */
-        EvaluationDetailResponse: {
-            /** Name */
-            name: string;
-            /** Namespace */
-            namespace: string;
-            /** Spec */
-            spec: {
-                [key: string]: unknown;
-            };
-            /** Status */
-            status?: {
-                [key: string]: unknown;
-            } | null;
-            /** Metadata */
-            metadata: {
-                [key: string]: unknown;
-            };
-            tokenUsage?: components["schemas"]["TokenUsage"] | null;
-            /** Batchresults */
-            batchResults?: components["schemas"]["BatchResult"][] | null;
-            childEvaluationStatus?: components["schemas"]["ChildEvaluationStatus"] | null;
-        };
-        /**
-         * EvaluationListResponse
-         * @description Response for listing evaluations.
-         */
-        EvaluationListResponse: {
-            /** Items */
-            items: components["schemas"]["EvaluationResponse"][];
-            /** Count */
-            count: number;
-        };
-        /**
-         * EvaluationRef
-         * @description Reference to an evaluation for batch aggregation.
-         */
-        EvaluationRef: {
-            /** Name */
-            name: string;
-            /** Namespace */
-            namespace?: string | null;
-        };
-        /**
-         * EvaluationResponse
-         * @description Basic evaluation response for list operations.
-         */
-        EvaluationResponse: {
-            /** Name */
-            name: string;
-            /** Namespace */
-            namespace: string;
-            /** Type */
-            type: string;
-            /** Phase */
-            phase?: string | null;
-            /** Score */
-            score?: string | null;
-            /** Passed */
-            passed?: boolean | null;
-            /** Message */
-            message?: string | null;
-        };
-        /**
-         * EvaluationType
-         * @description Evaluation types.
-         * @enum {string}
-         */
-        EvaluationType: "direct" | "baseline" | "query" | "batch" | "event";
-        /**
-         * EvaluationUpdateRequest
-         * @description Request body for updating an evaluation.
-         */
-        EvaluationUpdateRequest: {
-            type?: components["schemas"]["EvaluationType"] | null;
-            config?: components["schemas"]["EvaluationConfig"] | null;
-            evaluator?: components["schemas"]["EvaluatorReference"] | null;
-            /** Ttl */
-            ttl?: string | null;
-            /** Timeout */
-            timeout?: string | null;
-        };
-        /**
-         * EvaluatorCreateRequest
-         * @description Request body for creating an evaluator.
-         */
-        EvaluatorCreateRequest: {
-            /** Name */
-            name: string;
-            address: components["schemas"]["ark_api__models__evaluators__ValueSource"];
-            /** Description */
-            description?: string | null;
-            selector?: components["schemas"]["ResourceSelector"] | null;
-            /** Parameters */
-            parameters?: components["schemas"]["ark_api__models__evaluators__Parameter"][] | null;
-        };
-        /**
-         * EvaluatorDetailResponse
-         * @description Detailed evaluator response model.
-         */
-        EvaluatorDetailResponse: {
-            /** Name */
-            name: string;
-            /** Namespace */
-            namespace: string;
-            /** Spec */
-            spec: {
-                [key: string]: unknown;
-            };
-            /** Status */
-            status?: {
-                [key: string]: unknown;
-            } | null;
-            /** Metadata */
-            metadata: {
-                [key: string]: unknown;
-            };
-        };
-        /**
-         * EvaluatorListResponse
-         * @description Response for listing evaluators.
-         */
-        EvaluatorListResponse: {
-            /** Items */
-            items: components["schemas"]["EvaluatorResponse"][];
-            /** Count */
-            count: number;
-        };
-        /**
-         * EvaluatorReference
-         * @description Reference to an evaluator.
-         */
-        EvaluatorReference: {
-            /** Name */
-            name: string;
-            /** Namespace */
-            namespace?: string | null;
-            /** Parameters */
-            parameters?: {
-                [key: string]: unknown;
-            }[] | null;
-        };
-        /**
-         * EvaluatorResponse
-         * @description Basic evaluator response for list operations.
-         */
-        EvaluatorResponse: {
-            /** Name */
-            name: string;
-            /** Namespace */
-            namespace: string;
-            /** Address */
-            address?: string | null;
-            /** Description */
-            description?: string | null;
-            /** Phase */
-            phase?: string | null;
-            /** Message */
-            message?: string | null;
-        };
-        /**
-         * EvaluatorUpdateRequest
-         * @description Request body for updating an evaluator.
-         */
-        EvaluatorUpdateRequest: {
-            address?: components["schemas"]["ark_api__models__evaluators__ValueSource"] | null;
-            /** Description */
-            description?: string | null;
-            selector?: components["schemas"]["ResourceSelector"] | null;
-            /** Parameters */
-            parameters?: components["schemas"]["ark_api__models__evaluators__Parameter"][] | null;
-        };
-        /**
-         * EventEvaluationMetadata
-         * @description Enhanced metadata for event-based evaluations.
-         */
-        EventEvaluationMetadata: {
-            /** Total Rules */
-            total_rules?: number | null;
-            /** Passed Rules */
-            passed_rules?: number | null;
-            /** Failed Rules */
-            failed_rules?: number | null;
-            /** Total Weight */
-            total_weight?: number | null;
-            /** Weighted Score */
-            weighted_score?: number | null;
-            /** Min Score Threshold */
-            min_score_threshold?: number | null;
-            /** Events Analyzed */
-            events_analyzed?: number | null;
-            /** Query Name */
-            query_name?: string | null;
-            /** Session Id */
-            session_id?: string | null;
-            /** Rule Results */
-            rule_results?: {
-                [key: string]: unknown;
-            }[] | null;
-        };
-        /**
-         * EventListResponse
-         * @description Response model for listing events.
-         */
-        EventListResponse: {
-            /** Items */
-            items: components["schemas"]["EventResponse"][];
-            /** Total */
-            total: number;
-        };
-        /**
-         * EventResponse
-         * @description Response model for a single Kubernetes event.
-         */
-        EventResponse: {
-            /** Name */
-            name: string;
-            /** Namespace */
-            namespace: string;
-            /** Type */
-            type: string;
-            /** Reason */
-            reason: string;
-            /** Message */
-            message: string;
-            /** Source Component */
-            source_component?: string | null;
-            /** Source Host */
-            source_host?: string | null;
-            /** Involved Object Kind */
-            involved_object_kind: string;
-            /** Involved Object Name */
-            involved_object_name: string;
-            /** Involved Object Namespace */
-            involved_object_namespace?: string | null;
-            /** Involved Object Uid */
-            involved_object_uid?: string | null;
-            /** First Timestamp */
-            first_timestamp?: string | null;
-            /** Last Timestamp */
-            last_timestamp?: string | null;
-            /**
-             * Count
-             * @default 1
-             */
-            count: number;
-            /**
-             * Creation Timestamp
-             * Format: date-time
-             */
-            creation_timestamp: string;
-            /** Uid */
-            uid: string;
-        };
-        /**
-         * ExecutionEngineRef
-         * @description ExecutionEngine reference for running an agent.
-         */
-        ExecutionEngineRef: {
-            /** Name */
-            name: string;
-            /** Namespace */
-            namespace?: string | null;
-        };
-        /** Function */
-        Function: {
-            /** Arguments */
-            arguments: string;
-            /** Name */
-            name: string;
-        } & {
-            [key: string]: unknown;
-        };
-        /** FunctionCall */
-        FunctionCall: {
-            /** Arguments */
-            arguments: string;
-            /** Name */
-            name: string;
-        } & {
-            [key: string]: unknown;
-        };
-        /**
-         * Graph
-         * @description Team workflow graph configuration.
-         */
-        Graph: {
-            /** Edges */
-            edges: components["schemas"]["GraphEdge"][];
-        };
-        /**
-         * GraphEdge
-         * @description Graph edge configuration.
-         */
-        GraphEdge: {
-            /** From */
-            from: string;
-            /** To */
-            to: string;
-        };
-        /**
-         * HTTPRouteInfo
-         * @description Information about an HTTPRoute associated with a service.
-         */
-        HTTPRouteInfo: {
-            /** Name */
-            name: string;
-            /** Namespace */
-            namespace: string;
-            /** Url */
-            url: string;
-            /** Rules */
-            rules: number;
-        };
-        /** HTTPValidationError */
-        HTTPValidationError: {
-            /** Detail */
-            detail?: components["schemas"]["ValidationError"][];
-        };
-        /**
-         * HealthResponse
-         * @description Health check response model.
-         */
-        HealthResponse: {
-            /**
-             * Status
-             * @description Health status
-             * @example healthy
-             */
-            status: string;
-            /**
-             * Service
-             * @description Service name
-             * @example ark-api
-             */
-            service: string;
-        };
-        /** MCPServerDetailResponse */
-        MCPServerDetailResponse: {
-            /** Name */
-            name: string;
-            /** Namespace */
-            namespace: string;
-            /** Description */
-            description?: string | null;
-            /** Labels */
-            labels?: {
-                [key: string]: string;
-            } | null;
-            /** Annotations */
-            annotations?: {
-                [key: string]: string;
-            } | null;
-            /** Spec */
-            spec?: {
-                [key: string]: unknown;
-            } | null;
-            /** Status */
-            status?: {
-                [key: string]: unknown;
-            } | null;
-        };
-        /** MCPServerListResponse */
-        MCPServerListResponse: {
-            /** Items */
-            items: components["schemas"]["MCPServerResponse"][];
-            /** Total */
-            total: number;
-        };
-        /** MCPServerResponse */
-        MCPServerResponse: {
-            /** Name */
-            name: string;
-            /** Namespace */
-            namespace: string;
-            /** Description */
-            description?: string | null;
-            /** Labels */
-            labels?: {
-                [key: string]: string;
-            } | null;
-            /** Address */
-            address?: string | null;
-            /** Annotations */
-            annotations?: {
-                [key: string]: string;
-            } | null;
-            /** Transport */
-            transport?: string | null;
-            /** Ready */
-            ready?: boolean | null;
-            /** Discovering */
-            discovering?: boolean | null;
-            /** Status Message */
-            status_message?: string | null;
-            /** Tool Count */
-            tool_count?: number | null;
-        };
-        /**
-         * Memory
-         * @description Memory reference for a query.
-         */
-        Memory: {
-            /** Name */
-            name: string;
-            /** Namespace */
-            namespace?: string | null;
-        };
-        /**
-         * MemoryCreateRequest
-         * @description Request model for creating a memory.
-         */
-        MemoryCreateRequest: {
-            /** Name */
-            name: string;
-            /** Description */
-            description?: string | null;
-            /** Config */
-            config?: {
-                [key: string]: unknown;
-            } | null;
-        };
-        /**
-         * MemoryDetailResponse
-         * @description Response model for detailed memory information.
-         */
-        MemoryDetailResponse: {
-            /** Name */
-            name: string;
-            /** Namespace */
-            namespace: string;
-            /** Description */
-            description?: string | null;
-            /** Config */
-            config?: {
-                [key: string]: unknown;
-            } | null;
-            /** Status */
-            status?: {
-                [key: string]: unknown;
-            } | null;
-        };
-        /**
-         * MemoryListResponse
-         * @description Response model for memory list.
-         */
-        MemoryListResponse: {
-            /** Items */
-            items: components["schemas"]["MemoryResponse"][];
-        };
-        /**
-         * MemoryMessageListResponse
-         * @description Response model for listing memory messages.
-         */
-        MemoryMessageListResponse: {
-            /** Items */
-            items: components["schemas"]["MemoryMessageResponse"][];
-            /** Total */
-            total?: number | null;
-        };
-        /**
-         * MemoryMessageResponse
-         * @description Response model for a memory message with context.
-         */
-        MemoryMessageResponse: {
-            /** Timestamp */
-            timestamp?: string | null;
-            /** Memoryname */
-            memoryName: string;
-            /** Sessionid */
-            sessionId: string;
-            /** Queryid */
-            queryId?: string | null;
-            /** Message */
-            message: {
-                [key: string]: unknown;
-            };
-        };
-        /**
-         * MemoryResponse
-         * @description Response model for memory list items.
-         */
-        MemoryResponse: {
-            /** Name */
-            name: string;
-            /** Namespace */
-            namespace: string;
-            /** Description */
-            description?: string | null;
-            /** Status */
-            status?: string | null;
-        };
-        /**
-         * MemoryUpdateRequest
-         * @description Request model for updating a memory.
-         */
-        MemoryUpdateRequest: {
-            /** Description */
-            description?: string | null;
-            /** Config */
-            config?: {
-                [key: string]: unknown;
-            } | null;
-        };
-        /**
-         * ModelConfig
-         * @description Model configuration container.
-         */
-        ModelConfig: {
-            openai?: components["schemas"]["OpenAIConfig"] | null;
-            azure?: components["schemas"]["AzureConfig"] | null;
-            bedrock?: components["schemas"]["BedrockConfig"] | null;
-        };
-        /**
-         * ModelCreateRequest
-         * @description Request model for creating a model.
-         */
-        ModelCreateRequest: {
-            /** Name */
-            name: string;
-            /**
-             * Type
-             * @enum {string}
-             */
-            type: "openai" | "azure" | "bedrock";
-            /** Model */
-            model: string;
-            config: components["schemas"]["ModelConfig"];
-        };
-        /**
-         * ModelDetailResponse
-         * @description Detailed model response model.
-         */
-        ModelDetailResponse: {
-            /** Name */
-            name: string;
-            /** Namespace */
-            namespace: string;
-            /**
-             * Type
-             * @enum {string}
-             */
-            type: "openai" | "azure" | "bedrock";
-            /** Model */
-            model: string;
-            /** Config */
-            config: {
-                [key: string]: {
-                    [key: string]: string | {
-                        [key: string]: unknown;
-                    };
-                };
-            };
-            /** Status */
-            status?: string | null;
-            /** Resolved Address */
-            resolved_address?: string | null;
-            /** Annotations */
-            annotations?: {
-                [key: string]: string;
-            } | null;
-        };
-        /**
-         * ModelListResponse
-         * @description List of models response model.
-         */
-        ModelListResponse: {
-            /** Items */
-            items: components["schemas"]["ModelResponse"][];
-            /** Count */
-            count: number;
-        };
-        /**
-         * ModelRef
-         * @description Model reference for an agent.
-         */
-        ModelRef: {
-            /** Name */
-            name: string;
-            /** Namespace */
-            namespace?: string | null;
-        };
-        /**
-         * ModelResponse
-         * @description Model resource response model.
-         */
-        ModelResponse: {
-            /** Name */
-            name: string;
-            /** Namespace */
-            namespace: string;
-            /**
-             * Type
-             * @enum {string}
-             */
-            type: "openai" | "azure" | "bedrock";
-            /** Model */
-            model: string;
-            /** Status */
-            status?: string | null;
-            /** Annotations */
-            annotations?: {
-                [key: string]: string;
-            } | null;
-        };
-        /**
-         * ModelUpdateRequest
-         * @description Request model for updating a model.
-         */
-        ModelUpdateRequest: {
-            /** Model */
-            model?: string | null;
-            config?: components["schemas"]["ModelConfig"] | null;
-        };
-        /**
-         * NamespaceCreateRequest
-         * @description Request model for creating a namespace.
-         */
-        NamespaceCreateRequest: {
-            /** Name */
-            name: string;
-        };
-        /**
-         * NamespaceListResponse
-         * @description List of namespaces response model.
-         */
-        NamespaceListResponse: {
-            /** Items */
-            items: components["schemas"]["NamespaceResponse"][];
-            /** Count */
-            count: number;
-        };
-        /**
-         * NamespaceResponse
-         * @description Kubernetes namespace response model.
-         */
-        NamespaceResponse: {
-            /** Name */
-            name: string;
-        };
-        /**
-         * OpenAIConfig
-         * @description OpenAI model configuration.
-         */
-        OpenAIConfig: {
-            /** Apikey */
-            apiKey: string | components["schemas"]["ark_api__models__models__ValueSource"];
-            /** Baseurl */
-            baseUrl: string | components["schemas"]["ark_api__models__models__ValueSource"];
-        };
-        /** PromptTokensDetails */
-        PromptTokensDetails: {
-            /** Audio Tokens */
-            audio_tokens?: number | null;
-            /** Cached Tokens */
-            cached_tokens?: number | null;
-        } & {
-            [key: string]: unknown;
-        };
-        /**
-         * QueryCreateRequest
-         * @description Request body for creating a query.
-         */
-        QueryCreateRequest: {
-            /** Name */
-            name: string;
-            /** Input */
-            input: string;
-            memory?: components["schemas"]["Memory"] | null;
-            /** Parameters */
-            parameters?: components["schemas"]["ark_api__models__queries__Parameter-Input"][] | null;
-            selector?: components["schemas"]["ark_api__models__queries__LabelSelector"] | null;
-            /** Serviceaccount */
-            serviceAccount?: string | null;
-            /** Sessionid */
-            sessionId?: string | null;
-            /** Targets */
-            targets?: components["schemas"]["Target"][] | null;
-            /** Timeout */
-            timeout?: string | null;
-            /** Ttl */
-            ttl?: string | null;
-            /** Cancel */
-            cancel?: boolean | null;
-            /** Evaluators */
-            evaluators?: components["schemas"]["Memory"][] | null;
-            evaluatorSelector?: components["schemas"]["ark_api__models__queries__LabelSelector"] | null;
-        };
-        /**
-         * QueryDetailResponse
-         * @description Detailed query response.
-         */
-        QueryDetailResponse: {
-            /** Name */
-            name: string;
-            /** Namespace */
-            namespace: string;
-            /** Input */
-            input: string;
-            memory?: components["schemas"]["Memory"] | null;
-            /** Parameters */
-            parameters?: components["schemas"]["ark_api__models__queries__Parameter-Output"][] | null;
-            selector?: components["schemas"]["ark_api__models__queries__LabelSelector"] | null;
-            /** Serviceaccount */
-            serviceAccount?: string | null;
-            /** Sessionid */
-            sessionId?: string | null;
-            /** Targets */
-            targets?: components["schemas"]["Target"][] | null;
-            /** Timeout */
-            timeout?: string | null;
-            /** Ttl */
-            ttl?: string | null;
-            /** Cancel */
-            cancel?: boolean | null;
-            /** Evaluators */
-            evaluators?: components["schemas"]["Memory"][] | null;
-            evaluatorSelector?: components["schemas"]["ark_api__models__queries__LabelSelector"] | null;
-            /** Status */
-            status?: {
-                [key: string]: unknown;
-            } | null;
-        };
-        /**
-         * QueryEvaluationMetadata
-         * @description Enhanced metadata for query-based evaluations.
-         */
-        QueryEvaluationMetadata: {
-            /** Query Name */
-            query_name?: string | null;
-            /** Query Namespace */
-            query_namespace?: string | null;
-            /** Response Target */
-            response_target?: string | null;
-            /** Execution Time */
-            execution_time?: number | null;
-            /** Tokens Used */
-            tokens_used?: number | null;
-            /** Query Status */
-            query_status?: string | null;
-            /** Response Quality */
-            response_quality?: number | null;
-        };
-        /**
-         * QueryListResponse
-         * @description Response for listing queries.
-         */
-        QueryListResponse: {
-            /** Items */
-            items: components["schemas"]["QueryResponse"][];
-            /** Count */
-            count: number;
-        };
-        /**
-         * QueryRef
-         * @description Reference to a query for evaluation.
-         */
-        QueryRef: {
-            /** Name */
-            name: string;
-            /** Namespace */
-            namespace?: string | null;
-            /** Responsetarget */
-            responseTarget?: string | null;
-        };
-        /**
-         * QueryResponse
-         * @description Basic query response for list operations.
-         */
-        QueryResponse: {
-            /** Name */
-            name: string;
-            /** Namespace */
-            namespace: string;
-            /** Input */
-            input: string;
-            memory?: components["schemas"]["Memory"] | null;
-            /** Sessionid */
-            sessionId?: string | null;
-            /** Status */
-            status?: {
-                [key: string]: unknown;
-            } | null;
-            /** Creationtimestamp */
-            creationTimestamp?: string | null;
-        };
-        /**
-         * QueryUpdateRequest
-         * @description Request body for updating a query.
-         */
-        QueryUpdateRequest: {
-            /** Input */
-            input?: string | null;
-            memory?: components["schemas"]["Memory"] | null;
-            /** Parameters */
-            parameters?: components["schemas"]["ark_api__models__queries__Parameter-Input"][] | null;
-            selector?: components["schemas"]["ark_api__models__queries__LabelSelector"] | null;
-            /** Serviceaccount */
-            serviceAccount?: string | null;
-            /** Sessionid */
-            sessionId?: string | null;
-            /** Targets */
-            targets?: components["schemas"]["Target"][] | null;
-            /** Timeout */
-            timeout?: string | null;
-            /** Ttl */
-            ttl?: string | null;
-            /** Cancel */
-            cancel?: boolean | null;
-            /** Evaluators */
-            evaluators?: components["schemas"]["Memory"][] | null;
-            evaluatorSelector?: components["schemas"]["ark_api__models__queries__LabelSelector"] | null;
-        };
-        /**
-         * ReadinessResponse
-         * @description Readiness check response model.
-         */
-        ReadinessResponse: {
-            /**
-             * Status
-             * @description Readiness status
-             * @example ready
-             */
-            status: string;
-            /**
-             * Service
-             * @description Service name
-             * @example ark-api
-             */
-            service: string;
-            /**
-             * Error
-             * @description Error message if not ready
-             * @example Connection refused
-             */
-            error?: string | null;
-        };
-        /**
-         * ResourceSelector
-         * @description Selector for automatic evaluation of resources.
-         */
-        ResourceSelector: {
-            /** Resource */
-            resource: string;
-            labelSelector?: components["schemas"]["ark_api__models__evaluators__LabelSelector"] | null;
-        };
-        /**
-         * SecretCreateRequest
-         * @description Request model for creating a secret.
-         */
-        SecretCreateRequest: {
-            /** Name */
-            name: string;
-            /** String Data */
-            string_data: {
-                [key: string]: string;
-            };
-            /**
-             * Type
-             * @default Opaque
-             */
-            type: string | null;
-        };
-        /**
-         * SecretDetailResponse
-         * @description Detailed secret response model.
-         */
-        SecretDetailResponse: {
-            /** Name */
-            name: string;
-            /** Id */
-            id: string;
-            /** Type */
-            type: string;
-            /** Secret Length */
-            secret_length: number;
-            /** Annotations */
-            annotations?: {
-                [key: string]: string;
-            } | null;
-        };
-        /**
-         * SecretListResponse
-         * @description List of secrets response model.
-         */
-        SecretListResponse: {
-            /** Items */
-            items: components["schemas"]["SecretResponse"][];
-            /** Count */
-            count: number;
-        };
-        /**
-         * SecretResponse
-         * @description Kubernetes secret response model.
-         */
-        SecretResponse: {
-            /** Name */
-            name: string;
-            /** Id */
-            id: string;
-            /** Annotations */
-            annotations?: {
-                [key: string]: string;
-            } | null;
-        };
-        /**
-         * SecretUpdateRequest
-         * @description Request model for updating a secret.
-         */
-        SecretUpdateRequest: {
-            /** String Data */
-            string_data: {
-                [key: string]: string;
-            };
-        };
-        /**
-         * Selector
-         * @description Team selector configuration.
-         */
-        Selector: {
-            /** Model */
-            model?: string | null;
-            /** Selectorprompt */
-            selectorPrompt?: string | null;
-        };
-        /**
-         * SessionListResponse
-         * @description Response model for listing sessions.
-         */
-        SessionListResponse: {
-            /** Items */
-            items: components["schemas"]["SessionResponse"][];
-            /** Total */
-            total?: number | null;
-        };
-        /**
-         * SessionResponse
-         * @description Response model for a session.
-         */
-        SessionResponse: {
-            /** Sessionid */
-            sessionId: string;
-            /** Memoryname */
-            memoryName: string;
-            /** Queries */
-            queries?: string[] | null;
-            /** Messagecount */
-            messageCount?: number | null;
-            /** Lastactivity */
-            lastActivity?: string | null;
-        };
-        /**
-         * Skill
-         * @description Skill configuration for an A2A agent.
-         */
-        Skill: {
-            /** Id */
-            id: string;
-            /** Name */
-            name: string;
-            /** Description */
-            description?: string | null;
-            /** Tags */
-            tags?: string[] | null;
-        };
-        /** SystemInfo */
-        SystemInfo: {
-            /** Kubernetes Version */
-            kubernetes_version: string;
-            /** System Version */
-            system_version: string;
-        };
-        /**
-         * Target
-         * @description Target for a query.
-         */
-        Target: {
-            /** Name */
-            name: string;
-            /** Type */
-            type: string;
-        };
-        /**
-         * TeamCreateRequest
-         * @description Request model for creating a team.
-         */
-        TeamCreateRequest: {
-            /** Name */
-            name: string;
-            /** Description */
-            description?: string | null;
-            /** Members */
-            members: components["schemas"]["TeamMember"][];
-            /** Strategy */
-            strategy: string;
-            graph?: components["schemas"]["Graph"] | null;
-            /** Maxturns */
-            maxTurns?: number | null;
-            selector?: components["schemas"]["Selector"] | null;
-        };
-        /**
-         * TeamDetailResponse
-         * @description Detailed team response model.
-         */
-        TeamDetailResponse: {
-            /** Name */
-            name: string;
-            /** Namespace */
-            namespace: string;
-            /** Description */
-            description?: string | null;
-            /** Members */
-            members: components["schemas"]["TeamMember"][];
-            /** Strategy */
-            strategy: string;
-            graph?: components["schemas"]["Graph"] | null;
-            /** Maxturns */
-            maxTurns?: number | null;
-            selector?: components["schemas"]["Selector"] | null;
-            /** Status */
-            status?: {
-                [key: string]: unknown;
-            } | null;
-        };
-        /**
-         * TeamListResponse
-         * @description List of teams response model.
-         */
-        TeamListResponse: {
-            /** Items */
-            items: components["schemas"]["TeamResponse"][];
-            /** Count */
-            count: number;
-        };
-        /**
-         * TeamMember
-         * @description Team member configuration.
-         */
-        TeamMember: {
-            /** Name */
-            name: string;
-            /** Type */
-            type: string;
-        };
-        /**
-         * TeamResponse
-         * @description Team resource response model.
-         */
-        TeamResponse: {
-            /** Name */
-            name: string;
-            /** Namespace */
-            namespace: string;
-            /** Description */
-            description?: string | null;
-            /** Strategy */
-            strategy?: string | null;
-            /** Members Count */
-            members_count?: number | null;
-            /** Status */
-            status?: string | null;
-        };
-        /**
-         * TeamUpdateRequest
-         * @description Request model for updating a team.
-         */
-        TeamUpdateRequest: {
-            /** Description */
-            description?: string | null;
-            /** Members */
-            members?: components["schemas"]["TeamMember"][] | null;
-            /** Strategy */
-            strategy?: string | null;
-            graph?: components["schemas"]["Graph"] | null;
-            /** Maxturns */
-            maxTurns?: number | null;
-            selector?: components["schemas"]["Selector"] | null;
-        };
-        /**
-         * TokenUsage
-         * @description Token usage metrics.
-         */
-        TokenUsage: {
-            /** Prompttokens */
-            promptTokens?: number | null;
-            /** Completiontokens */
-            completionTokens?: number | null;
-            /** Totaltokens */
-            totalTokens?: number | null;
-        };
-        /**
-         * Tool
-         * @description Tool configuration for an agent.
-         */
-        "Tool-Input": {
-            /** Type */
-            type: string;
-            /** Name */
-            name?: string | null;
-            labelSelector?: components["schemas"]["ark_api__models__agents__LabelSelector"] | null;
-        };
-        /**
-         * Tool
-         * @description Tool configuration for an agent.
-         */
-        "Tool-Output": {
-            /** Type */
-            type: string;
-            /** Name */
-            name?: string | null;
-            labelSelector?: components["schemas"]["ark_api__models__agents__LabelSelector"] | null;
-        };
-        /** ToolDetailResponse */
-        ToolDetailResponse: {
-            /** Name */
-            name: string;
-            /** Namespace */
-            namespace: string;
-            /** Description */
-            description?: string | null;
-            /** Labels */
-            labels?: {
-                [key: string]: string;
-            } | null;
-            /** Annotations */
-            annotations?: {
-                [key: string]: string;
-            } | null;
-            /** Spec */
-            spec?: {
-                [key: string]: unknown;
-            } | null;
-            /** Status */
-            status?: {
-                [key: string]: unknown;
-            } | null;
-        };
-        /** ToolListResponse */
-        ToolListResponse: {
-            /** Items */
-            items: components["schemas"]["ToolResponse"][];
-            /** Total */
-            total: number;
-        };
-        /** ToolResponse */
-        ToolResponse: {
-            /** Name */
-            name: string;
-            /** Namespace */
-            namespace: string;
-            /** Description */
-            description?: string | null;
-            /** Labels */
-            labels?: {
-                [key: string]: string;
-            } | null;
-            /** Annotations */
-            annotations?: {
-                [key: string]: string;
-            } | null;
-        };
-        /** TopLogprob */
-        TopLogprob: {
-            /** Token */
-            token: string;
-            /** Bytes */
-            bytes?: number[] | null;
-            /** Logprob */
-            logprob: number;
-        } & {
-            [key: string]: unknown;
-        };
-        /**
-         * UnifiedEvaluationMetadata
-         * @description Unified metadata model that can contain any evaluation type metadata.
-         */
-        UnifiedEvaluationMetadata: {
-            /** Evaluation Type */
-            evaluation_type?: string | null;
-            event_metadata?: components["schemas"]["EventEvaluationMetadata"] | null;
-            baseline_metadata?: components["schemas"]["BaselineEvaluationMetadata"] | null;
-            query_metadata?: components["schemas"]["QueryEvaluationMetadata"] | null;
-            batch_metadata?: components["schemas"]["BatchEvaluationMetadata"] | null;
-            direct_metadata?: components["schemas"]["DirectEvaluationMetadata"] | null;
-            /** Category Breakdown */
-            category_breakdown?: components["schemas"]["CategoryBreakdown"][] | null;
-            /** Custom Fields */
-            custom_fields?: {
-                [key: string]: unknown;
-            } | null;
-        };
-        /** ValidationError */
-        ValidationError: {
-            /** Location */
-            loc: (string | number)[];
-            /** Message */
-            msg: string;
-            /** Error Type */
-            type: string;
-        };
-        /**
-         * ConfigMapKeyRef
-         * @description Reference to a key in a ConfigMap.
-         */
-        ark_api__models__agents__ConfigMapKeyRef: {
-            /** Key */
-            key: string;
-            /** Name */
-            name: string;
-            /** Optional */
-            optional?: boolean | null;
-        };
-        /**
-         * LabelSelector
-         * @description A label selector is a label query over a set of resources.
-         */
-        ark_api__models__agents__LabelSelector: {
-            /** Matchlabels */
-            matchLabels?: {
-                [key: string]: string;
-            } | null;
-            /** Matchexpressions */
-            matchExpressions?: components["schemas"]["ark_api__models__agents__LabelSelectorRequirement"][] | null;
-        };
-        /**
-         * LabelSelectorRequirement
-         * @description A label selector requirement is a selector that contains values, a key, and an operator.
-         */
-        ark_api__models__agents__LabelSelectorRequirement: {
-            /** Key */
-            key: string;
-            /** Operator */
-            operator: string;
-            /** Values */
-            values?: string[] | null;
-        };
-        /**
-         * Parameter
-         * @description Parameter for template processing in prompts and inputs.
-         */
-        "ark_api__models__agents__Parameter-Input": {
-            /** Name */
-            name: string;
-            /** Value */
-            value?: string | null;
-            valueFrom?: components["schemas"]["ark_api__models__agents__ValueFrom"] | null;
-        };
-        /**
-         * Parameter
-         * @description Parameter for template processing in prompts and inputs.
-         */
-        "ark_api__models__agents__Parameter-Output": {
-            /** Name */
-            name: string;
-            /** Value */
-            value?: string | null;
-            valueFrom?: components["schemas"]["ark_api__models__agents__ValueFrom"] | null;
-        };
-        /**
-         * SecretKeyRef
-         * @description Reference to a key in a Secret.
-         */
-        ark_api__models__agents__SecretKeyRef: {
-            /** Key */
-            key: string;
-            /** Name */
-            name: string;
-            /** Optional */
-            optional?: boolean | null;
-        };
-        /**
-         * ValueFrom
-         * @description Reference to external sources for parameter values.
-         */
-        ark_api__models__agents__ValueFrom: {
-            configMapKeyRef?: components["schemas"]["ark_api__models__agents__ConfigMapKeyRef"] | null;
-            secretKeyRef?: components["schemas"]["ark_api__models__agents__SecretKeyRef"] | null;
-        };
-        /**
-         * ConfigMapKeyRef
-         * @description Reference to a key in a ConfigMap.
-         */
-        ark_api__models__evaluators__ConfigMapKeyRef: {
-            /** Key */
-            key: string;
-            /**
-             * Name
-             * @default
-             */
-            name: string;
-            /** Optional */
-            optional?: boolean | null;
-        };
-        /**
-         * LabelSelector
-         * @description Label selector for resources.
-         */
-        ark_api__models__evaluators__LabelSelector: {
-            /** Matchexpressions */
-            matchExpressions?: components["schemas"]["ark_api__models__evaluators__LabelSelectorRequirement"][] | null;
-            /** Matchlabels */
-            matchLabels?: {
-                [key: string]: string;
-            } | null;
-        };
-        /**
-         * LabelSelectorRequirement
-         * @description A label selector requirement.
-         */
-        ark_api__models__evaluators__LabelSelectorRequirement: {
-            /** Key */
-            key: string;
-            /** Operator */
-            operator: string;
-            /** Values */
-            values?: string[] | null;
-        };
-        /**
-         * Parameter
-         * @description Parameter for evaluator configuration.
-         */
-        ark_api__models__evaluators__Parameter: {
-            /** Name */
-            name: string;
-            /** Value */
-            value?: string | null;
-            valueFrom?: components["schemas"]["ark_api__models__evaluators__ValueFrom"] | null;
-        };
-        /**
-         * SecretKeyRef
-         * @description Reference to a key in a Secret.
-         */
-        ark_api__models__evaluators__SecretKeyRef: {
-            /** Key */
-            key: string;
-            /**
-             * Name
-             * @default
-             */
-            name: string;
-            /** Optional */
-            optional?: boolean | null;
-        };
-        /**
-         * ValueFrom
-         * @description Reference to external sources for parameter values.
-         */
-        ark_api__models__evaluators__ValueFrom: {
-            configMapKeyRef?: components["schemas"]["ark_api__models__evaluators__ConfigMapKeyRef"] | null;
-            secretKeyRef?: components["schemas"]["ark_api__models__evaluators__SecretKeyRef"] | null;
-        };
-        /**
-         * ValueSource
-         * @description Source for a value - either direct or from external reference.
-         */
-        ark_api__models__evaluators__ValueSource: {
-            /** Value */
-            value?: string | null;
-            valueFrom?: components["schemas"]["ark_api__models__evaluators__ValueFrom"] | null;
-        };
-        /**
-         * ValueSource
-         * @description ValueSource for model configuration (supports direct value or valueFrom).
-         */
-        ark_api__models__models__ValueSource: {
-            /** Value */
-            value?: string | null;
-            /** Valuefrom */
-            valueFrom?: {
-                [key: string]: {
-                    [key: string]: string;
-                };
-            } | null;
-        };
-        /**
-         * ConfigMapKeyRef
-         * @description Reference to a key in a ConfigMap.
-         */
-        ark_api__models__queries__ConfigMapKeyRef: {
-            /** Key */
-            key: string;
-            /**
-             * Name
-             * @default
-             */
-            name: string;
-            /** Optional */
-            optional?: boolean | null;
-        };
-        /**
-         * LabelSelector
-         * @description Label selector for resources.
-         */
-        ark_api__models__queries__LabelSelector: {
-            /** Matchexpressions */
-            matchExpressions?: components["schemas"]["ark_api__models__queries__LabelSelectorRequirement"][] | null;
-            /** Matchlabels */
-            matchLabels?: {
-                [key: string]: string;
-            } | null;
-        };
-        /**
-         * LabelSelectorRequirement
-         * @description A label selector requirement.
-         */
-        ark_api__models__queries__LabelSelectorRequirement: {
-            /** Key */
-            key: string;
-            /** Operator */
-            operator: string;
-            /** Values */
-            values?: string[] | null;
-        };
-        /**
-         * Parameter
-         * @description Parameter for template processing in prompts and inputs.
-         */
-        "ark_api__models__queries__Parameter-Input": {
-            /** Name */
-            name: string;
-            /** Value */
-            value?: string | null;
-            valueFrom?: components["schemas"]["ark_api__models__queries__ValueFrom"] | null;
-        };
-        /**
-         * Parameter
-         * @description Parameter for template processing in prompts and inputs.
-         */
-        "ark_api__models__queries__Parameter-Output": {
-            /** Name */
-            name: string;
-            /** Value */
-            value?: string | null;
-            valueFrom?: components["schemas"]["ark_api__models__queries__ValueFrom"] | null;
-        };
-        /**
-         * SecretKeyRef
-         * @description Reference to a key in a Secret.
-         */
-        ark_api__models__queries__SecretKeyRef: {
-            /** Key */
-            key: string;
-            /**
-             * Name
-             * @default
-             */
-            name: string;
-            /** Optional */
-            optional?: boolean | null;
-        };
-        /**
-         * ValueFrom
-         * @description Reference to external sources for parameter values.
-         */
-        ark_api__models__queries__ValueFrom: {
-            configMapKeyRef?: components["schemas"]["ark_api__models__queries__ConfigMapKeyRef"] | null;
-            secretKeyRef?: components["schemas"]["ark_api__models__queries__SecretKeyRef"] | null;
-        };
+  schemas: {
+    /** A2AServerDetailResponse */
+    A2AServerDetailResponse: {
+      /** Name */
+      name: string;
+      /** Namespace */
+      namespace: string;
+      /** Description */
+      description?: string | null;
+      /** Labels */
+      labels?: {
+        [key: string]: string;
+      } | null;
+      /** Annotations */
+      annotations?: {
+        [key: string]: string;
+      } | null;
+      /** Spec */
+      spec?: {
+        [key: string]: unknown;
+      } | null;
+      /** Status */
+      status?: {
+        [key: string]: unknown;
+      } | null;
     };
-    responses: never;
-    parameters: never;
-    requestBodies: never;
-    headers: never;
-    pathItems: never;
+    /** A2AServerListResponse */
+    A2AServerListResponse: {
+      /** Items */
+      items: components["schemas"]["A2AServerResponse"][];
+      /** Total */
+      total: number;
+    };
+    /** A2AServerResponse */
+    A2AServerResponse: {
+      /** Name */
+      name: string;
+      /** Namespace */
+      namespace: string;
+      /** Description */
+      description?: string | null;
+      /** Labels */
+      labels?: {
+        [key: string]: string;
+      } | null;
+      /** Address */
+      address?: string | null;
+      /** Annotations */
+      annotations?: {
+        [key: string]: string;
+      } | null;
+      /** Ready */
+      ready?: boolean | null;
+      /** Discovering */
+      discovering?: boolean | null;
+      /** Status Message */
+      status_message?: string | null;
+    };
+    /**
+     * A2ATaskArtifact
+     * @description Artifact in an A2ATask.
+     */
+    A2ATaskArtifact: {
+      /** Artifact Id */
+      artifact_id: string;
+      /** Name */
+      name?: string | null;
+      /** Description */
+      description?: string | null;
+      /** Parts */
+      parts: components["schemas"]["A2ATaskPart"][];
+      /** Metadata */
+      metadata?: {
+        [key: string]: string;
+      } | null;
+    };
+    /**
+     * A2ATaskAssignedAgent
+     * @description Assigned agent information.
+     */
+    A2ATaskAssignedAgent: {
+      /** Name */
+      name: string;
+      /** Namespace */
+      namespace: string;
+    };
+    /**
+     * A2ATaskDetailResponse
+     * @description Detailed response model for a single A2ATask with full task data.
+     */
+    A2ATaskDetailResponse: {
+      /** Name */
+      name: string;
+      /** Namespace */
+      namespace: string;
+      /** Task Id */
+      task_id: string;
+      /** Phase */
+      phase: string;
+      /** Priority */
+      priority: number;
+      /** Timeout */
+      timeout?: string | null;
+      query_ref?: components["schemas"]["A2ATaskQueryRef"] | null;
+      assigned_agent?: components["schemas"]["A2ATaskAssignedAgent"] | null;
+      /** Start Time */
+      start_time?: string | null;
+      /** Completion Time */
+      completion_time?: string | null;
+      /** Creation Timestamp */
+      creation_timestamp?: string | null;
+      /** Progress */
+      progress?: number | null;
+      task?: components["schemas"]["A2ATaskTask"] | null;
+    };
+    /**
+     * A2ATaskListResponse
+     * @description Response model for listing A2ATasks.
+     */
+    A2ATaskListResponse: {
+      /** Items */
+      items: components["schemas"]["A2ATaskResponse"][];
+      /** Total */
+      total: number;
+    };
+    /**
+     * A2ATaskMessage
+     * @description Message in A2ATask history.
+     */
+    A2ATaskMessage: {
+      /** Role */
+      role: string;
+      /** Parts */
+      parts: components["schemas"]["A2ATaskPart"][];
+      /** Metadata */
+      metadata?: {
+        [key: string]: string;
+      } | null;
+    };
+    /**
+     * A2ATaskPart
+     * @description Part of an A2ATask artifact or message.
+     */
+    A2ATaskPart: {
+      /** Kind */
+      kind: string;
+      /** Text */
+      text?: string | null;
+      /** Data */
+      data?: string | null;
+      /** Uri */
+      uri?: string | null;
+      /** Mime Type */
+      mime_type?: string | null;
+    };
+    /**
+     * A2ATaskQueryRef
+     * @description Reference to the originating query.
+     */
+    A2ATaskQueryRef: {
+      /** Name */
+      name: string;
+      /** Namespace */
+      namespace: string;
+    };
+    /**
+     * A2ATaskResponse
+     * @description Response model for a single A2ATask.
+     */
+    A2ATaskResponse: {
+      /** Name */
+      name: string;
+      /** Namespace */
+      namespace: string;
+      /** Task Id */
+      task_id: string;
+      /** Phase */
+      phase: string;
+      /** Priority */
+      priority: number;
+      /** Timeout */
+      timeout?: string | null;
+      query_ref?: components["schemas"]["A2ATaskQueryRef"] | null;
+      assigned_agent?: components["schemas"]["A2ATaskAssignedAgent"] | null;
+      /** Start Time */
+      start_time?: string | null;
+      /** Completion Time */
+      completion_time?: string | null;
+      /** Creation Timestamp */
+      creation_timestamp?: string | null;
+      /** Progress */
+      progress?: number | null;
+    };
+    /**
+     * A2ATaskStatus
+     * @description Status message of an A2ATask.
+     */
+    A2ATaskStatus: {
+      /** State */
+      state: string;
+      message?: components["schemas"]["A2ATaskMessage"] | null;
+      /** Timestamp */
+      timestamp?: string | null;
+    };
+    /**
+     * A2ATaskTask
+     * @description Task details in A2ATask status.
+     */
+    A2ATaskTask: {
+      /** Id */
+      id: string;
+      /** Session Id */
+      session_id?: string | null;
+      status: components["schemas"]["A2ATaskStatus"];
+      /**
+       * Artifacts
+       * @default []
+       */
+      artifacts?: components["schemas"]["A2ATaskArtifact"][];
+      /**
+       * History
+       * @default []
+       */
+      history?: components["schemas"]["A2ATaskMessage"][];
+      /** Metadata */
+      metadata?: {
+        [key: string]: string;
+      } | null;
+    };
+    /**
+     * AgentCreateRequest
+     * @description Request model for creating an agent.
+     */
+    AgentCreateRequest: {
+      /** Name */
+      name: string;
+      /** Description */
+      description?: string | null;
+      executionEngine?: components["schemas"]["ExecutionEngineRef"] | null;
+      modelRef?: components["schemas"]["ModelRef"] | null;
+      /** Parameters */
+      parameters?: components["schemas"]["ark_api__models__agents__Parameter-Input"][] | null;
+      /** Prompt */
+      prompt?: string | null;
+      /** Tools */
+      tools?: components["schemas"]["Tool-Input"][] | null;
+    };
+    /**
+     * AgentDetailResponse
+     * @description Detailed agent response model.
+     */
+    AgentDetailResponse: {
+      /** Name */
+      name: string;
+      /** Namespace */
+      namespace: string;
+      /** Description */
+      description?: string | null;
+      executionEngine?: components["schemas"]["ExecutionEngineRef"] | null;
+      modelRef?: components["schemas"]["ModelRef"] | null;
+      /** Parameters */
+      parameters?: components["schemas"]["ark_api__models__agents__Parameter-Output"][] | null;
+      /** Prompt */
+      prompt?: string | null;
+      /** Tools */
+      tools?: components["schemas"]["Tool-Output"][] | null;
+      /** Skills */
+      skills?: components["schemas"]["Skill"][] | null;
+      /**
+       * Isa2A
+       * @default false
+       */
+      isA2A?: boolean;
+      /** Status */
+      status?: {
+        [key: string]: unknown;
+      } | null;
+      /** Annotations */
+      annotations?: {
+        [key: string]: string;
+      } | null;
+    };
+    /**
+     * AgentListResponse
+     * @description List of agents response model.
+     */
+    AgentListResponse: {
+      /** Items */
+      items: components["schemas"]["AgentResponse"][];
+      /** Count */
+      count: number;
+    };
+    /**
+     * AgentResponse
+     * @description Agent resource response model.
+     */
+    AgentResponse: {
+      /** Name */
+      name: string;
+      /** Namespace */
+      namespace: string;
+      /** Description */
+      description?: string | null;
+      /** Model Ref */
+      model_ref?: string | null;
+      /** Prompt */
+      prompt?: string | null;
+      /** Status */
+      status?: string | null;
+      /** Annotations */
+      annotations?: {
+        [key: string]: string;
+      } | null;
+    };
+    /**
+     * AgentUpdateRequest
+     * @description Request model for updating an agent.
+     */
+    AgentUpdateRequest: {
+      /** Description */
+      description?: string | null;
+      executionEngine?: components["schemas"]["ExecutionEngineRef"] | null;
+      modelRef?: components["schemas"]["ModelRef"] | null;
+      /** Parameters */
+      parameters?: components["schemas"]["ark_api__models__agents__Parameter-Input"][] | null;
+      /** Prompt */
+      prompt?: string | null;
+      /** Tools */
+      tools?: components["schemas"]["Tool-Input"][] | null;
+    };
+    /** Annotation */
+    Annotation: {
+      /**
+       * Type
+       * @constant
+       */
+      type: "url_citation";
+      url_citation: components["schemas"]["AnnotationURLCitation"];
+      [key: string]: unknown;
+    };
+    /** AnnotationURLCitation */
+    AnnotationURLCitation: {
+      /** End Index */
+      end_index: number;
+      /** Start Index */
+      start_index: number;
+      /** Title */
+      title: string;
+      /** Url */
+      url: string;
+      [key: string]: unknown;
+    };
+    /**
+     * ArkService
+     * @description Response model for a single ARK service.
+     *
+     * An ARK service is essentially a Helm chart with ARK-specific annotations
+     * that indicate it provides AI capabilities (agents, models, tools, etc.).
+     */
+    ArkService: {
+      /** Name */
+      name: string;
+      /** Namespace */
+      namespace: string;
+      /** Chart */
+      chart: string;
+      /** Chart Version */
+      chart_version?: string | null;
+      /** App Version */
+      app_version: string;
+      /** Status */
+      status: string;
+      /** Revision */
+      revision: number;
+      /** Updated */
+      updated: string;
+      /** Ark Service Type */
+      ark_service_type?: string | null;
+      /** Description */
+      description?: string | null;
+      /**
+       * Ark Resources
+       * @default []
+       */
+      ark_resources?: string[];
+      /**
+       * Httproutes
+       * @default []
+       */
+      httproutes?: components["schemas"]["HTTPRouteInfo"][];
+    };
+    /**
+     * ArkServiceListResponse
+     * @description Response model for a list of ARK services.
+     */
+    ArkServiceListResponse: {
+      /** Items */
+      items: components["schemas"]["ArkService"][];
+      /** Count */
+      count: number;
+    };
+    /**
+     * AzureConfig
+     * @description Azure model configuration.
+     */
+    AzureConfig: {
+      /** Apikey */
+      apiKey: string | components["schemas"]["ark_api__models__models__ValueSource"];
+      /** Baseurl */
+      baseUrl: string | components["schemas"]["ark_api__models__models__ValueSource"];
+      /** Apiversion */
+      apiVersion?: string | components["schemas"]["ark_api__models__models__ValueSource"] | null;
+    };
+    /**
+     * BaselineEvaluationMetadata
+     * @description Enhanced metadata for baseline evaluations.
+     */
+    BaselineEvaluationMetadata: {
+      /** Baseline Score */
+      baseline_score?: number | null;
+      /** Current Score */
+      current_score?: number | null;
+      /** Improvement */
+      improvement?: number | null;
+      /** Baseline Passed */
+      baseline_passed?: boolean | null;
+      /** Current Passed */
+      current_passed?: boolean | null;
+      /** Comparison Threshold */
+      comparison_threshold?: number | null;
+      /** Baseline Metadata */
+      baseline_metadata?: {
+        [key: string]: unknown;
+      } | null;
+    };
+    /**
+     * BatchEvaluationMetadata
+     * @description Enhanced metadata for batch evaluations.
+     */
+    BatchEvaluationMetadata: {
+      /** Total Evaluations */
+      total_evaluations?: number | null;
+      /** Completed Evaluations */
+      completed_evaluations?: number | null;
+      /** Failed Evaluations */
+      failed_evaluations?: number | null;
+      /** Pending Evaluations */
+      pending_evaluations?: number | null;
+      /** Average Score */
+      average_score?: number | null;
+      /** Min Score */
+      min_score?: number | null;
+      /** Max Score */
+      max_score?: number | null;
+      /** Batch Passed */
+      batch_passed?: boolean | null;
+      /** Evaluation Results */
+      evaluation_results?: {
+          [key: string]: unknown;
+        }[] | null;
+    };
+    /**
+     * BatchResult
+     * @description Result from batch evaluation.
+     */
+    BatchResult: {
+      /** Evaluatorname */
+      evaluatorName: string;
+      /** Score */
+      score?: number | null;
+      /** Passed */
+      passed?: boolean | null;
+      /** Message */
+      message?: string | null;
+      /** Metadata */
+      metadata?: {
+        [key: string]: unknown;
+      } | null;
+    };
+    /**
+     * BedrockConfig
+     * @description Bedrock model configuration.
+     */
+    BedrockConfig: {
+      /** Region */
+      region?: string | components["schemas"]["ark_api__models__models__ValueSource"] | null;
+      /** Accesskeyid */
+      accessKeyId?: string | components["schemas"]["ark_api__models__models__ValueSource"] | null;
+      /** Secretaccesskey */
+      secretAccessKey?: string | components["schemas"]["ark_api__models__models__ValueSource"] | null;
+      /** Sessiontoken */
+      sessionToken?: string | components["schemas"]["ark_api__models__models__ValueSource"] | null;
+      /** Modelarn */
+      modelArn?: string | components["schemas"]["ark_api__models__models__ValueSource"] | null;
+      /** Maxtokens */
+      maxTokens?: number | null;
+      /** Temperature */
+      temperature?: string | null;
+    };
+    /**
+     * CategoryBreakdown
+     * @description Category-wise breakdown of evaluation results.
+     */
+    CategoryBreakdown: {
+      /** Category */
+      category: string;
+      /** Score */
+      score?: number | null;
+      /** Passed */
+      passed?: boolean | null;
+      /** Weight */
+      weight?: number | null;
+      /** Description */
+      description?: string | null;
+    };
+    /** ChatCompletion */
+    ChatCompletion: {
+      /** Id */
+      id: string;
+      /** Choices */
+      choices: components["schemas"]["Choice"][];
+      /** Created */
+      created: number;
+      /** Model */
+      model: string;
+      /**
+       * Object
+       * @constant
+       */
+      object: "chat.completion";
+      /** Service Tier */
+      service_tier?: ("auto" | "default" | "flex" | "scale" | "priority") | null;
+      /** System Fingerprint */
+      system_fingerprint?: string | null;
+      usage?: components["schemas"]["CompletionUsage"] | null;
+      [key: string]: unknown;
+    };
+    /** ChatCompletionAudio */
+    ChatCompletionAudio: {
+      /** Id */
+      id: string;
+      /** Data */
+      data: string;
+      /** Expires At */
+      expires_at: number;
+      /** Transcript */
+      transcript: string;
+      [key: string]: unknown;
+    };
+    /** ChatCompletionMessage */
+    ChatCompletionMessage: {
+      /** Content */
+      content?: string | null;
+      /** Refusal */
+      refusal?: string | null;
+      /**
+       * Role
+       * @constant
+       */
+      role: "assistant";
+      /** Annotations */
+      annotations?: components["schemas"]["Annotation"][] | null;
+      audio?: components["schemas"]["ChatCompletionAudio"] | null;
+      function_call?: components["schemas"]["FunctionCall"] | null;
+      /** Tool Calls */
+      tool_calls?: ((components["schemas"]["ChatCompletionMessageFunctionToolCall"] | components["schemas"]["ChatCompletionMessageCustomToolCall"])[]) | null;
+      [key: string]: unknown;
+    };
+    /** ChatCompletionMessageCustomToolCall */
+    ChatCompletionMessageCustomToolCall: {
+      /** Id */
+      id: string;
+      custom: components["schemas"]["Custom"];
+      /**
+       * Type
+       * @constant
+       */
+      type: "custom";
+      [key: string]: unknown;
+    };
+    /** ChatCompletionMessageFunctionToolCall */
+    ChatCompletionMessageFunctionToolCall: {
+      /** Id */
+      id: string;
+      function: components["schemas"]["Function"];
+      /**
+       * Type
+       * @constant
+       */
+      type: "function";
+      [key: string]: unknown;
+    };
+    /** ChatCompletionRequest */
+    ChatCompletionRequest: {
+      /** Model */
+      model: string;
+      /** Messages */
+      messages: components["schemas"]["ChatMessage"][];
+      /**
+       * Temperature
+       * @default 1
+       */
+      temperature?: number;
+      /** Max Tokens */
+      max_tokens?: number | null;
+      /**
+       * Stream
+       * @default false
+       */
+      stream?: boolean;
+    };
+    /** ChatCompletionTokenLogprob */
+    ChatCompletionTokenLogprob: {
+      /** Token */
+      token: string;
+      /** Bytes */
+      bytes?: number[] | null;
+      /** Logprob */
+      logprob: number;
+      /** Top Logprobs */
+      top_logprobs: components["schemas"]["TopLogprob"][];
+      [key: string]: unknown;
+    };
+    /** ChatMessage */
+    ChatMessage: {
+      /** Role */
+      role: string;
+      /** Content */
+      content: string;
+    };
+    /**
+     * ChildEvaluationStatus
+     * @description Status of child evaluations in batch mode.
+     */
+    ChildEvaluationStatus: {
+      /** Total */
+      total: number;
+      /** Completed */
+      completed: number;
+      /** Failed */
+      failed: number;
+      /** Pending */
+      pending: number;
+    };
+    /** Choice */
+    Choice: {
+      /**
+       * Finish Reason
+       * @enum {string}
+       */
+      finish_reason: "stop" | "length" | "tool_calls" | "content_filter" | "function_call";
+      /** Index */
+      index: number;
+      logprobs?: components["schemas"]["ChoiceLogprobs"] | null;
+      message: components["schemas"]["ChatCompletionMessage"];
+      [key: string]: unknown;
+    };
+    /** ChoiceLogprobs */
+    ChoiceLogprobs: {
+      /** Content */
+      content?: components["schemas"]["ChatCompletionTokenLogprob"][] | null;
+      /** Refusal */
+      refusal?: components["schemas"]["ChatCompletionTokenLogprob"][] | null;
+      [key: string]: unknown;
+    };
+    /** CompletionTokensDetails */
+    CompletionTokensDetails: {
+      /** Accepted Prediction Tokens */
+      accepted_prediction_tokens?: number | null;
+      /** Audio Tokens */
+      audio_tokens?: number | null;
+      /** Reasoning Tokens */
+      reasoning_tokens?: number | null;
+      /** Rejected Prediction Tokens */
+      rejected_prediction_tokens?: number | null;
+      [key: string]: unknown;
+    };
+    /** CompletionUsage */
+    CompletionUsage: {
+      /** Completion Tokens */
+      completion_tokens: number;
+      /** Prompt Tokens */
+      prompt_tokens: number;
+      /** Total Tokens */
+      total_tokens: number;
+      completion_tokens_details?: components["schemas"]["CompletionTokensDetails"] | null;
+      prompt_tokens_details?: components["schemas"]["PromptTokensDetails"] | null;
+      [key: string]: unknown;
+    };
+    /** Custom */
+    Custom: {
+      /** Input */
+      input: string;
+      /** Name */
+      name: string;
+      [key: string]: unknown;
+    };
+    /**
+     * DirectEvaluationMetadata
+     * @description Enhanced metadata for direct evaluations.
+     */
+    DirectEvaluationMetadata: {
+      /** Input Length */
+      input_length?: number | null;
+      /** Output Length */
+      output_length?: number | null;
+      /** Evaluation Duration */
+      evaluation_duration?: number | null;
+      /** Model Used */
+      model_used?: string | null;
+      /** Reasoning Quality */
+      reasoning_quality?: number | null;
+      /** Confidence Score */
+      confidence_score?: number | null;
+    };
+    /**
+     * EnhancedEvaluationDetailResponse
+     * @description Enhanced detailed evaluation response with metadata.
+     */
+    EnhancedEvaluationDetailResponse: {
+      /** Name */
+      name: string;
+      /** Namespace */
+      namespace: string;
+      /** Spec */
+      spec: {
+        [key: string]: unknown;
+      };
+      /** Status */
+      status?: {
+        [key: string]: unknown;
+      } | null;
+      /** Metadata */
+      metadata: {
+        [key: string]: unknown;
+      };
+      tokenUsage?: components["schemas"]["TokenUsage"] | null;
+      /** Batchresults */
+      batchResults?: components["schemas"]["BatchResult"][] | null;
+      childEvaluationStatus?: components["schemas"]["ChildEvaluationStatus"] | null;
+      enhanced_metadata?: components["schemas"]["UnifiedEvaluationMetadata"] | null;
+    };
+    /**
+     * EnhancedEvaluationListResponse
+     * @description Enhanced response for listing evaluations with metadata.
+     */
+    EnhancedEvaluationListResponse: {
+      /** Items */
+      items: components["schemas"]["EnhancedEvaluationResponse"][];
+      /** Count */
+      count: number;
+    };
+    /**
+     * EnhancedEvaluationResponse
+     * @description Enhanced evaluation response with metadata for list operations.
+     */
+    EnhancedEvaluationResponse: {
+      /** Name */
+      name: string;
+      /** Namespace */
+      namespace: string;
+      /** Type */
+      type: string;
+      /** Phase */
+      phase?: string | null;
+      /** Score */
+      score?: string | null;
+      /** Passed */
+      passed?: boolean | null;
+      /** Message */
+      message?: string | null;
+      enhanced_metadata?: components["schemas"]["UnifiedEvaluationMetadata"] | null;
+    };
+    /**
+     * EvaluationConfig
+     * @description Unified evaluation configuration supporting all types.
+     */
+    EvaluationConfig: {
+      /** Input */
+      input?: string | null;
+      /** Output */
+      output?: string | null;
+      queryRef?: components["schemas"]["QueryRef"] | null;
+      /** Evaluations */
+      evaluations?: components["schemas"]["EvaluationRef"][] | null;
+      /** Rules */
+      rules?: {
+          [key: string]: unknown;
+        }[] | null;
+    };
+    /**
+     * EvaluationCreateRequest
+     * @description Request body for creating an evaluation.
+     */
+    EvaluationCreateRequest: {
+      /** Name */
+      name: string;
+      /** @default direct */
+      type?: components["schemas"]["EvaluationType"] | null;
+      config: components["schemas"]["EvaluationConfig"];
+      evaluator: components["schemas"]["EvaluatorReference"];
+      /**
+       * Ttl
+       * @default 720h
+       */
+      ttl?: string | null;
+      /**
+       * Timeout
+       * @default 5m
+       */
+      timeout?: string | null;
+    };
+    /**
+     * EvaluationDetailResponse
+     * @description Detailed evaluation response model.
+     */
+    EvaluationDetailResponse: {
+      /** Name */
+      name: string;
+      /** Namespace */
+      namespace: string;
+      /** Spec */
+      spec: {
+        [key: string]: unknown;
+      };
+      /** Status */
+      status?: {
+        [key: string]: unknown;
+      } | null;
+      /** Metadata */
+      metadata: {
+        [key: string]: unknown;
+      };
+      tokenUsage?: components["schemas"]["TokenUsage"] | null;
+      /** Batchresults */
+      batchResults?: components["schemas"]["BatchResult"][] | null;
+      childEvaluationStatus?: components["schemas"]["ChildEvaluationStatus"] | null;
+    };
+    /**
+     * EvaluationListResponse
+     * @description Response for listing evaluations.
+     */
+    EvaluationListResponse: {
+      /** Items */
+      items: components["schemas"]["EvaluationResponse"][];
+      /** Count */
+      count: number;
+    };
+    /**
+     * EvaluationRef
+     * @description Reference to an evaluation for batch aggregation.
+     */
+    EvaluationRef: {
+      /** Name */
+      name: string;
+      /** Namespace */
+      namespace?: string | null;
+    };
+    /**
+     * EvaluationResponse
+     * @description Basic evaluation response for list operations.
+     */
+    EvaluationResponse: {
+      /** Name */
+      name: string;
+      /** Namespace */
+      namespace: string;
+      /** Type */
+      type: string;
+      /** Phase */
+      phase?: string | null;
+      /** Score */
+      score?: string | null;
+      /** Passed */
+      passed?: boolean | null;
+      /** Message */
+      message?: string | null;
+    };
+    /**
+     * EvaluationType
+     * @description Evaluation types.
+     * @enum {string}
+     */
+    EvaluationType: "direct" | "baseline" | "query" | "batch" | "event";
+    /**
+     * EvaluationUpdateRequest
+     * @description Request body for updating an evaluation.
+     */
+    EvaluationUpdateRequest: {
+      type?: components["schemas"]["EvaluationType"] | null;
+      config?: components["schemas"]["EvaluationConfig"] | null;
+      evaluator?: components["schemas"]["EvaluatorReference"] | null;
+      /** Ttl */
+      ttl?: string | null;
+      /** Timeout */
+      timeout?: string | null;
+    };
+    /**
+     * EvaluatorCreateRequest
+     * @description Request body for creating an evaluator.
+     */
+    EvaluatorCreateRequest: {
+      /** Name */
+      name: string;
+      address: components["schemas"]["ark_api__models__evaluators__ValueSource"];
+      /** Description */
+      description?: string | null;
+      selector?: components["schemas"]["ResourceSelector"] | null;
+      /** Parameters */
+      parameters?: components["schemas"]["ark_api__models__evaluators__Parameter"][] | null;
+    };
+    /**
+     * EvaluatorDetailResponse
+     * @description Detailed evaluator response model.
+     */
+    EvaluatorDetailResponse: {
+      /** Name */
+      name: string;
+      /** Namespace */
+      namespace: string;
+      /** Spec */
+      spec: {
+        [key: string]: unknown;
+      };
+      /** Status */
+      status?: {
+        [key: string]: unknown;
+      } | null;
+      /** Metadata */
+      metadata: {
+        [key: string]: unknown;
+      };
+    };
+    /**
+     * EvaluatorListResponse
+     * @description Response for listing evaluators.
+     */
+    EvaluatorListResponse: {
+      /** Items */
+      items: components["schemas"]["EvaluatorResponse"][];
+      /** Count */
+      count: number;
+    };
+    /**
+     * EvaluatorReference
+     * @description Reference to an evaluator.
+     */
+    EvaluatorReference: {
+      /** Name */
+      name: string;
+      /** Namespace */
+      namespace?: string | null;
+      /** Parameters */
+      parameters?: {
+          [key: string]: unknown;
+        }[] | null;
+    };
+    /**
+     * EvaluatorResponse
+     * @description Basic evaluator response for list operations.
+     */
+    EvaluatorResponse: {
+      /** Name */
+      name: string;
+      /** Namespace */
+      namespace: string;
+      /** Address */
+      address?: string | null;
+      /** Description */
+      description?: string | null;
+      /** Phase */
+      phase?: string | null;
+      /** Message */
+      message?: string | null;
+    };
+    /**
+     * EvaluatorUpdateRequest
+     * @description Request body for updating an evaluator.
+     */
+    EvaluatorUpdateRequest: {
+      address?: components["schemas"]["ark_api__models__evaluators__ValueSource"] | null;
+      /** Description */
+      description?: string | null;
+      selector?: components["schemas"]["ResourceSelector"] | null;
+      /** Parameters */
+      parameters?: components["schemas"]["ark_api__models__evaluators__Parameter"][] | null;
+    };
+    /**
+     * EventEvaluationMetadata
+     * @description Enhanced metadata for event-based evaluations.
+     */
+    EventEvaluationMetadata: {
+      /** Total Rules */
+      total_rules?: number | null;
+      /** Passed Rules */
+      passed_rules?: number | null;
+      /** Failed Rules */
+      failed_rules?: number | null;
+      /** Total Weight */
+      total_weight?: number | null;
+      /** Weighted Score */
+      weighted_score?: number | null;
+      /** Min Score Threshold */
+      min_score_threshold?: number | null;
+      /** Events Analyzed */
+      events_analyzed?: number | null;
+      /** Query Name */
+      query_name?: string | null;
+      /** Session Id */
+      session_id?: string | null;
+      /** Rule Results */
+      rule_results?: {
+          [key: string]: unknown;
+        }[] | null;
+    };
+    /**
+     * EventListResponse
+     * @description Response model for listing events.
+     */
+    EventListResponse: {
+      /** Items */
+      items: components["schemas"]["EventResponse"][];
+      /** Total */
+      total: number;
+    };
+    /**
+     * EventResponse
+     * @description Response model for a single Kubernetes event.
+     */
+    EventResponse: {
+      /** Name */
+      name: string;
+      /** Namespace */
+      namespace: string;
+      /** Type */
+      type: string;
+      /** Reason */
+      reason: string;
+      /** Message */
+      message: string;
+      /** Source Component */
+      source_component?: string | null;
+      /** Source Host */
+      source_host?: string | null;
+      /** Involved Object Kind */
+      involved_object_kind: string;
+      /** Involved Object Name */
+      involved_object_name: string;
+      /** Involved Object Namespace */
+      involved_object_namespace?: string | null;
+      /** Involved Object Uid */
+      involved_object_uid?: string | null;
+      /** First Timestamp */
+      first_timestamp?: string | null;
+      /** Last Timestamp */
+      last_timestamp?: string | null;
+      /**
+       * Count
+       * @default 1
+       */
+      count?: number;
+      /**
+       * Creation Timestamp
+       * Format: date-time
+       */
+      creation_timestamp: string;
+      /** Uid */
+      uid: string;
+    };
+    /**
+     * ExecutionEngineRef
+     * @description ExecutionEngine reference for running an agent.
+     */
+    ExecutionEngineRef: {
+      /** Name */
+      name: string;
+      /** Namespace */
+      namespace?: string | null;
+    };
+    /** Function */
+    Function: {
+      /** Arguments */
+      arguments: string;
+      /** Name */
+      name: string;
+      [key: string]: unknown;
+    };
+    /** FunctionCall */
+    FunctionCall: {
+      /** Arguments */
+      arguments: string;
+      /** Name */
+      name: string;
+      [key: string]: unknown;
+    };
+    /**
+     * Graph
+     * @description Team workflow graph configuration.
+     */
+    Graph: {
+      /** Edges */
+      edges: components["schemas"]["GraphEdge"][];
+    };
+    /**
+     * GraphEdge
+     * @description Graph edge configuration.
+     */
+    GraphEdge: {
+      /** From */
+      from: string;
+      /** To */
+      to: string;
+    };
+    /**
+     * HTTPRouteInfo
+     * @description Information about an HTTPRoute associated with a service.
+     */
+    HTTPRouteInfo: {
+      /** Name */
+      name: string;
+      /** Namespace */
+      namespace: string;
+      /** Url */
+      url: string;
+      /** Rules */
+      rules: number;
+    };
+    /** HTTPValidationError */
+    HTTPValidationError: {
+      /** Detail */
+      detail?: components["schemas"]["ValidationError"][];
+    };
+    /**
+     * HealthResponse
+     * @description Health check response model.
+     */
+    HealthResponse: {
+      /**
+       * Status
+       * @description Health status
+       * @example healthy
+       */
+      status: string;
+      /**
+       * Service
+       * @description Service name
+       * @example ark-api
+       */
+      service: string;
+    };
+    /** MCPServerDetailResponse */
+    MCPServerDetailResponse: {
+      /** Name */
+      name: string;
+      /** Namespace */
+      namespace: string;
+      /** Description */
+      description?: string | null;
+      /** Labels */
+      labels?: {
+        [key: string]: string;
+      } | null;
+      /** Annotations */
+      annotations?: {
+        [key: string]: string;
+      } | null;
+      /** Spec */
+      spec?: {
+        [key: string]: unknown;
+      } | null;
+      /** Status */
+      status?: {
+        [key: string]: unknown;
+      } | null;
+    };
+    /** MCPServerListResponse */
+    MCPServerListResponse: {
+      /** Items */
+      items: components["schemas"]["MCPServerResponse"][];
+      /** Total */
+      total: number;
+    };
+    /** MCPServerResponse */
+    MCPServerResponse: {
+      /** Name */
+      name: string;
+      /** Namespace */
+      namespace: string;
+      /** Description */
+      description?: string | null;
+      /** Labels */
+      labels?: {
+        [key: string]: string;
+      } | null;
+      /** Address */
+      address?: string | null;
+      /** Annotations */
+      annotations?: {
+        [key: string]: string;
+      } | null;
+      /** Transport */
+      transport?: string | null;
+      /** Ready */
+      ready?: boolean | null;
+      /** Discovering */
+      discovering?: boolean | null;
+      /** Status Message */
+      status_message?: string | null;
+      /** Tool Count */
+      tool_count?: number | null;
+    };
+    /**
+     * Memory
+     * @description Memory reference for a query.
+     */
+    Memory: {
+      /** Name */
+      name: string;
+      /** Namespace */
+      namespace?: string | null;
+    };
+    /**
+     * MemoryCreateRequest
+     * @description Request model for creating a memory.
+     */
+    MemoryCreateRequest: {
+      /** Name */
+      name: string;
+      /** Description */
+      description?: string | null;
+      /** Config */
+      config?: {
+        [key: string]: unknown;
+      } | null;
+    };
+    /**
+     * MemoryDetailResponse
+     * @description Response model for detailed memory information.
+     */
+    MemoryDetailResponse: {
+      /** Name */
+      name: string;
+      /** Namespace */
+      namespace: string;
+      /** Description */
+      description?: string | null;
+      /** Config */
+      config?: {
+        [key: string]: unknown;
+      } | null;
+      /** Status */
+      status?: {
+        [key: string]: unknown;
+      } | null;
+    };
+    /**
+     * MemoryListResponse
+     * @description Response model for memory list.
+     */
+    MemoryListResponse: {
+      /** Items */
+      items: components["schemas"]["MemoryResponse"][];
+    };
+    /**
+     * MemoryMessageListResponse
+     * @description Response model for listing memory messages.
+     */
+    MemoryMessageListResponse: {
+      /** Items */
+      items: components["schemas"]["MemoryMessageResponse"][];
+      /** Total */
+      total?: number | null;
+    };
+    /**
+     * MemoryMessageResponse
+     * @description Response model for a memory message with context.
+     */
+    MemoryMessageResponse: {
+      /** Timestamp */
+      timestamp?: string | null;
+      /** Memoryname */
+      memoryName: string;
+      /** Sessionid */
+      sessionId: string;
+      /** Queryid */
+      queryId?: string | null;
+      /** Message */
+      message: {
+        [key: string]: unknown;
+      };
+    };
+    /**
+     * MemoryResponse
+     * @description Response model for memory list items.
+     */
+    MemoryResponse: {
+      /** Name */
+      name: string;
+      /** Namespace */
+      namespace: string;
+      /** Description */
+      description?: string | null;
+      /** Status */
+      status?: string | null;
+    };
+    /**
+     * MemoryUpdateRequest
+     * @description Request model for updating a memory.
+     */
+    MemoryUpdateRequest: {
+      /** Description */
+      description?: string | null;
+      /** Config */
+      config?: {
+        [key: string]: unknown;
+      } | null;
+    };
+    /**
+     * ModelConfig
+     * @description Model configuration container.
+     */
+    ModelConfig: {
+      openai?: components["schemas"]["OpenAIConfig"] | null;
+      azure?: components["schemas"]["AzureConfig"] | null;
+      bedrock?: components["schemas"]["BedrockConfig"] | null;
+    };
+    /**
+     * ModelCreateRequest
+     * @description Request model for creating a model.
+     */
+    ModelCreateRequest: {
+      /** Name */
+      name: string;
+      /**
+       * Type
+       * @enum {string}
+       */
+      type: "openai" | "azure" | "bedrock";
+      /** Model */
+      model: string;
+      config: components["schemas"]["ModelConfig"];
+    };
+    /**
+     * ModelDetailResponse
+     * @description Detailed model response model.
+     */
+    ModelDetailResponse: {
+      /** Name */
+      name: string;
+      /** Namespace */
+      namespace: string;
+      /**
+       * Type
+       * @enum {string}
+       */
+      type: "openai" | "azure" | "bedrock";
+      /** Model */
+      model: string;
+      /** Config */
+      config: {
+        [key: string]: {
+          [key: string]: string | {
+            [key: string]: unknown;
+          };
+        };
+      };
+      /** Status */
+      status?: string | null;
+      /** Resolved Address */
+      resolved_address?: string | null;
+      /** Annotations */
+      annotations?: {
+        [key: string]: string;
+      } | null;
+    };
+    /**
+     * ModelListResponse
+     * @description List of models response model.
+     */
+    ModelListResponse: {
+      /** Items */
+      items: components["schemas"]["ModelResponse"][];
+      /** Count */
+      count: number;
+    };
+    /**
+     * ModelRef
+     * @description Model reference for an agent.
+     */
+    ModelRef: {
+      /** Name */
+      name: string;
+      /** Namespace */
+      namespace?: string | null;
+    };
+    /**
+     * ModelResponse
+     * @description Model resource response model.
+     */
+    ModelResponse: {
+      /** Name */
+      name: string;
+      /** Namespace */
+      namespace: string;
+      /**
+       * Type
+       * @enum {string}
+       */
+      type: "openai" | "azure" | "bedrock";
+      /** Model */
+      model: string;
+      /** Status */
+      status?: string | null;
+      /** Annotations */
+      annotations?: {
+        [key: string]: string;
+      } | null;
+    };
+    /**
+     * ModelUpdateRequest
+     * @description Request model for updating a model.
+     */
+    ModelUpdateRequest: {
+      /** Model */
+      model?: string | null;
+      config?: components["schemas"]["ModelConfig"] | null;
+    };
+    /**
+     * NamespaceCreateRequest
+     * @description Request model for creating a namespace.
+     */
+    NamespaceCreateRequest: {
+      /** Name */
+      name: string;
+    };
+    /**
+     * NamespaceListResponse
+     * @description List of namespaces response model.
+     */
+    NamespaceListResponse: {
+      /** Items */
+      items: components["schemas"]["NamespaceResponse"][];
+      /** Count */
+      count: number;
+    };
+    /**
+     * NamespaceResponse
+     * @description Kubernetes namespace response model.
+     */
+    NamespaceResponse: {
+      /** Name */
+      name: string;
+    };
+    /**
+     * OpenAIConfig
+     * @description OpenAI model configuration.
+     */
+    OpenAIConfig: {
+      /** Apikey */
+      apiKey: string | components["schemas"]["ark_api__models__models__ValueSource"];
+      /** Baseurl */
+      baseUrl: string | components["schemas"]["ark_api__models__models__ValueSource"];
+    };
+    /** PromptTokensDetails */
+    PromptTokensDetails: {
+      /** Audio Tokens */
+      audio_tokens?: number | null;
+      /** Cached Tokens */
+      cached_tokens?: number | null;
+      [key: string]: unknown;
+    };
+    /**
+     * QueryCreateRequest
+     * @description Request body for creating a query.
+     */
+    QueryCreateRequest: {
+      /** Name */
+      name: string;
+      /** Input */
+      input: string;
+      memory?: components["schemas"]["Memory"] | null;
+      /** Parameters */
+      parameters?: components["schemas"]["ark_api__models__queries__Parameter-Input"][] | null;
+      selector?: components["schemas"]["ark_api__models__queries__LabelSelector"] | null;
+      /** Serviceaccount */
+      serviceAccount?: string | null;
+      /** Sessionid */
+      sessionId?: string | null;
+      /** Targets */
+      targets?: components["schemas"]["Target"][] | null;
+      /** Timeout */
+      timeout?: string | null;
+      /** Ttl */
+      ttl?: string | null;
+      /** Cancel */
+      cancel?: boolean | null;
+      /** Evaluators */
+      evaluators?: components["schemas"]["Memory"][] | null;
+      evaluatorSelector?: components["schemas"]["ark_api__models__queries__LabelSelector"] | null;
+    };
+    /**
+     * QueryDetailResponse
+     * @description Detailed query response.
+     */
+    QueryDetailResponse: {
+      /** Name */
+      name: string;
+      /** Namespace */
+      namespace: string;
+      /** Input */
+      input: string;
+      memory?: components["schemas"]["Memory"] | null;
+      /** Parameters */
+      parameters?: components["schemas"]["ark_api__models__queries__Parameter-Output"][] | null;
+      selector?: components["schemas"]["ark_api__models__queries__LabelSelector"] | null;
+      /** Serviceaccount */
+      serviceAccount?: string | null;
+      /** Sessionid */
+      sessionId?: string | null;
+      /** Targets */
+      targets?: components["schemas"]["Target"][] | null;
+      /** Timeout */
+      timeout?: string | null;
+      /** Ttl */
+      ttl?: string | null;
+      /** Cancel */
+      cancel?: boolean | null;
+      /** Evaluators */
+      evaluators?: components["schemas"]["Memory"][] | null;
+      evaluatorSelector?: components["schemas"]["ark_api__models__queries__LabelSelector"] | null;
+      /** Status */
+      status?: {
+        [key: string]: unknown;
+      } | null;
+    };
+    /**
+     * QueryEvaluationMetadata
+     * @description Enhanced metadata for query-based evaluations.
+     */
+    QueryEvaluationMetadata: {
+      /** Query Name */
+      query_name?: string | null;
+      /** Query Namespace */
+      query_namespace?: string | null;
+      /** Response Target */
+      response_target?: string | null;
+      /** Execution Time */
+      execution_time?: number | null;
+      /** Tokens Used */
+      tokens_used?: number | null;
+      /** Query Status */
+      query_status?: string | null;
+      /** Response Quality */
+      response_quality?: number | null;
+    };
+    /**
+     * QueryListResponse
+     * @description Response for listing queries.
+     */
+    QueryListResponse: {
+      /** Items */
+      items: components["schemas"]["QueryResponse"][];
+      /** Count */
+      count: number;
+    };
+    /**
+     * QueryRef
+     * @description Reference to a query for evaluation.
+     */
+    QueryRef: {
+      /** Name */
+      name: string;
+      /** Namespace */
+      namespace?: string | null;
+      /** Responsetarget */
+      responseTarget?: string | null;
+    };
+    /**
+     * QueryResponse
+     * @description Basic query response for list operations.
+     */
+    QueryResponse: {
+      /** Name */
+      name: string;
+      /** Namespace */
+      namespace: string;
+      /** Input */
+      input: string;
+      memory?: components["schemas"]["Memory"] | null;
+      /** Sessionid */
+      sessionId?: string | null;
+      /** Status */
+      status?: {
+        [key: string]: unknown;
+      } | null;
+      /** Creationtimestamp */
+      creationTimestamp?: string | null;
+    };
+    /**
+     * QueryUpdateRequest
+     * @description Request body for updating a query.
+     */
+    QueryUpdateRequest: {
+      /** Input */
+      input?: string | null;
+      memory?: components["schemas"]["Memory"] | null;
+      /** Parameters */
+      parameters?: components["schemas"]["ark_api__models__queries__Parameter-Input"][] | null;
+      selector?: components["schemas"]["ark_api__models__queries__LabelSelector"] | null;
+      /** Serviceaccount */
+      serviceAccount?: string | null;
+      /** Sessionid */
+      sessionId?: string | null;
+      /** Targets */
+      targets?: components["schemas"]["Target"][] | null;
+      /** Timeout */
+      timeout?: string | null;
+      /** Ttl */
+      ttl?: string | null;
+      /** Cancel */
+      cancel?: boolean | null;
+      /** Evaluators */
+      evaluators?: components["schemas"]["Memory"][] | null;
+      evaluatorSelector?: components["schemas"]["ark_api__models__queries__LabelSelector"] | null;
+    };
+    /**
+     * ReadinessResponse
+     * @description Readiness check response model.
+     */
+    ReadinessResponse: {
+      /**
+       * Status
+       * @description Readiness status
+       * @example ready
+       */
+      status: string;
+      /**
+       * Service
+       * @description Service name
+       * @example ark-api
+       */
+      service: string;
+      /**
+       * Error
+       * @description Error message if not ready
+       * @example Connection refused
+       */
+      error?: string | null;
+    };
+    /**
+     * ResourceSelector
+     * @description Selector for automatic evaluation of resources.
+     */
+    ResourceSelector: {
+      /** Resource */
+      resource: string;
+      labelSelector?: components["schemas"]["ark_api__models__evaluators__LabelSelector"] | null;
+    };
+    /**
+     * SecretCreateRequest
+     * @description Request model for creating a secret.
+     */
+    SecretCreateRequest: {
+      /** Name */
+      name: string;
+      /** String Data */
+      string_data: {
+        [key: string]: string;
+      };
+      /**
+       * Type
+       * @default Opaque
+       */
+      type?: string | null;
+    };
+    /**
+     * SecretDetailResponse
+     * @description Detailed secret response model.
+     */
+    SecretDetailResponse: {
+      /** Name */
+      name: string;
+      /** Id */
+      id: string;
+      /** Type */
+      type: string;
+      /** Secret Length */
+      secret_length: number;
+      /** Annotations */
+      annotations?: {
+        [key: string]: string;
+      } | null;
+    };
+    /**
+     * SecretListResponse
+     * @description List of secrets response model.
+     */
+    SecretListResponse: {
+      /** Items */
+      items: components["schemas"]["SecretResponse"][];
+      /** Count */
+      count: number;
+    };
+    /**
+     * SecretResponse
+     * @description Kubernetes secret response model.
+     */
+    SecretResponse: {
+      /** Name */
+      name: string;
+      /** Id */
+      id: string;
+      /** Annotations */
+      annotations?: {
+        [key: string]: string;
+      } | null;
+    };
+    /**
+     * SecretUpdateRequest
+     * @description Request model for updating a secret.
+     */
+    SecretUpdateRequest: {
+      /** String Data */
+      string_data: {
+        [key: string]: string;
+      };
+    };
+    /**
+     * Selector
+     * @description Team selector configuration.
+     */
+    Selector: {
+      /** Model */
+      model?: string | null;
+      /** Selectorprompt */
+      selectorPrompt?: string | null;
+    };
+    /**
+     * SessionListResponse
+     * @description Response model for listing sessions.
+     */
+    SessionListResponse: {
+      /** Items */
+      items: components["schemas"]["SessionResponse"][];
+      /** Total */
+      total?: number | null;
+    };
+    /**
+     * SessionResponse
+     * @description Response model for a session.
+     */
+    SessionResponse: {
+      /** Sessionid */
+      sessionId: string;
+      /** Memoryname */
+      memoryName: string;
+      /** Queries */
+      queries?: string[] | null;
+      /** Messagecount */
+      messageCount?: number | null;
+      /** Lastactivity */
+      lastActivity?: string | null;
+    };
+    /**
+     * Skill
+     * @description Skill configuration for an A2A agent.
+     */
+    Skill: {
+      /** Id */
+      id: string;
+      /** Name */
+      name: string;
+      /** Description */
+      description?: string | null;
+      /** Tags */
+      tags?: string[] | null;
+    };
+    /** SystemInfo */
+    SystemInfo: {
+      /** Kubernetes Version */
+      kubernetes_version: string;
+      /** System Version */
+      system_version: string;
+    };
+    /**
+     * Target
+     * @description Target for a query.
+     */
+    Target: {
+      /** Name */
+      name: string;
+      /** Type */
+      type: string;
+    };
+    /**
+     * TeamCreateRequest
+     * @description Request model for creating a team.
+     */
+    TeamCreateRequest: {
+      /** Name */
+      name: string;
+      /** Description */
+      description?: string | null;
+      /** Members */
+      members: components["schemas"]["TeamMember"][];
+      /** Strategy */
+      strategy: string;
+      graph?: components["schemas"]["Graph"] | null;
+      /** Maxturns */
+      maxTurns?: number | null;
+      selector?: components["schemas"]["Selector"] | null;
+    };
+    /**
+     * TeamDetailResponse
+     * @description Detailed team response model.
+     */
+    TeamDetailResponse: {
+      /** Name */
+      name: string;
+      /** Namespace */
+      namespace: string;
+      /** Description */
+      description?: string | null;
+      /** Members */
+      members: components["schemas"]["TeamMember"][];
+      /** Strategy */
+      strategy: string;
+      graph?: components["schemas"]["Graph"] | null;
+      /** Maxturns */
+      maxTurns?: number | null;
+      selector?: components["schemas"]["Selector"] | null;
+      /** Status */
+      status?: {
+        [key: string]: unknown;
+      } | null;
+    };
+    /**
+     * TeamListResponse
+     * @description List of teams response model.
+     */
+    TeamListResponse: {
+      /** Items */
+      items: components["schemas"]["TeamResponse"][];
+      /** Count */
+      count: number;
+    };
+    /**
+     * TeamMember
+     * @description Team member configuration.
+     */
+    TeamMember: {
+      /** Name */
+      name: string;
+      /** Type */
+      type: string;
+    };
+    /**
+     * TeamResponse
+     * @description Team resource response model.
+     */
+    TeamResponse: {
+      /** Name */
+      name: string;
+      /** Namespace */
+      namespace: string;
+      /** Description */
+      description?: string | null;
+      /** Strategy */
+      strategy?: string | null;
+      /** Members Count */
+      members_count?: number | null;
+      /** Status */
+      status?: string | null;
+    };
+    /**
+     * TeamUpdateRequest
+     * @description Request model for updating a team.
+     */
+    TeamUpdateRequest: {
+      /** Description */
+      description?: string | null;
+      /** Members */
+      members?: components["schemas"]["TeamMember"][] | null;
+      /** Strategy */
+      strategy?: string | null;
+      graph?: components["schemas"]["Graph"] | null;
+      /** Maxturns */
+      maxTurns?: number | null;
+      selector?: components["schemas"]["Selector"] | null;
+    };
+    /**
+     * TokenUsage
+     * @description Token usage metrics.
+     */
+    TokenUsage: {
+      /** Prompttokens */
+      promptTokens?: number | null;
+      /** Completiontokens */
+      completionTokens?: number | null;
+      /** Totaltokens */
+      totalTokens?: number | null;
+    };
+    /**
+     * Tool
+     * @description Tool configuration for an agent.
+     */
+    "Tool-Input": {
+      /** Type */
+      type: string;
+      /** Name */
+      name?: string | null;
+      labelSelector?: components["schemas"]["ark_api__models__agents__LabelSelector"] | null;
+    };
+    /**
+     * Tool
+     * @description Tool configuration for an agent.
+     */
+    "Tool-Output": {
+      /** Type */
+      type: string;
+      /** Name */
+      name?: string | null;
+      labelSelector?: components["schemas"]["ark_api__models__agents__LabelSelector"] | null;
+    };
+    /** ToolDetailResponse */
+    ToolDetailResponse: {
+      /** Name */
+      name: string;
+      /** Namespace */
+      namespace: string;
+      /** Description */
+      description?: string | null;
+      /** Labels */
+      labels?: {
+        [key: string]: string;
+      } | null;
+      /** Annotations */
+      annotations?: {
+        [key: string]: string;
+      } | null;
+      /** Spec */
+      spec?: {
+        [key: string]: unknown;
+      } | null;
+      /** Status */
+      status?: {
+        [key: string]: unknown;
+      } | null;
+    };
+    /** ToolListResponse */
+    ToolListResponse: {
+      /** Items */
+      items: components["schemas"]["ToolResponse"][];
+      /** Total */
+      total: number;
+    };
+    /** ToolResponse */
+    ToolResponse: {
+      /** Name */
+      name: string;
+      /** Namespace */
+      namespace: string;
+      /** Description */
+      description?: string | null;
+      /** Labels */
+      labels?: {
+        [key: string]: string;
+      } | null;
+      /** Annotations */
+      annotations?: {
+        [key: string]: string;
+      } | null;
+    };
+    /** TopLogprob */
+    TopLogprob: {
+      /** Token */
+      token: string;
+      /** Bytes */
+      bytes?: number[] | null;
+      /** Logprob */
+      logprob: number;
+      [key: string]: unknown;
+    };
+    /**
+     * UnifiedEvaluationMetadata
+     * @description Unified metadata model that can contain any evaluation type metadata.
+     */
+    UnifiedEvaluationMetadata: {
+      /** Evaluation Type */
+      evaluation_type?: string | null;
+      event_metadata?: components["schemas"]["EventEvaluationMetadata"] | null;
+      baseline_metadata?: components["schemas"]["BaselineEvaluationMetadata"] | null;
+      query_metadata?: components["schemas"]["QueryEvaluationMetadata"] | null;
+      batch_metadata?: components["schemas"]["BatchEvaluationMetadata"] | null;
+      direct_metadata?: components["schemas"]["DirectEvaluationMetadata"] | null;
+      /** Category Breakdown */
+      category_breakdown?: components["schemas"]["CategoryBreakdown"][] | null;
+      /** Custom Fields */
+      custom_fields?: {
+        [key: string]: unknown;
+      } | null;
+    };
+    /** ValidationError */
+    ValidationError: {
+      /** Location */
+      loc: (string | number)[];
+      /** Message */
+      msg: string;
+      /** Error Type */
+      type: string;
+    };
+    /**
+     * ConfigMapKeyRef
+     * @description Reference to a key in a ConfigMap.
+     */
+    ark_api__models__agents__ConfigMapKeyRef: {
+      /** Key */
+      key: string;
+      /** Name */
+      name: string;
+      /** Optional */
+      optional?: boolean | null;
+    };
+    /**
+     * LabelSelector
+     * @description A label selector is a label query over a set of resources.
+     */
+    ark_api__models__agents__LabelSelector: {
+      /** Matchlabels */
+      matchLabels?: {
+        [key: string]: string;
+      } | null;
+      /** Matchexpressions */
+      matchExpressions?: components["schemas"]["ark_api__models__agents__LabelSelectorRequirement"][] | null;
+    };
+    /**
+     * LabelSelectorRequirement
+     * @description A label selector requirement is a selector that contains values, a key, and an operator.
+     */
+    ark_api__models__agents__LabelSelectorRequirement: {
+      /** Key */
+      key: string;
+      /** Operator */
+      operator: string;
+      /** Values */
+      values?: string[] | null;
+    };
+    /**
+     * Parameter
+     * @description Parameter for template processing in prompts and inputs.
+     */
+    "ark_api__models__agents__Parameter-Input": {
+      /** Name */
+      name: string;
+      /** Value */
+      value?: string | null;
+      valueFrom?: components["schemas"]["ark_api__models__agents__ValueFrom"] | null;
+    };
+    /**
+     * Parameter
+     * @description Parameter for template processing in prompts and inputs.
+     */
+    "ark_api__models__agents__Parameter-Output": {
+      /** Name */
+      name: string;
+      /** Value */
+      value?: string | null;
+      valueFrom?: components["schemas"]["ark_api__models__agents__ValueFrom"] | null;
+    };
+    /**
+     * SecretKeyRef
+     * @description Reference to a key in a Secret.
+     */
+    ark_api__models__agents__SecretKeyRef: {
+      /** Key */
+      key: string;
+      /** Name */
+      name: string;
+      /** Optional */
+      optional?: boolean | null;
+    };
+    /**
+     * ValueFrom
+     * @description Reference to external sources for parameter values.
+     */
+    ark_api__models__agents__ValueFrom: {
+      configMapKeyRef?: components["schemas"]["ark_api__models__agents__ConfigMapKeyRef"] | null;
+      secretKeyRef?: components["schemas"]["ark_api__models__agents__SecretKeyRef"] | null;
+    };
+    /**
+     * ConfigMapKeyRef
+     * @description Reference to a key in a ConfigMap.
+     */
+    ark_api__models__evaluators__ConfigMapKeyRef: {
+      /** Key */
+      key: string;
+      /**
+       * Name
+       * @default
+       */
+      name?: string;
+      /** Optional */
+      optional?: boolean | null;
+    };
+    /**
+     * LabelSelector
+     * @description Label selector for resources.
+     */
+    ark_api__models__evaluators__LabelSelector: {
+      /** Matchexpressions */
+      matchExpressions?: components["schemas"]["ark_api__models__evaluators__LabelSelectorRequirement"][] | null;
+      /** Matchlabels */
+      matchLabels?: {
+        [key: string]: string;
+      } | null;
+    };
+    /**
+     * LabelSelectorRequirement
+     * @description A label selector requirement.
+     */
+    ark_api__models__evaluators__LabelSelectorRequirement: {
+      /** Key */
+      key: string;
+      /** Operator */
+      operator: string;
+      /** Values */
+      values?: string[] | null;
+    };
+    /**
+     * Parameter
+     * @description Parameter for evaluator configuration.
+     */
+    ark_api__models__evaluators__Parameter: {
+      /** Name */
+      name: string;
+      /** Value */
+      value?: string | null;
+      valueFrom?: components["schemas"]["ark_api__models__evaluators__ValueFrom"] | null;
+    };
+    /**
+     * SecretKeyRef
+     * @description Reference to a key in a Secret.
+     */
+    ark_api__models__evaluators__SecretKeyRef: {
+      /** Key */
+      key: string;
+      /**
+       * Name
+       * @default
+       */
+      name?: string;
+      /** Optional */
+      optional?: boolean | null;
+    };
+    /**
+     * ValueFrom
+     * @description Reference to external sources for parameter values.
+     */
+    ark_api__models__evaluators__ValueFrom: {
+      configMapKeyRef?: components["schemas"]["ark_api__models__evaluators__ConfigMapKeyRef"] | null;
+      secretKeyRef?: components["schemas"]["ark_api__models__evaluators__SecretKeyRef"] | null;
+    };
+    /**
+     * ValueSource
+     * @description Source for a value - either direct or from external reference.
+     */
+    ark_api__models__evaluators__ValueSource: {
+      /** Value */
+      value?: string | null;
+      valueFrom?: components["schemas"]["ark_api__models__evaluators__ValueFrom"] | null;
+    };
+    /**
+     * ValueSource
+     * @description ValueSource for model configuration (supports direct value or valueFrom).
+     */
+    ark_api__models__models__ValueSource: {
+      /** Value */
+      value?: string | null;
+      /** Valuefrom */
+      valueFrom?: {
+        [key: string]: {
+          [key: string]: string;
+        };
+      } | null;
+    };
+    /**
+     * ConfigMapKeyRef
+     * @description Reference to a key in a ConfigMap.
+     */
+    ark_api__models__queries__ConfigMapKeyRef: {
+      /** Key */
+      key: string;
+      /**
+       * Name
+       * @default
+       */
+      name?: string;
+      /** Optional */
+      optional?: boolean | null;
+    };
+    /**
+     * LabelSelector
+     * @description Label selector for resources.
+     */
+    ark_api__models__queries__LabelSelector: {
+      /** Matchexpressions */
+      matchExpressions?: components["schemas"]["ark_api__models__queries__LabelSelectorRequirement"][] | null;
+      /** Matchlabels */
+      matchLabels?: {
+        [key: string]: string;
+      } | null;
+    };
+    /**
+     * LabelSelectorRequirement
+     * @description A label selector requirement.
+     */
+    ark_api__models__queries__LabelSelectorRequirement: {
+      /** Key */
+      key: string;
+      /** Operator */
+      operator: string;
+      /** Values */
+      values?: string[] | null;
+    };
+    /**
+     * Parameter
+     * @description Parameter for template processing in prompts and inputs.
+     */
+    "ark_api__models__queries__Parameter-Input": {
+      /** Name */
+      name: string;
+      /** Value */
+      value?: string | null;
+      valueFrom?: components["schemas"]["ark_api__models__queries__ValueFrom"] | null;
+    };
+    /**
+     * Parameter
+     * @description Parameter for template processing in prompts and inputs.
+     */
+    "ark_api__models__queries__Parameter-Output": {
+      /** Name */
+      name: string;
+      /** Value */
+      value?: string | null;
+      valueFrom?: components["schemas"]["ark_api__models__queries__ValueFrom"] | null;
+    };
+    /**
+     * SecretKeyRef
+     * @description Reference to a key in a Secret.
+     */
+    ark_api__models__queries__SecretKeyRef: {
+      /** Key */
+      key: string;
+      /**
+       * Name
+       * @default
+       */
+      name?: string;
+      /** Optional */
+      optional?: boolean | null;
+    };
+    /**
+     * ValueFrom
+     * @description Reference to external sources for parameter values.
+     */
+    ark_api__models__queries__ValueFrom: {
+      configMapKeyRef?: components["schemas"]["ark_api__models__queries__ConfigMapKeyRef"] | null;
+      secretKeyRef?: components["schemas"]["ark_api__models__queries__SecretKeyRef"] | null;
+    };
+  };
+  responses: never;
+  parameters: never;
+  requestBodies: never;
+  headers: never;
+  pathItems: never;
 }
+
 export type $defs = Record<string, never>;
+
+export type external = Record<string, never>;
+
 export interface operations {
-    health_check_health_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HealthResponse"];
-                };
-            };
-        };
-    };
-    readiness_check_ready_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ReadinessResponse"];
-                };
-            };
-        };
-    };
-    list_namespaces_v1_namespaces_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["NamespaceListResponse"];
-                };
-            };
-        };
-    };
-    create_namespace_v1_namespaces_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["NamespaceCreateRequest"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["NamespaceResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    list_secrets_v1_namespaces__namespace__secrets_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                namespace: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SecretListResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    create_secret_v1_namespaces__namespace__secrets_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                namespace: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["SecretCreateRequest"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SecretDetailResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    get_secret_v1_namespaces__namespace__secrets__secret_name__get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                namespace: string;
-                secret_name: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SecretDetailResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    update_secret_v1_namespaces__namespace__secrets__secret_name__put: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                namespace: string;
-                secret_name: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["SecretUpdateRequest"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SecretDetailResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    delete_secret_v1_namespaces__namespace__secrets__secret_name__delete: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                namespace: string;
-                secret_name: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    list_agents_v1_namespaces__namespace__agents_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                namespace: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["AgentListResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    create_agent_v1_namespaces__namespace__agents_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                namespace: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["AgentCreateRequest"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["AgentDetailResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    get_agent_v1_namespaces__namespace__agents__agent_name__get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                namespace: string;
-                agent_name: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["AgentDetailResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    update_agent_v1_namespaces__namespace__agents__agent_name__put: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                namespace: string;
-                agent_name: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["AgentUpdateRequest"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["AgentDetailResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    delete_agent_v1_namespaces__namespace__agents__agent_name__delete: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                namespace: string;
-                agent_name: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    list_models_v1_namespaces__namespace__models_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                namespace: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ModelListResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    create_model_v1_namespaces__namespace__models_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                namespace: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["ModelCreateRequest"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ModelDetailResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    get_model_v1_namespaces__namespace__models__model_name__get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                namespace: string;
-                model_name: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ModelDetailResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    update_model_v1_namespaces__namespace__models__model_name__put: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                namespace: string;
-                model_name: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["ModelUpdateRequest"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ModelDetailResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    delete_model_v1_namespaces__namespace__models__model_name__delete: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                namespace: string;
-                model_name: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    list_teams_v1_namespaces__namespace__teams_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                namespace: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["TeamListResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    create_team_v1_namespaces__namespace__teams_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                namespace: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["TeamCreateRequest"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["TeamDetailResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    get_team_v1_namespaces__namespace__teams__team_name__get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                namespace: string;
-                team_name: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["TeamDetailResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    update_team_v1_namespaces__namespace__teams__team_name__put: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                namespace: string;
-                team_name: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["TeamUpdateRequest"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["TeamDetailResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    delete_team_v1_namespaces__namespace__teams__team_name__delete: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                namespace: string;
-                team_name: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    list_queries_v1_namespaces__namespace__queries_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                namespace: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["QueryListResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    create_query_v1_namespaces__namespace__queries_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                namespace: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["QueryCreateRequest"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["QueryDetailResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    get_query_v1_namespaces__namespace__queries__query_name__get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                namespace: string;
-                query_name: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["QueryDetailResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    update_query_v1_namespaces__namespace__queries__query_name__put: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                namespace: string;
-                query_name: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["QueryUpdateRequest"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["QueryDetailResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    delete_query_v1_namespaces__namespace__queries__query_name__delete: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                namespace: string;
-                query_name: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    cancel_query_v1_namespaces__namespace__queries__query_name__cancel_patch: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                namespace: string;
-                query_name: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["QueryDetailResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    list_tools_v1_namespaces__namespace__tools_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                namespace: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ToolListResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    get_tool_v1_namespaces__namespace__tools__tool_name__get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                namespace: string;
-                tool_name: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ToolDetailResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    delete_tool_v1_namespaces__namespace__tools__tool_name__delete: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                namespace: string;
-                tool_name: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    list_mcp_servers_v1_namespaces__namespace__mcp_servers_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                namespace: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["MCPServerListResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    get_mcp_server_v1_namespaces__namespace__mcp_servers__mcp_server_name__get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                namespace: string;
-                mcp_server_name: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["MCPServerDetailResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    delete_mcp_server_v1_namespaces__namespace__mcp_servers__mcp_server_name__delete: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                namespace: string;
-                mcp_server_name: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    list_a2a_servers_v1_namespaces__namespace__a2a_servers_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                namespace: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["A2AServerListResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    get_a2a_server_v1_namespaces__namespace__a2a_servers__a2a_server_name__get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                namespace: string;
-                a2a_server_name: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["A2AServerDetailResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    delete_a2a_server_v1_namespaces__namespace__a2a_servers__a2a_server_name__delete: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                namespace: string;
-                a2a_server_name: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    list_memories_v1_namespaces__namespace__memories_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                namespace: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["MemoryListResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    create_memory_v1_namespaces__namespace__memories_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                namespace: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["MemoryCreateRequest"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["MemoryDetailResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    get_memory_v1_namespaces__namespace__memories__name__get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                namespace: string;
-                name: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["MemoryDetailResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    update_memory_v1_namespaces__namespace__memories__name__put: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                namespace: string;
-                name: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["MemoryUpdateRequest"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["MemoryDetailResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    delete_memory_v1_namespaces__namespace__memories__name__delete: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                namespace: string;
-                name: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    get_memory_messages_v1_namespaces__namespace__memories__name__sessions__session_id__messages_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                namespace: string;
-                name: string;
-                session_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    list_memory_messages_v1_namespaces__namespace__memory_messages_get: {
-        parameters: {
-            query?: {
-                /** @description Filter by memory name */
-                memory?: string | null;
-                /** @description Filter by session ID */
-                session?: string | null;
-                /** @description Filter by query ID */
-                query?: string | null;
-            };
-            header?: never;
-            path: {
-                namespace: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["MemoryMessageListResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    list_sessions_v1_namespaces__namespace__sessions_get: {
-        parameters: {
-            query?: {
-                /** @description Filter by memory name */
-                memory?: string | null;
-            };
-            header?: never;
-            path: {
-                namespace: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SessionListResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    get_system_info_v1_system_info_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SystemInfo"];
-                };
-            };
-        };
-    };
-    list_ark_services_v1_namespaces__namespace__ark_services_get: {
-        parameters: {
-            query?: {
-                /** @description List all Helm releases, not just ARK services */
-                list_all_services?: boolean | null;
-            };
-            header?: never;
-            path: {
-                namespace: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ArkServiceListResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    get_ark_service_v1_namespaces__namespace__ark_services__service_name__get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                namespace: string;
-                service_name: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ArkService"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    list_events_v1_namespaces__namespace__events_get: {
-        parameters: {
-            query?: {
-                /** @description Filter by event type (Normal, Warning) */
-                type?: string | null;
-                /** @description Filter by involved object kind */
-                kind?: string | null;
-                /** @description Filter by involved object name */
-                name?: string | null;
-                /** @description Maximum number of events to return */
-                limit?: number | null;
-                /** @description Page number for pagination (1-based) */
-                page?: number | null;
-            };
-            header?: never;
-            path: {
-                namespace: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["EventListResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    get_event_v1_namespaces__namespace__events__event_name__get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                namespace: string;
-                event_name: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["EventResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    list_evaluations_v1_namespaces__namespace__evaluations_get: {
-        parameters: {
-            query?: {
-                /** @description Include enhanced metadata from annotations */
-                enhanced?: boolean;
-            };
-            header?: never;
-            path: {
-                namespace: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["EvaluationListResponse"] | components["schemas"]["EnhancedEvaluationListResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    create_evaluation_v1_namespaces__namespace__evaluations_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                namespace: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["EvaluationCreateRequest"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["EvaluationDetailResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    get_evaluation_v1_namespaces__namespace__evaluations__name__get: {
-        parameters: {
-            query?: {
-                /** @description Include enhanced metadata from annotations */
-                enhanced?: boolean;
-            };
-            header?: never;
-            path: {
-                namespace: string;
-                name: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["EvaluationDetailResponse"] | components["schemas"]["EnhancedEvaluationDetailResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    update_evaluation_v1_namespaces__namespace__evaluations__name__put: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                namespace: string;
-                name: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["EvaluationUpdateRequest"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["EvaluationDetailResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    delete_evaluation_v1_namespaces__namespace__evaluations__name__delete: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                namespace: string;
-                name: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    cancel_evaluation_v1_namespaces__namespace__evaluations__name__cancel_patch: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                namespace: string;
-                name: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["EvaluationDetailResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    list_evaluators_v1_namespaces__namespace__evaluators_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                namespace: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["EvaluatorListResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    create_evaluator_v1_namespaces__namespace__evaluators_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                namespace: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["EvaluatorCreateRequest"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["EvaluatorDetailResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    get_evaluator_v1_namespaces__namespace__evaluators__name__get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                namespace: string;
-                name: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["EvaluatorDetailResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    update_evaluator_v1_namespaces__namespace__evaluators__name__put: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                namespace: string;
-                name: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["EvaluatorUpdateRequest"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["EvaluatorDetailResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    delete_evaluator_v1_namespaces__namespace__evaluators__name__delete: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                namespace: string;
-                name: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    chat_completions_openai_v1_chat_completions_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["ChatCompletionRequest"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ChatCompletion"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    list_models_openai_v1_models_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-        };
-    };
+
+  /**
+   * Health Check
+   * @description This endpoint always returns a healthy status if the service is running.
+   *
+   * Returns: HealthResponse: Basic health status of the service
+   */
+  health_check_health_get: {
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["HealthResponse"];
+        };
+      };
+    };
+  };
+  /**
+   * Readiness Check
+   * @description Verifies that the ARK API service is ready to handle requests by testing
+   * connectivity to the Kubernetes API.
+   *
+   * Returns: ReadinessResponse: Readiness status with Kubernetes connectivity check
+   */
+  readiness_check_ready_get: {
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["ReadinessResponse"];
+        };
+      };
+    };
+  };
+  /**
+   * List Namespaces
+   * @description List all available namespaces.
+   *
+   * Returns:
+   *     NamespaceListResponse: List of all available namespaces
+   */
+  list_namespaces_v1_namespaces_get: {
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["NamespaceListResponse"];
+        };
+      };
+    };
+  };
+  /**
+   * Create Namespace
+   * @description Create a new Kubernetes namespace.
+   *
+   * Args:
+   *     body: The namespace creation request
+   *
+   * Returns:
+   *     NamespaceResponse: The created namespace details
+   */
+  create_namespace_v1_namespaces_post: {
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["NamespaceCreateRequest"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["NamespaceResponse"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * List Secrets
+   * @description List all Kubernetes secrets in a namespace.
+   *
+   * Args:
+   *     namespace: The namespace to list secrets from
+   *
+   * Returns:
+   *     SecretListResponse: List of all secrets in the namespace
+   */
+  list_secrets_v1_namespaces__namespace__secrets_get: {
+    parameters: {
+      path: {
+        namespace: string;
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["SecretListResponse"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * Create Secret
+   * @description Create a new Kubernetes secret.
+   *
+   * Args:
+   *     namespace: The namespace to create the secret in
+   *     body: The secret creation request
+   *
+   * Returns:
+   *     SecretDetailResponse: The created secret details
+   */
+  create_secret_v1_namespaces__namespace__secrets_post: {
+    parameters: {
+      path: {
+        namespace: string;
+      };
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["SecretCreateRequest"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["SecretDetailResponse"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * Get Secret
+   * @description Get a specific Kubernetes secret by name.
+   *
+   * Args:
+   *     namespace: The namespace to get the secret from
+   *     secret_name: The name of the secret
+   *
+   * Returns:
+   *     SecretDetailResponse: The secret details with total data length
+   */
+  get_secret_v1_namespaces__namespace__secrets__secret_name__get: {
+    parameters: {
+      path: {
+        namespace: string;
+        secret_name: string;
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["SecretDetailResponse"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * Update Secret
+   * @description Update a Kubernetes secret by name.
+   *
+   * Args:
+   *     namespace: The namespace containing the secret
+   *     secret_name: The name of the secret
+   *     body: The secret update request
+   *
+   * Returns:
+   *     SecretDetailResponse: The updated secret details
+   */
+  update_secret_v1_namespaces__namespace__secrets__secret_name__put: {
+    parameters: {
+      path: {
+        namespace: string;
+        secret_name: string;
+      };
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["SecretUpdateRequest"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["SecretDetailResponse"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * Delete Secret
+   * @description Delete a Kubernetes secret by name.
+   *
+   * Args:
+   *     namespace: The namespace containing the secret
+   *     secret_name: The name of the secret
+   */
+  delete_secret_v1_namespaces__namespace__secrets__secret_name__delete: {
+    parameters: {
+      path: {
+        namespace: string;
+        secret_name: string;
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      204: {
+        content: never;
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * List Agents
+   * @description List all Agent CRs in a namespace.
+   *
+   * Args:
+   *     namespace: The namespace to list agents from
+   *
+   * Returns:
+   *     AgentListResponse: List of all agents in the namespace
+   */
+  list_agents_v1_namespaces__namespace__agents_get: {
+    parameters: {
+      path: {
+        namespace: string;
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["AgentListResponse"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * Create Agent
+   * @description Create a new Agent CR.
+   *
+   * Args:
+   *     namespace: The namespace to create the agent in
+   *     body: The agent creation request
+   *
+   * Returns:
+   *     AgentDetailResponse: The created agent details
+   */
+  create_agent_v1_namespaces__namespace__agents_post: {
+    parameters: {
+      path: {
+        namespace: string;
+      };
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["AgentCreateRequest"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["AgentDetailResponse"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * Get Agent
+   * @description Get a specific Agent CR by name.
+   *
+   * Args:
+   *     namespace: The namespace to get the agent from
+   *     agent_name: The name of the agent
+   *
+   * Returns:
+   *     AgentDetailResponse: The agent details
+   */
+  get_agent_v1_namespaces__namespace__agents__agent_name__get: {
+    parameters: {
+      path: {
+        namespace: string;
+        agent_name: string;
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["AgentDetailResponse"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * Update Agent
+   * @description Update an Agent CR by name.
+   *
+   * Args:
+   *     namespace: The namespace containing the agent
+   *     agent_name: The name of the agent
+   *     body: The agent update request
+   *
+   * Returns:
+   *     AgentDetailResponse: The updated agent details
+   */
+  update_agent_v1_namespaces__namespace__agents__agent_name__put: {
+    parameters: {
+      path: {
+        namespace: string;
+        agent_name: string;
+      };
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["AgentUpdateRequest"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["AgentDetailResponse"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * Delete Agent
+   * @description Delete an Agent CR by name.
+   *
+   * Args:
+   *     namespace: The namespace containing the agent
+   *     agent_name: The name of the agent
+   */
+  delete_agent_v1_namespaces__namespace__agents__agent_name__delete: {
+    parameters: {
+      path: {
+        namespace: string;
+        agent_name: string;
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      204: {
+        content: never;
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * List Models
+   * @description List all Model CRs in a namespace.
+   *
+   * Args:
+   *     namespace: The namespace to list models from
+   *
+   * Returns:
+   *     ModelListResponse: List of all models in the namespace
+   */
+  list_models_v1_namespaces__namespace__models_get: {
+    parameters: {
+      path: {
+        namespace: string;
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["ModelListResponse"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * Create Model
+   * @description Create a new Model CR.
+   *
+   * Args:
+   *     namespace: The namespace to create the model in
+   *     body: The model creation request
+   *
+   * Returns:
+   *     ModelDetailResponse: The created model details
+   */
+  create_model_v1_namespaces__namespace__models_post: {
+    parameters: {
+      path: {
+        namespace: string;
+      };
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["ModelCreateRequest"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["ModelDetailResponse"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * Get Model
+   * @description Get a specific Model CR by name.
+   *
+   * Args:
+   *     namespace: The namespace to get the model from
+   *     model_name: The name of the model
+   *
+   * Returns:
+   *     ModelDetailResponse: The model details
+   */
+  get_model_v1_namespaces__namespace__models__model_name__get: {
+    parameters: {
+      path: {
+        namespace: string;
+        model_name: string;
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["ModelDetailResponse"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * Update Model
+   * @description Update a Model CR by name.
+   *
+   * Args:
+   *     namespace: The namespace containing the model
+   *     model_name: The name of the model
+   *     body: The model update request
+   *
+   * Returns:
+   *     ModelDetailResponse: The updated model details
+   */
+  update_model_v1_namespaces__namespace__models__model_name__put: {
+    parameters: {
+      path: {
+        namespace: string;
+        model_name: string;
+      };
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["ModelUpdateRequest"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["ModelDetailResponse"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * Delete Model
+   * @description Delete a Model CR by name.
+   *
+   * Args:
+   *     namespace: The namespace containing the model
+   *     model_name: The name of the model
+   */
+  delete_model_v1_namespaces__namespace__models__model_name__delete: {
+    parameters: {
+      path: {
+        namespace: string;
+        model_name: string;
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      204: {
+        content: never;
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * List Teams
+   * @description List all Team CRs in a namespace.
+   *
+   * Args:
+   *     namespace: The namespace to list teams from
+   *
+   * Returns:
+   *     TeamListResponse: List of all teams in the namespace
+   */
+  list_teams_v1_namespaces__namespace__teams_get: {
+    parameters: {
+      path: {
+        namespace: string;
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["TeamListResponse"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * Create Team
+   * @description Create a new Team CR.
+   *
+   * Args:
+   *     namespace: The namespace to create the team in
+   *     body: The team creation request
+   *
+   * Returns:
+   *     TeamDetailResponse: The created team details
+   */
+  create_team_v1_namespaces__namespace__teams_post: {
+    parameters: {
+      path: {
+        namespace: string;
+      };
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["TeamCreateRequest"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["TeamDetailResponse"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * Get Team
+   * @description Get a specific Team CR by name.
+   *
+   * Args:
+   *     namespace: The namespace to get the team from
+   *     team_name: The name of the team
+   *
+   * Returns:
+   *     TeamDetailResponse: The team details
+   */
+  get_team_v1_namespaces__namespace__teams__team_name__get: {
+    parameters: {
+      path: {
+        namespace: string;
+        team_name: string;
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["TeamDetailResponse"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * Update Team
+   * @description Update a Team CR by name.
+   *
+   * Args:
+   *     namespace: The namespace containing the team
+   *     team_name: The name of the team
+   *     body: The team update request
+   *
+   * Returns:
+   *     TeamDetailResponse: The updated team details
+   */
+  update_team_v1_namespaces__namespace__teams__team_name__put: {
+    parameters: {
+      path: {
+        namespace: string;
+        team_name: string;
+      };
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["TeamUpdateRequest"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["TeamDetailResponse"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * Delete Team
+   * @description Delete a Team CR by name.
+   *
+   * Args:
+   *     namespace: The namespace containing the team
+   *     team_name: The name of the team
+   */
+  delete_team_v1_namespaces__namespace__teams__team_name__delete: {
+    parameters: {
+      path: {
+        namespace: string;
+        team_name: string;
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      204: {
+        content: never;
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * List Queries
+   * @description List all queries in a namespace.
+   */
+  list_queries_v1_namespaces__namespace__queries_get: {
+    parameters: {
+      path: {
+        namespace: string;
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["QueryListResponse"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * Create Query
+   * @description Create a new query.
+   */
+  create_query_v1_namespaces__namespace__queries_post: {
+    parameters: {
+      path: {
+        namespace: string;
+      };
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["QueryCreateRequest"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["QueryDetailResponse"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * Get Query
+   * @description Get a specific query.
+   */
+  get_query_v1_namespaces__namespace__queries__query_name__get: {
+    parameters: {
+      path: {
+        namespace: string;
+        query_name: string;
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["QueryDetailResponse"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * Update Query
+   * @description Update a specific query.
+   */
+  update_query_v1_namespaces__namespace__queries__query_name__put: {
+    parameters: {
+      path: {
+        namespace: string;
+        query_name: string;
+      };
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["QueryUpdateRequest"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["QueryDetailResponse"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * Delete Query
+   * @description Delete a specific query.
+   */
+  delete_query_v1_namespaces__namespace__queries__query_name__delete: {
+    parameters: {
+      path: {
+        namespace: string;
+        query_name: string;
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      204: {
+        content: never;
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * Cancel Query
+   * @description Cancel a specific query by setting spec.cancel to true.
+   */
+  cancel_query_v1_namespaces__namespace__queries__query_name__cancel_patch: {
+    parameters: {
+      path: {
+        namespace: string;
+        query_name: string;
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["QueryDetailResponse"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * List Tools
+   * @description List all Tool CRs in a namespace.
+   *
+   * Args:
+   *     namespace: The namespace to list tools from
+   *
+   * Returns:
+   *     ToolListResponse: List of all tools in the namespace
+   */
+  list_tools_v1_namespaces__namespace__tools_get: {
+    parameters: {
+      path: {
+        namespace: string;
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["ToolListResponse"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * Get Tool
+   * @description Get a specific Tool CR by name.
+   *
+   * Args:
+   *     namespace: The namespace to get the tool from
+   *     tool_name: The name of the tool
+   *
+   * Returns:
+   *     ToolDetailResponse: The tool details
+   */
+  get_tool_v1_namespaces__namespace__tools__tool_name__get: {
+    parameters: {
+      path: {
+        namespace: string;
+        tool_name: string;
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["ToolDetailResponse"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * Delete Tool
+   * @description Delete a Tool CR by name.
+   *
+   * Args:
+   *     namespace: The namespace containing the tool
+   *     tool_name: The name of the tool
+   */
+  delete_tool_v1_namespaces__namespace__tools__tool_name__delete: {
+    parameters: {
+      path: {
+        namespace: string;
+        tool_name: string;
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      204: {
+        content: never;
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * List Mcp Servers
+   * @description List all MCPServer CRs in a namespace.
+   *
+   * Args:
+   *     namespace: The namespace to list MCP servers from
+   *
+   * Returns:
+   *     MCPServerListResponse: List of all MCP servers in the namespace
+   */
+  list_mcp_servers_v1_namespaces__namespace__mcp_servers_get: {
+    parameters: {
+      path: {
+        namespace: string;
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["MCPServerListResponse"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * Get Mcp Server
+   * @description Get a specific MCPServer CR by name.
+   *
+   * Args:
+   *     namespace: The namespace to get the MCP server from
+   *     mcp_server_name: The name of the MCP server
+   *
+   * Returns:
+   *     MCPServerDetailResponse: The MCP server details
+   */
+  get_mcp_server_v1_namespaces__namespace__mcp_servers__mcp_server_name__get: {
+    parameters: {
+      path: {
+        namespace: string;
+        mcp_server_name: string;
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["MCPServerDetailResponse"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * Delete Mcp Server
+   * @description Delete a MCPServer CR by name.
+   *
+   * Args:
+   *     namespace: The namespace containing the MCP server
+   *     mcp_server_name: The name of the MCP server
+   */
+  delete_mcp_server_v1_namespaces__namespace__mcp_servers__mcp_server_name__delete: {
+    parameters: {
+      path: {
+        namespace: string;
+        mcp_server_name: string;
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      204: {
+        content: never;
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * List A2A Servers
+   * @description List all A2AServer CRs in a namespace.
+   *
+   * Args:
+   *     namespace: The namespace to list A2A servers from
+   *
+   * Returns:
+   *     A2AServerListResponse: List of all A2A servers in the namespace
+   */
+  list_a2a_servers_v1_namespaces__namespace__a2a_servers_get: {
+    parameters: {
+      path: {
+        namespace: string;
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["A2AServerListResponse"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * Get A2A Server
+   * @description Get a specific A2AServer CR by name.
+   *
+   * Args:
+   *     namespace: The namespace to get the A2A server from
+   *     a2a_server_name: The name of the A2A server
+   *
+   * Returns:
+   *     A2AServerDetailResponse: The A2A server details
+   */
+  get_a2a_server_v1_namespaces__namespace__a2a_servers__a2a_server_name__get: {
+    parameters: {
+      path: {
+        namespace: string;
+        a2a_server_name: string;
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["A2AServerDetailResponse"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * Delete A2A Server
+   * @description Delete a A2AServer CR by name.
+   *
+   * Args:
+   *     namespace: The namespace containing the A2A server
+   *     a2a_server_name: The name of the A2A server
+   */
+  delete_a2a_server_v1_namespaces__namespace__a2a_servers__a2a_server_name__delete: {
+    parameters: {
+      path: {
+        namespace: string;
+        a2a_server_name: string;
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      204: {
+        content: never;
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * List A2Atasks
+   * @description List all A2ATasks in a namespace with optional filtering.
+   *
+   * Args:
+   *     namespace: The namespace to list A2ATasks from
+   *     phase: Filter by task phase (assigned, running, completed, failed, cancelled)
+   *     agent: Filter by agent name
+   *     task_id: Filter by task ID
+   *     limit: Maximum number of A2ATasks to return (default: 200)
+   *     page: Page number for pagination (1-based, default: 1)
+   *
+   * Returns:
+   *     A2ATaskListResponse: List of A2ATasks in the namespace
+   */
+  list_a2atasks_v1_namespaces__namespace__a2atasks_get: {
+    parameters: {
+      query?: {
+        /** @description Filter by task phase (assigned, running, completed, failed, cancelled) */
+        phase?: string | null;
+        /** @description Filter by agent name */
+        agent?: string | null;
+        /** @description Filter by task ID */
+        taskId?: string | null;
+        /** @description Maximum number of A2ATasks to return */
+        limit?: number | null;
+        /** @description Page number for pagination (1-based) */
+        page?: number | null;
+      };
+      path: {
+        namespace: string;
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["A2ATaskListResponse"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * Get A2Atask
+   * @description Get a specific A2ATask by name with full details including history and artifacts.
+   *
+   * Args:
+   *     namespace: The namespace containing the A2ATask
+   *     a2atask_name: The name of the A2ATask to retrieve
+   *
+   * Returns:
+   *     A2ATaskDetailResponse: The requested A2ATask with full details
+   */
+  get_a2atask_v1_namespaces__namespace__a2atasks__a2atask_name__get: {
+    parameters: {
+      path: {
+        namespace: string;
+        a2atask_name: string;
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["A2ATaskDetailResponse"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * List Memories
+   * @description List all memories in a namespace.
+   */
+  list_memories_v1_namespaces__namespace__memories_get: {
+    parameters: {
+      path: {
+        namespace: string;
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["MemoryListResponse"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * Create Memory
+   * @description Create a new memory.
+   */
+  create_memory_v1_namespaces__namespace__memories_post: {
+    parameters: {
+      path: {
+        namespace: string;
+      };
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["MemoryCreateRequest"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["MemoryDetailResponse"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * Get Memory
+   * @description Get a specific memory by name.
+   */
+  get_memory_v1_namespaces__namespace__memories__name__get: {
+    parameters: {
+      path: {
+        namespace: string;
+        name: string;
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["MemoryDetailResponse"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * Update Memory
+   * @description Update an existing memory.
+   */
+  update_memory_v1_namespaces__namespace__memories__name__put: {
+    parameters: {
+      path: {
+        namespace: string;
+        name: string;
+      };
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["MemoryUpdateRequest"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["MemoryDetailResponse"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * Delete Memory
+   * @description Delete a memory.
+   */
+  delete_memory_v1_namespaces__namespace__memories__name__delete: {
+    parameters: {
+      path: {
+        namespace: string;
+        name: string;
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": {
+            [key: string]: unknown;
+          };
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * Get Memory Messages
+   * @description Get messages for a specific session from a memory resource.
+   */
+  get_memory_messages_v1_namespaces__namespace__memories__name__sessions__session_id__messages_get: {
+    parameters: {
+      path: {
+        namespace: string;
+        name: string;
+        session_id: string;
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": {
+            [key: string]: unknown;
+          };
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * List Memory Messages
+   * @description List all memory messages with context, optionally filtered.
+   */
+  list_memory_messages_v1_namespaces__namespace__memory_messages_get: {
+    parameters: {
+      query?: {
+        /** @description Filter by memory name */
+        memory?: string | null;
+        /** @description Filter by session ID */
+        session?: string | null;
+        /** @description Filter by query ID */
+        query?: string | null;
+      };
+      path: {
+        namespace: string;
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["MemoryMessageListResponse"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * List Sessions
+   * @description List all sessions in a namespace, optionally filtered by memory.
+   */
+  list_sessions_v1_namespaces__namespace__sessions_get: {
+    parameters: {
+      query?: {
+        /** @description Filter by memory name */
+        memory?: string | null;
+      };
+      path: {
+        namespace: string;
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["SessionListResponse"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /** Get System Info */
+  get_system_info_v1_system_info_get: {
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["SystemInfo"];
+        };
+      };
+    };
+  };
+  /**
+   * List Ark Services
+   * @description List ARK services (Helm releases) in a namespace.
+   *
+   * Args:
+   *     namespace: The namespace to list ARK services from
+   *     list_all_services: List all Helm releases instead of just ARK services (default: False)
+   *
+   * Returns:
+   *     ArkServiceListResponse: List of ARK services in the namespace
+   */
+  list_ark_services_v1_namespaces__namespace__ark_services_get: {
+    parameters: {
+      query?: {
+        /** @description List all Helm releases, not just ARK services */
+        list_all_services?: boolean | null;
+      };
+      path: {
+        namespace: string;
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["ArkServiceListResponse"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * Get Ark Service
+   * @description Get a specific ARK service (Helm release) by name.
+   *
+   * Args:
+   *     namespace: The namespace to get the ARK service from
+   *     service_name: The name of the ARK service (Helm release)
+   *
+   * Returns:
+   *     ArkService: The ARK service details
+   */
+  get_ark_service_v1_namespaces__namespace__ark_services__service_name__get: {
+    parameters: {
+      path: {
+        namespace: string;
+        service_name: string;
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["ArkService"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * List Events
+   * @description List all Kubernetes events in a namespace with optional filtering.
+   *
+   * Args:
+   *     namespace: The namespace to list events from
+   *     type_filter: Filter by event type (Normal, Warning)
+   *     kind_filter: Filter by involved object kind (Agent, Team, Query, etc.)
+   *     name_filter: Filter by involved object name
+   *     limit: Maximum number of events to return (default: 500)
+   *     page: Page number for pagination (1-based, default: 1)
+   *
+   * Returns:
+   *     EventListResponse: List of events in the namespace
+   */
+  list_events_v1_namespaces__namespace__events_get: {
+    parameters: {
+      query?: {
+        /** @description Filter by event type (Normal, Warning) */
+        type?: string | null;
+        /** @description Filter by involved object kind */
+        kind?: string | null;
+        /** @description Filter by involved object name */
+        name?: string | null;
+        /** @description Maximum number of events to return */
+        limit?: number | null;
+        /** @description Page number for pagination (1-based) */
+        page?: number | null;
+      };
+      path: {
+        namespace: string;
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["EventListResponse"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * Get Event
+   * @description Get a specific Kubernetes event by name.
+   *
+   * Args:
+   *     namespace: The namespace containing the event
+   *     event_name: The name of the event to retrieve
+   *
+   * Returns:
+   *     EventResponse: The requested event details
+   */
+  get_event_v1_namespaces__namespace__events__event_name__get: {
+    parameters: {
+      path: {
+        namespace: string;
+        event_name: string;
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["EventResponse"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * List Evaluations
+   * @description List all evaluations in a namespace.
+   */
+  list_evaluations_v1_namespaces__namespace__evaluations_get: {
+    parameters: {
+      query?: {
+        /** @description Include enhanced metadata from annotations */
+        enhanced?: boolean;
+      };
+      path: {
+        namespace: string;
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["EvaluationListResponse"] | components["schemas"]["EnhancedEvaluationListResponse"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * Create Evaluation
+   * @description Create a new evaluation.
+   */
+  create_evaluation_v1_namespaces__namespace__evaluations_post: {
+    parameters: {
+      path: {
+        namespace: string;
+      };
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["EvaluationCreateRequest"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["EvaluationDetailResponse"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * Get Evaluation
+   * @description Get details of a specific evaluation.
+   */
+  get_evaluation_v1_namespaces__namespace__evaluations__name__get: {
+    parameters: {
+      query?: {
+        /** @description Include enhanced metadata from annotations */
+        enhanced?: boolean;
+      };
+      path: {
+        namespace: string;
+        name: string;
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["EvaluationDetailResponse"] | components["schemas"]["EnhancedEvaluationDetailResponse"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * Update Evaluation
+   * @description Update an existing evaluation.
+   */
+  update_evaluation_v1_namespaces__namespace__evaluations__name__put: {
+    parameters: {
+      path: {
+        namespace: string;
+        name: string;
+      };
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["EvaluationUpdateRequest"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["EvaluationDetailResponse"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * Delete Evaluation
+   * @description Delete an evaluation.
+   */
+  delete_evaluation_v1_namespaces__namespace__evaluations__name__delete: {
+    parameters: {
+      path: {
+        namespace: string;
+        name: string;
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": {
+            [key: string]: unknown;
+          };
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * Cancel Evaluation
+   * @description Cancel a running evaluation.
+   */
+  cancel_evaluation_v1_namespaces__namespace__evaluations__name__cancel_patch: {
+    parameters: {
+      path: {
+        namespace: string;
+        name: string;
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["EvaluationDetailResponse"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * List Evaluators
+   * @description List all evaluators in a namespace.
+   */
+  list_evaluators_v1_namespaces__namespace__evaluators_get: {
+    parameters: {
+      path: {
+        namespace: string;
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["EvaluatorListResponse"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * Create Evaluator
+   * @description Create a new evaluator.
+   */
+  create_evaluator_v1_namespaces__namespace__evaluators_post: {
+    parameters: {
+      path: {
+        namespace: string;
+      };
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["EvaluatorCreateRequest"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["EvaluatorDetailResponse"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * Get Evaluator
+   * @description Get details of a specific evaluator.
+   */
+  get_evaluator_v1_namespaces__namespace__evaluators__name__get: {
+    parameters: {
+      path: {
+        namespace: string;
+        name: string;
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["EvaluatorDetailResponse"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * Update Evaluator
+   * @description Update an existing evaluator.
+   */
+  update_evaluator_v1_namespaces__namespace__evaluators__name__put: {
+    parameters: {
+      path: {
+        namespace: string;
+        name: string;
+      };
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["EvaluatorUpdateRequest"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["EvaluatorDetailResponse"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * Delete Evaluator
+   * @description Delete an evaluator.
+   */
+  delete_evaluator_v1_namespaces__namespace__evaluators__name__delete: {
+    parameters: {
+      path: {
+        namespace: string;
+        name: string;
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": {
+            [key: string]: unknown;
+          };
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /** Chat Completions */
+  chat_completions_openai_v1_chat_completions_post: {
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["ChatCompletionRequest"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["ChatCompletion"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * List Models
+   * @description List available models in OpenAI format, including ARK agents, teams, models, and tools.
+   */
+  list_models_openai_v1_models_get: {
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": unknown;
+        };
+      };
+    };
+  };
 }
