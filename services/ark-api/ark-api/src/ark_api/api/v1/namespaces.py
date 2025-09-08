@@ -4,7 +4,6 @@ import logging
 from fastapi import APIRouter
 from kubernetes_asyncio import client
 from kubernetes_asyncio.client.api_client import ApiClient
-
 from ...models.kubernetes import NamespaceResponse, NamespaceListResponse, NamespaceCreateRequest
 from .exceptions import handle_k8s_errors
 

@@ -14,6 +14,7 @@ router = APIRouter(prefix="/api/v1", tags=["api"])
 
 @router.get("/namespaces", response_model=NamespaceListResponse)
 async def list_namespaces() -> NamespaceListResponse:
+    
     """
     List all Kubernetes namespaces.
     

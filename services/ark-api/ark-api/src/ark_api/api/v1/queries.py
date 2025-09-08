@@ -83,8 +83,7 @@ async def list_queries(namespace: str) -> QueryListResponse:
 @handle_k8s_errors(operation="create", resource_type="query")
 async def create_query(
     namespace: str,
-    query: QueryCreateRequest
-) -> QueryDetailResponse:
+    query: QueryCreateRequest) -> QueryDetailResponse:
     """Create a new query."""
     async with with_ark_client(namespace, VERSION) as ark_client:
         spec = {
@@ -143,8 +142,7 @@ async def get_query(namespace: str, query_name: str) -> QueryDetailResponse:
 async def update_query(
     namespace: str,
     query_name: str,
-    query: QueryUpdateRequest
-) -> QueryDetailResponse:
+    query: QueryUpdateRequest) -> QueryDetailResponse:
     """Update a specific query."""
     async with with_ark_client(namespace, VERSION) as ark_client:
         # Get current query

@@ -1,0 +1,6 @@
+pyproject.toml
+ark_auth.egg-info/PKG-INFO
+ark_auth.egg-info/SOURCES.txt
+ark_auth.egg-info/dependency_links.txt
+ark_auth.egg-info/requires.txt
+ark_auth.egg-info/top_level.txt

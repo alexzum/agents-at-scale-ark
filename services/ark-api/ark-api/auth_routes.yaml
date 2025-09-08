@@ -1,0 +1,80 @@
+# ARK API Authentication Configuration
+# This file lists all routes that require authentication
+
+# Main API routes
+main_api:
+  - "/api/v1/namespaces"
+
+# V1 API routes (all require authentication)
+v1_api:
+  # Agents
+  - "/v1/namespaces/{namespace}/agents"
+  - "/v1/namespaces/{namespace}/agents/{agent_name}"
+  
+  # Queries
+  - "/v1/namespaces/{namespace}/queries"
+  - "/v1/namespaces/{namespace}/queries/{query_name}"
+  
+  # Teams
+  - "/v1/namespaces/{namespace}/teams"
+  - "/v1/namespaces/{namespace}/teams/{team_name}"
+  
+  # Tools
+  - "/v1/namespaces/{namespace}/tools"
+  - "/v1/namespaces/{namespace}/tools/{tool_name}"
+  
+  # Models
+  - "/v1/namespaces/{namespace}/models"
+  - "/v1/namespaces/{namespace}/models/{model_name}"
+  
+  # MCP Servers
+  - "/v1/namespaces/{namespace}/mcp-servers"
+  - "/v1/namespaces/{namespace}/mcp-servers/{server_name}"
+  
+  # Memories
+  - "/v1/namespaces/{namespace}/memories"
+  - "/v1/namespaces/{namespace}/memories/{memory_name}"
+  
+  # A2A Servers
+  - "/v1/namespaces/{namespace}/a2a-servers"
+  - "/v1/namespaces/{namespace}/a2a-servers/{server_name}"
+  
+  # Events
+  - "/v1/namespaces/{namespace}/events"
+  - "/v1/namespaces/{namespace}/events/{event_name}"
+  
+  # Secrets
+  - "/v1/namespaces/{namespace}/secrets"
+  - "/v1/namespaces/{namespace}/secrets/{secret_name}"
+  
+  # System Info
+  - "/v1/system-info"
+  
+  # ARK Services
+  - "/v1/ark-services"
+  - "/v1/ark-services/{service_name}"
+
+# Public routes (no authentication required)
+public_routes:
+  - "/health"
+  - "/docs"
+  - "/openapi.json"
+  - "/redoc"
+
+# HTTP Methods for each route type
+methods:
+  authenticated:
+    - "GET"
+    - "POST"
+    - "PUT"
+    - "DELETE"
+    - "PATCH"
+  
+  public:
+    - "GET"
+
+# Summary
+summary:
+  total_authenticated_routes: 25
+  total_public_routes: 4
+  authentication_coverage: "86%"

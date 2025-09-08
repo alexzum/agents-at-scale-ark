@@ -11,7 +11,7 @@ export function middleware(request: NextRequest) {
   
   if (request.nextUrl.pathname.startsWith(apiPath)) {
     // Read environment variables at runtime
-    const host = process.env.ARK_API_SERVICE_HOST || 'localhost';
+    const host = process.env.ARK_API_SERVICE_HOST || '0.0.0.0';
     const port = process.env.ARK_API_SERVICE_PORT || '8000';
     const protocol = process.env.ARK_API_SERVICE_PROTOCOL || 'http';
     

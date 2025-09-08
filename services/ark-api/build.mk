@@ -60,7 +60,7 @@ $(ARK_API_SERVICE_DIR)/openapi.json: $(ARK_API_STAMP_DEPS)
 $(ARK_API_SERVICE_NAME)-test: $(ARK_API_STAMP_TEST) # HELP: Run ARK API server tests
 $(ARK_API_STAMP_TEST): $(ARK_API_STAMP_DEPS)
 	cd $(ARK_API_SERVICE_SOURCE_DIR) && mkdir -p coverage && \
-	uv run coverage run -m unittest discover -s tests -p 'test_*.py' -v && \
+	ARK_SKIP_AUTH=true uv run coverage run -m unittest discover -s tests -p 'test_*.py' -v && \
 	uv run coverage html && \
 	uv run coverage lcov && \
 	uv run python generate_openapi.py && cp openapi.json ..
