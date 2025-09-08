@@ -8,7 +8,7 @@ from unittest.mock import patch, AsyncMock
 from fastapi.testclient import TestClient
 from kubernetes_asyncio.client.rest import ApiException
 
-from .test_base import BaseTestCase
+from test_base import BaseTestCase
 
 
 class TestHealthEndpoints(BaseTestCase):
