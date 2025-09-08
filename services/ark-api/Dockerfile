@@ -22,7 +22,7 @@ COPY ark-api/pyproject.toml ark-api/uv.lock ./
 COPY README.md ./
 
 # Copy wheel files
-COPY ark-api/wheels/ark*.whl /tmp/wheels/
+COPY ark-api/out/ark*.whl /tmp/wheels/
 
 # Copy source code only (not pyproject.toml again)
 COPY ark-api/src/ ./src/
