@@ -14,3 +14,10 @@ const (
 	RoleSystem    = "system"
 	RoleTool      = "tool"
 )
+
+// Tool type constants
+const (
+	ToolTypeHTTP  = "http"
+	ToolTypeMCP   = "mcp"
+	ToolTypeAgent = "agent"
+)

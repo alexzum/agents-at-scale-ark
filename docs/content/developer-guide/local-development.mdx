@@ -1,31 +1,73 @@
 ---
-title: ARK Controller Local Development Mode
-description: Run ARK controller locally while connecting to cluster services
+title: "Local Development"
+description: "Local development with DevSpace for ARK services"
 ---
 
-import Image from 'next/image'
-import arkDevModeImage from '../images/ark-controller-dev-mode-diagram.png'
+## Local development with DevSpace
 
-# ARK Controller Local Development
+Develop and live-reload ARK services directly in your Kubernetes cluster using DevSpace.
 
-Run the ARK controller on your local machine instead of in the cluster.
+## Prerequisites
+- A running Kubernetes cluster (e.g., minikube)
+- kubectl and DevSpace installed
+- Docker running locally
 
-<Image 
-  src={arkDevModeImage} 
-  alt="Ark Controller Local Development Mode" 
-  style={{ width: '400px', height: 'auto' }} 
-/>
-
-## Usage
-
-Stop the cluster controller:
+## One-time setup
 ```bash
-cd ark && make eject-controller
+# Install DevSpace
+brew install devspace
+
+# Install localhost gateway
+make localhost-gateway-install
 ```
 
-Run the controller locally:
+## Start the dev environment
 ```bash
 cd ark && make dev
 ```
+- ark-api and ark-dashboard deploy to namespace: default
+- ark-controller deploys to namespace: ark-system
 
-That's it! The local controller connects to your cluster and processes ARK resources.
+## Check deployment status
+```bash
+devspace list deployments --namespace default
+devspace list deployments --namespace ark-system
+```
+
+## Open the dashboard
+- Via routes:
+```bash
+make routes
+```
+
+- Or via port-forward:
+```bash
+kubectl port-forward -n default svc/ark-dashboard 3000:3000
+# Then open http://localhost:3000
+```
+
+## Live reload behavior
+- Dashboard (Next.js): hot reloads on save
+- API (FastAPI): hot reloads on save
+- Controller (Go): does NOT auto-reload
+  - Restart options:
+    - Stop & start DevSpace: `devspace stop && devspace dev`
+    - Or restart the controller pod: `kubectl delete pod -n ark-system -l app=ark-controller`
+
+## When you change CRDs
+```bash
+cd ark/
+make manifests
+kubectl apply -f config/crd/bases/ark.mckinsey.com_queries.yaml
+# Then restart the controller (see above)
+```
+
+## Build/deploy production images
+```bash
+devspace deploy
+```
+
+## Clean up
+```bash
+devspace purge
+```

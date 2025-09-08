@@ -28,6 +28,155 @@ type ToolDefinition struct {
 	Parameters  map[string]any `json:"parameters"`
 }
 
+// HTTPExecutor executes HTTP tools
+type HTTPExecutor struct {
+	K8sClient     client.Client
+	ToolName      string
+	ToolNamespace string
+}
+
+// Execute implements ToolExecutor interface for HTTP tools
+func (h *HTTPExecutor) Execute(ctx context.Context, call ToolCall, recorder EventEmitter) (ToolResult, error) {
+	// Parse arguments
+	var arguments map[string]any
+	if call.Function.Arguments != "" {
+		if err := json.Unmarshal([]byte(call.Function.Arguments), &arguments); err != nil {
+			return ToolResult{
+				ID:    call.ID,
+				Name:  call.Function.Name,
+				Error: fmt.Sprintf("failed to parse arguments: %v", err),
+			}, fmt.Errorf("failed to parse arguments: %w", err)
+		}
+	}
+
+	// Get tool from Kubernetes
+	tool := &arkv1alpha1.Tool{}
+	objectKey := client.ObjectKey{Name: h.ToolName}
+	if h.ToolNamespace != "" {
+		objectKey.Namespace = h.ToolNamespace
+	}
+	if err := h.K8sClient.Get(ctx, objectKey, tool); err != nil {
+		return ToolResult{
+			ID:    call.ID,
+			Name:  call.Function.Name,
+			Error: fmt.Sprintf("failed to get tool %s: %v", h.ToolName, err),
+		}, fmt.Errorf("failed to get tool %s: %w", h.ToolName, err)
+	}
+
+	log := logf.FromContext(ctx).WithValues("tool", tool.Name, "toolID", call.ID)
+
+	httpSpec := tool.Spec.HTTP
+	if httpSpec == nil {
+		return ToolResult{
+			ID:    call.ID,
+			Name:  call.Function.Name,
+			Error: "HTTP spec is required",
+		}, fmt.Errorf("HTTP spec is required")
+	}
+
+	// Substitute URL parameters
+	finalURL := h.substituteURLParameters(httpSpec.URL, arguments)
+
+	// Parse URL
+	parsedURL, err := url.Parse(finalURL)
+	if err != nil {
+		return ToolResult{
+			ID:    call.ID,
+			Name:  call.Function.Name,
+			Error: fmt.Sprintf("invalid URL: %v", err),
+		}, fmt.Errorf("invalid URL: %w", err)
+	}
+
+	// Determine HTTP method
+	method := httpSpec.Method
+	if method == "" {
+		method = "GET"
+	}
+
+	// Handle request body for POST/PUT/PATCH requests
+	var requestBody io.Reader
+	if httpSpec.Body != "" && (method == "POST" || method == "PUT" || method == "PATCH") {
+		bodyContent, err := ResolveBodyTemplate(ctx, h.K8sClient, tool.Namespace, httpSpec.Body, httpSpec.BodyParameters, arguments)
+		if err != nil {
+			log.Error(err, "failed to resolve body template", "template", httpSpec.Body)
+			return ToolResult{
+				ID:    call.ID,
+				Name:  call.Function.Name,
+				Error: fmt.Sprintf("failed to resolve body template: %v", err),
+			}, fmt.Errorf("failed to resolve body template: %w", err)
+		}
+		requestBody = strings.NewReader(bodyContent)
+	}
+
+	// Create HTTP request
+	req, err := http.NewRequestWithContext(ctx, method, parsedURL.String(), requestBody)
+	if err != nil {
+		return ToolResult{
+			ID:    call.ID,
+			Name:  call.Function.Name,
+			Error: fmt.Sprintf("failed to create request: %v", err),
+		}, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	// Add headers
+	for _, header := range httpSpec.Headers {
+		value, err := h.resolveHeaderValue(ctx, header.Value, tool.Namespace)
+		if err != nil {
+			return ToolResult{
+				ID:    call.ID,
+				Name:  call.Function.Name,
+				Error: fmt.Sprintf("failed to resolve header %s: %v", header.Name, err),
+			}, fmt.Errorf("failed to resolve header %s: %w", header.Name, err)
+		}
+		req.Header.Set(header.Name, value)
+	}
+
+	// Set timeout
+	timeout := h.getTimeout(httpSpec.Timeout)
+	httpClient := &http.Client{Timeout: timeout}
+
+	// Make the request
+	log.Info("making HTTP request", "method", method, "url", parsedURL.String())
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return ToolResult{
+			ID:    call.ID,
+			Name:  call.Function.Name,
+			Error: fmt.Sprintf("failed to fetch URL: %v", err),
+		}, fmt.Errorf("failed to fetch URL: %w", err)
+	}
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+
+	// Check for HTTP errors
+	if resp.StatusCode >= 400 {
+		return ToolResult{
+			ID:    call.ID,
+			Name:  call.Function.Name,
+			Error: fmt.Sprintf("HTTP error %d: %s (URL: %s)", resp.StatusCode, resp.Status, parsedURL.String()),
+		}, fmt.Errorf("HTTP error %d: %s", resp.StatusCode, resp.Status)
+	}
+
+	// Read response body
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return ToolResult{
+			ID:    call.ID,
+			Name:  call.Function.Name,
+			Error: fmt.Sprintf("failed to read response: %v", err),
+		}, fmt.Errorf("failed to read response: %w", err)
+	}
+
+	log.Info("HTTP request completed", "status", resp.StatusCode, "responseSize", len(body))
+
+	return ToolResult{
+		ID:      call.ID,
+		Name:    call.Function.Name,
+		Content: string(body),
+	}, nil
+}
+
 type ToolRegistry struct {
 	tools     map[string]ToolDefinition
 	executors map[string]ToolExecutor
@@ -55,7 +204,29 @@ func (tr *ToolRegistry) GetToolDefinitions() []ToolDefinition {
 	return definitions
 }
 
-func (tr *ToolRegistry) ExecuteTool(ctx context.Context, call ToolCall) (ToolResult, error) {
+func (tr *ToolRegistry) GetToolType(toolName string) string {
+	executor, exists := tr.executors[toolName]
+	if !exists {
+		return "unknown"
+	}
+
+	switch executor.(type) {
+	case *NoopExecutor:
+		return "builtin"
+	case *TerminateExecutor:
+		return "builtin"
+	case *HTTPExecutor:
+		return "custom"
+	case *MCPExecutor:
+		return "mcp"
+	case *FilteredToolExecutor:
+		return "filtered"
+	default:
+		return "unknown"
+	}
+}
+
+func (tr *ToolRegistry) ExecuteTool(ctx context.Context, call ToolCall, recorder EventEmitter) (ToolResult, error) {
 	executor, exists := tr.executors[call.Function.Name]
 	if !exists {
 		return ToolResult{
@@ -65,7 +236,7 @@ func (tr *ToolRegistry) ExecuteTool(ctx context.Context, call ToolCall) (ToolRes
 		}, fmt.Errorf("tool %s not found", call.Function.Name)
 	}
 
-	return executor.Execute(ctx, call)
+	return executor.Execute(ctx, call, recorder)
 }
 
 func (tr *ToolRegistry) ToOpenAITools() []openai.ChatCompletionToolParam {
@@ -88,7 +259,7 @@ func (tr *ToolRegistry) ToOpenAITools() []openai.ChatCompletionToolParam {
 
 type NoopExecutor struct{}
 
-func (n *NoopExecutor) Execute(ctx context.Context, call ToolCall) (ToolResult, error) {
+func (n *NoopExecutor) Execute(ctx context.Context, call ToolCall, recorder EventEmitter) (ToolResult, error) {
 	var arguments map[string]any
 	if err := json.Unmarshal([]byte(call.Function.Arguments), &arguments); err != nil {
 		logf.Log.Info("Error parsing tool arguments", "ToolCall", call)
@@ -119,7 +290,7 @@ func GetNoopTool() ToolDefinition {
 
 type TerminateExecutor struct{}
 
-func (t *TerminateExecutor) Execute(ctx context.Context, call ToolCall) (ToolResult, error) {
+func (t *TerminateExecutor) Execute(ctx context.Context, call ToolCall, recorder EventEmitter) (ToolResult, error) {
 	var arguments map[string]any
 	if err := json.Unmarshal([]byte(call.Function.Arguments), &arguments); err != nil {
 		logf.Log.Info("Error parsing tool arguments", "ToolCall", call)

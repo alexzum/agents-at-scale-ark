@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/signal"
 	"regexp"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -52,12 +53,12 @@ func ensureContext(ctx context.Context) (context.Context, context.CancelFunc) {
 	if ctx == nil {
 		ctx = context.Background()
 	}
-	
+
 	_, hasDeadline := ctx.Deadline()
 	if !hasDeadline {
 		return context.WithTimeout(ctx, 5*time.Second)
 	}
-	
+
 	return ctx, func() {}
 }
 
@@ -65,16 +66,16 @@ func validateSessionID(sessionID string, maxLength int) error {
 	if sessionID == "" {
 		return fmt.Errorf("session ID cannot be empty")
 	}
-	
+
 	if len(sessionID) > maxLength {
 		return fmt.Errorf("session ID exceeds maximum length of %d characters", maxLength)
 	}
-	
+
 	validSessionID := regexp.MustCompile(`^[a-zA-Z0-9_-]+$`)
 	if !validSessionID.MatchString(sessionID) {
 		return fmt.Errorf("session ID contains invalid characters")
 	}
-	
+
 	return nil
 }
 
@@ -91,20 +92,20 @@ func validateMessageSize(messageData interface{}, maxSize int) error {
 func (s *Server) safeExec(ctx context.Context, executor DBExecutor, query string, sessionID string, messageData interface{}) (sql.Result, error) {
 	ctx, cancel := ensureContext(ctx)
 	defer cancel()
-	
+
 	if err := validateSessionID(sessionID, s.maxSessionIDLength); err != nil {
 		return nil, fmt.Errorf("invalid session ID: %w", err)
 	}
-	
+
 	if err := validateMessageSize(messageData, s.maxMessageSize); err != nil {
 		return nil, err
 	}
-	
+
 	result, err := executor.ExecContext(ctx, query, sessionID, messageData)
 	if err != nil {
 		return nil, fmt.Errorf("database execution error: %w", err)
 	}
-	
+
 	return result, nil
 }
 
@@ -131,10 +132,10 @@ func New(dsn, tableName string, logger *slog.Logger) (*Server, error) {
 	}
 
 	s := &Server{
-		db:                db,
-		logger:            logger,
-		tableName:         safeTable,
-		maxSessionIDLength: 255,    // Reasonable limit for session IDs
+		db:                 db,
+		logger:             logger,
+		tableName:          safeTable,
+		maxSessionIDLength: 255,              // Reasonable limit for session IDs
 		maxMessageSize:     10 * 1024 * 1024, // 10MB max message size
 	}
 	if err := s.migrate(ctx); err != nil {
@@ -221,7 +222,7 @@ func (s *Server) addRawMessages(ctx context.Context, sessionID string, messages 
 
 func (s *Server) getMessages(ctx context.Context, sessionID string) ([]json.RawMessage, error) {
 	query := fmt.Sprintf(`SELECT message FROM %s WHERE session_id = $1 ORDER BY created_at ASC`, quoteIdentifier(s.tableName))
-	
+
 	rows, err := s.db.QueryContext(ctx, query, sessionID)
 	if err != nil {
 		return nil, fmt.Errorf("query messages: %w", err)
@@ -246,7 +247,7 @@ func (s *Server) handleMessages(w http.ResponseWriter, r *http.Request) {
 	if sessionID == "" {
 		sessionID = "default"
 	}
-	
+
 	// Validate session ID before proceeding
 	if err := validateSessionID(sessionID, s.maxSessionIDLength); err != nil {
 		s.logger.Error("invalid session ID", "error", err, "session", sessionID)
@@ -269,7 +270,7 @@ func (s *Server) handleMultipleMessages(w http.ResponseWriter, r *http.Request) 
 	if sessionID == "" {
 		sessionID = "default"
 	}
-	
+
 	// Validate session ID before proceeding
 	if err := validateSessionID(sessionID, s.maxSessionIDLength); err != nil {
 		s.logger.Error("invalid session ID", "error", err, "session", sessionID)
@@ -362,6 +363,145 @@ func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("OK"))
 }
 
+func (s *Server) handleMessages(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodPost:
+		s.handleAddMessages(w, r)
+	case http.MethodGet:
+		s.handleGetMessages(w, r)
+	default:
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}
+}
+
+func (s *Server) handleAddMessages(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		SessionID string            `json:"session_id"`
+		QueryID   string            `json:"query_id"`
+		Messages  []json.RawMessage `json:"messages"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		s.logger.Error("decode request", "error", err)
+		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+		return
+	}
+
+	if req.SessionID == "" || req.QueryID == "" {
+		http.Error(w, "session_id and query_id are required", http.StatusBadRequest)
+		return
+	}
+
+	if len(req.Messages) == 0 {
+		http.Error(w, "messages array cannot be empty", http.StatusBadRequest)
+		return
+	}
+
+	if err := s.addRawMessages(r.Context(), req.SessionID, req.QueryID, req.Messages); err != nil {
+		s.logger.Error("add messages", "error", err, "session", req.SessionID, "query", req.QueryID)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
+func (s *Server) handleGetMessages(w http.ResponseWriter, r *http.Request) {
+	// Parse query parameters for filtering
+	sessionID := r.URL.Query().Get("session_id")
+	queryID := r.URL.Query().Get("query_id")
+
+	// Parse pagination parameters
+	limit := 50 // default
+	if limitStr := r.URL.Query().Get("limit"); limitStr != "" {
+		if parsed, err := strconv.Atoi(limitStr); err == nil && parsed > 0 && parsed <= 1000 {
+			limit = parsed
+		}
+	}
+
+	offset := 0
+	if offsetStr := r.URL.Query().Get("offset"); offsetStr != "" {
+		if parsed, err := strconv.Atoi(offsetStr); err == nil && parsed >= 0 {
+			offset = parsed
+		}
+	}
+
+	messages, total, err := s.getAllMessages(r.Context(), sessionID, queryID, limit, offset)
+	if err != nil {
+		s.logger.Error("get messages", "error", err, "session", sessionID, "query", queryID)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	// Ensure messages is never null - use empty slice if nil
+	if messages == nil {
+		messages = []MessageRecord{}
+	}
+
+	response := struct {
+		Messages []MessageRecord `json:"messages"`
+		Total    int             `json:"total"`
+		Limit    int             `json:"limit"`
+		Offset   int             `json:"offset"`
+	}{
+		Messages: messages,
+		Total:    total,
+		Limit:    limit,
+		Offset:   offset,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		s.logger.Error("encode response", "error", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+	}
+}
+
+func (s *Server) getSessions(ctx context.Context) ([]string, error) {
+	baseQuery := fmt.Sprintf(`SELECT DISTINCT session_id FROM %s ORDER BY session_id`, quoteIdentifier(s.tableName))
+
+	rows, err := s.db.QueryContext(ctx, baseQuery)
+	if err != nil {
+		return nil, fmt.Errorf("query sessions: %w", err)
+	}
+	defer rows.Close()
+
+	var sessions []string
+	for rows.Next() {
+		var sessionID string
+		if err := rows.Scan(&sessionID); err != nil {
+			return nil, fmt.Errorf("scan session: %w", err)
+		}
+		sessions = append(sessions, sessionID)
+	}
+
+	return sessions, rows.Err()
+}
+
+func (s *Server) handleSessions(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	sessions, err := s.getSessions(r.Context())
+	if err != nil {
+		s.logger.Error("get sessions", "error", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	response := map[string]interface{}{
+		"sessions": sessions,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		s.logger.Error("encode sessions response", "error", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+	}
+}
+
 func (s *Server) routes() http.Handler {
 	r := mux.NewRouter()
 	r.HandleFunc("/message/{uid}", s.handleMessages)
@@ -383,7 +523,7 @@ func main() {
 	if tableName == "" {
 		tableName = "messages"
 	}
-	
+
 	if _, err := safeTableName(tableName); err != nil {
 		logger.Error("Invalid table name", "error", err)
 		os.Exit(1)

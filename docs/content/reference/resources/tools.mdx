@@ -4,8 +4,11 @@ Tools extend agent capabilities by providing access to external functions, APIs,
 
 ## Tool Resource Types
 
-### Fetcher Tools
-HTTP API calls with URL template substitution.
+### HTTP Tools
+
+HTTP API calls with URL and body template substitution.
+
+#### GET Request Example
 
 ```yaml
 apiVersion: ark.mckinsey.com/v1alpha1
@@ -28,7 +31,87 @@ spec:
     timeout: 30s
 ```
 
-### MCP Tools  
+#### POST Request with Body Template Example
+
+```yaml
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Tool
+metadata:
+  name: create-user
+spec:
+  type: http
+  inputSchema:
+    type: object
+    properties:
+      name:
+        type: string
+        description: User name
+      email:
+        type: string
+        description: User email
+    required: ["name", "email"]
+  description: "Creates a new user"
+  http:
+    url: https://api.example.com/users
+    method: POST
+    headers:
+      - name: "Content-Type"
+        value:
+          value: "application/json"
+    body: |
+      {
+        "name": "{{.input.name}}",
+        "email": "{{.input.email}}",
+        "created_at": "{{.timestamp}}",
+        "organization": "{{.default_org}}"
+      }
+    bodyParameters:
+      - name: timestamp
+        value: "2024-01-01T00:00:00Z"
+      - name: default_org
+        valueFrom:
+          configMapKeyRef:
+            name: user-config
+            key: default-organization
+    timeout: 30s
+```
+
+## Template Syntax
+
+HTTP tools support golang template syntax for dynamic content generation:
+
+### Template Data Structure
+
+Templates have access to structured data:
+
+- **`.input.fieldName`** - User input from the inputSchema
+- **`.parameterName`** - Values from bodyParameters
+
+### Parameter Sources
+
+```yaml
+bodyParameters:
+  # Direct values
+  - name: api_version
+    value: "v1.0"
+
+  # ConfigMap references
+  - name: endpoint
+    valueFrom:
+      configMapKeyRef:
+        name: api-config
+        key: base-url
+
+  # Secret references
+  - name: token
+    valueFrom:
+      secretKeyRef:
+        name: api-secrets
+        key: auth-token
+```
+
+### MCP Tools
+
 Tools provided by Model Context Protocol servers.
 
 ```yaml
@@ -53,9 +136,32 @@ spec:
     toolName: read_file
 ```
 
+### Agent as Tools
+
+Agents can be declared and exposed as tools, which means they can be called by other agents in the system.This lets one agent delegate a task to another specialized agent instead of handling everything itself.Also, this lets an agent behave like an API, handling specific, self-contained tasks without being burdened by irrelevant context, which makes development simpler.
+
+```yaml
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Tool
+metadata:
+  name: call-research-agent
+spec:
+  type: agent
+  inputSchema:
+    type: object
+    properties:
+      input:
+        type: string
+        description: "The research query or topic that the agent should investigate and provide insights on."
+    required: ["input"]
+  agent:
+    name: research-agent
+```
+
 ## Agent Tool Reference Types
 
 ### Custom Tools
+
 Reference Tool resources by name:
 
 ```yaml
@@ -67,13 +173,23 @@ tools:
 ```
 
 ### Built-in Tools
+
 System-provided tools:
 
 ```yaml
 tools:
   - type: built-in
-    name: terminate  # End conversation with final response
+    name: terminate # End conversation with final response
   - type: built-in
-    name: noop      # No-operation (testing/debugging)
+    name: noop # No-operation (testing/debugging)
 ```
 
+### Agent as Tools
+
+Agent used as tools:
+
+```yaml
+tools:
+  - type: custom
+    name: call-research-agent
+```

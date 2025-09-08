@@ -142,7 +142,7 @@ func (a *Agent) executeToolCall(ctx context.Context, toolCall openai.ChatComplet
 		"agent":  a.FullName(),
 	})
 
-	result, err := a.Tools.ExecuteTool(ctx, ToolCall(toolCall))
+	result, err := a.Tools.ExecuteTool(ctx, ToolCall(toolCall), a.Recorder)
 	toolMessage := ToolMessage(result.Content, result.ID)
 
 	if err != nil {
