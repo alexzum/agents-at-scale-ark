@@ -269,7 +269,7 @@ func convertStatusMessageFromProtocol(statusMessage *protocol.Message) (*A2ATask
 		return nil, nil
 	}
 
-	var msgParts []A2ATaskPart
+	msgParts := make([]A2ATaskPart, 0, len(statusMessage.Parts))
 	for _, part := range statusMessage.Parts {
 		msgParts = append(msgParts, ConvertPartFromProtocol(part))
 	}
