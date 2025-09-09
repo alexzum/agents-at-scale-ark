@@ -29,11 +29,11 @@ COPY ark-api/src/ ./src/
 COPY ark-api/tests/ ./tests/
 COPY ark-api/*.py ./
 
-# Copy ark-auth source code for local dependency
+# Copy ark-auth source code for local dependency (from CI prebuild location)
 COPY ark-auth/ ./ark-auth/
 
-# Create symlink to match the expected path structure
-RUN mkdir -p ../ark-auth && ln -sf /app/ark-auth /app/../ark-auth/ark-auth
+# Update pyproject.toml to use the correct path for Docker context
+RUN sed -i 's|path = "../../ark-auth/ark-auth"|path = "./ark-auth/ark-auth"|' pyproject.toml
 
 # Add ark-sdk wheel as a dependency and sync all dependencies
 RUN uv add file://$(ls /tmp/wheels/ark*.whl) && \
