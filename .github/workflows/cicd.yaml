@@ -143,7 +143,7 @@ jobs:
             prebuild: "make ark-api-a2a-deps && mkdir -p services/ark-api-a2a/out && cp out/ark-sdk/py-sdk/dist/ark_sdk-*.whl services/ark-api-a2a/out/"
           - path: services/ark-api
             image: ark-api
-            prebuild: "make ark-api-deps && mkdir -p services/ark-api/ark-api/out && cp out/ark-sdk/py-sdk/dist/ark_sdk-*.whl services/ark-api/ark-api/out/ && echo 'Debug: Checking if ark-auth exists' && ls -la services/ark-auth/ || echo 'ark-auth not found' && echo 'Debug: Copying ark-auth' && cp -r services/ark-auth services/ark-api/ || echo 'Copy failed' && echo 'Debug: Verifying copy' && ls -la services/ark-api/ark-auth/ || echo 'Verification failed'"
+            prebuild: "echo 'Starting prebuild for ark-api' && make ark-api-deps && echo 'Deps done' && mkdir -p services/ark-api/ark-api/out && echo 'Dir created' && cp out/ark-sdk/py-sdk/dist/ark_sdk-*.whl services/ark-api/ark-api/out/ && echo 'Wheel copied' && echo 'Checking ark-auth...' && ls -la services/ark-auth/ && echo 'Copying ark-auth...' && cp -r services/ark-auth services/ark-api/ && echo 'Verifying copy...' && ls -la services/ark-api/ark-auth/ && echo 'Prebuild complete'"
           - path: services/ark-dashboard
             image: ark-dashboard
             prebuild: "make ark-dashboard-deps"
