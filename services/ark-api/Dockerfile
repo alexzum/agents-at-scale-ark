@@ -21,12 +21,7 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 COPY ark-api/pyproject.toml ark-api/uv.lock ./
 COPY README.md ./
 
-# Copy wheel files (create directory first)
-RUN mkdir -p /tmp/wheels
-# Debug: List contents of ark-api directory
-RUN echo "Contents of ark-api directory:" && ls -la ark-api/ || echo "ark-api directory not found"
-RUN echo "Contents of ark-api/out directory:" && ls -la ark-api/out/ || echo "ark-api/out directory not found"
-# Copy wheel files - this will fail if the directory doesn't exist, which is expected
+# Copy wheel files
 COPY ark-api/out/ark*.whl /tmp/wheels/
 
 # Copy source code only (not pyproject.toml again)
@@ -35,11 +30,7 @@ COPY ark-api/tests/ ./tests/
 COPY ark-api/*.py ./
 
 # Add ark-sdk wheel as a dependency and sync all dependencies
-RUN echo "Contents of /tmp/wheels/:" && ls -la /tmp/wheels/ && \
-  WHEEL_FILE=$(ls /tmp/wheels/ark*.whl 2>/dev/null | head -n1) && \
-  if [ -z "$WHEEL_FILE" ]; then echo "No wheel file found in /tmp/wheels/"; exit 1; fi && \
-  echo "Using wheel file: $WHEEL_FILE" && \
-  uv add file://$WHEEL_FILE && \
+RUN uv add file://$(ls /tmp/wheels/ark*.whl) && \
   uv sync --frozen --no-install-project
 
 ENV HOME=/home/ark
