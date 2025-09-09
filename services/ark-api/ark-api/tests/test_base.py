@@ -1,19 +1,13 @@
-"""Base test class with authentication disabled."""
+"""Base test class with proper test app (no authentication middleware)."""
 
-import os
 import unittest
-from unittest.mock import patch
 from fastapi.testclient import TestClient
 
-# Set environment variable to skip authentication during tests
-os.environ["ARK_SKIP_AUTH"] = "true"
-
 class BaseTestCase(unittest.TestCase):
-    """Base test case with authentication disabled."""
+    """Base test case using test app without authentication middleware."""
     
     def setUp(self):
-        """Set up test client with authentication disabled."""
-        # Ensure ARK_SKIP_AUTH is set for all tests
-        os.environ["ARK_SKIP_AUTH"] = "true"
-        from ark_api.main import app
+        """Set up test client using test app factory."""
+        from ark_api.test_app import create_test_app
+        app = create_test_app()
         self.client = TestClient(app)

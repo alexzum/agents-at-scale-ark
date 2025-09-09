@@ -1,15 +1,11 @@
 """Tests for API routes."""
-import os
-# Set environment variable to skip authentication during tests
-os.environ["ARK_SKIP_AUTH"] = "true"
-
 import unittest
 import unittest.mock
 from unittest.mock import Mock, patch, AsyncMock
 from fastapi.testclient import TestClient
 from kubernetes_asyncio.client.rest import ApiException
 
-from test_base import BaseTestCase
+from ..test_base import BaseTestCase
 
 
 class TestNamespacesEndpoint(BaseTestCase):
