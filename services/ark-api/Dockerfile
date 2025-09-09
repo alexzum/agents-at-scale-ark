@@ -30,7 +30,7 @@ COPY ark-api/tests/ ./tests/
 COPY ark-api/*.py ./
 
 # Copy ark-auth source code for local dependency (from CI prebuild location)
-COPY ark-auth/ ./ark-auth/
+COPY ark-api/ark-auth/ ./ark-auth/
 
 # Update pyproject.toml to use the correct path for Docker context
 RUN sed -i 's|path = "../../ark-auth/ark-auth"|path = "./ark-auth/ark-auth"|' pyproject.toml
