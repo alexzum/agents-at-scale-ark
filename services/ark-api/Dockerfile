@@ -38,7 +38,10 @@ RUN mkdir -p ark-auth/ark-auth/src/ark_auth && \
     echo 'dependencies = []' >> ark-auth/ark-auth/pyproject.toml && \
     echo 'def validate_token(token):' > ark-auth/ark-auth/src/ark_auth/__init__.py && \
     echo '    """Minimal validate_token function for fallback"""' >> ark-auth/ark-auth/src/ark_auth/__init__.py && \
-    echo '    return True' >> ark-auth/ark-auth/src/ark_auth/__init__.py
+    echo '    return True' >> ark-auth/ark-auth/src/ark_auth/__init__.py && \
+    echo 'def validate_token(token):' > ark-auth/ark-auth/src/ark_auth/dependencies.py && \
+    echo '    """Minimal validate_token function for fallback"""' >> ark-auth/ark-auth/src/ark_auth/dependencies.py && \
+    echo '    return True' >> ark-auth/ark-auth/src/ark_auth/dependencies.py
 
 # Update pyproject.toml to use the correct path for Docker context
 RUN sed -i 's|path = "../../ark-auth/ark-auth"|path = "./ark-auth/ark-auth"|' pyproject.toml
