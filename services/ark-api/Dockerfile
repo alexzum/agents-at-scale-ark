@@ -32,6 +32,9 @@ COPY ark-api/*.py ./
 # Copy ark-auth source code for local dependency
 COPY ark-auth/ ./ark-auth/
 
+# Create symlink to match the expected path structure
+RUN mkdir -p ../ark-auth && ln -sf /app/ark-auth /app/../ark-auth/ark-auth
+
 # Add ark-sdk wheel as a dependency and sync all dependencies
 RUN uv add file://$(ls /tmp/wheels/ark*.whl) && \
   uv sync --frozen --no-install-project
