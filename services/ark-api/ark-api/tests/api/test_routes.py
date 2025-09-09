@@ -5,7 +5,7 @@ from unittest.mock import Mock, patch, AsyncMock
 from fastapi.testclient import TestClient
 from kubernetes_asyncio.client.rest import ApiException
 
-from ..test_base import BaseTestCase
+from tests.test_base import BaseTestCase
 
 
 class TestNamespacesEndpoint(BaseTestCase):

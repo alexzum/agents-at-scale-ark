@@ -24,6 +24,7 @@ package = true
 
 [tool.uv.sources]
 ark-auth = { path = "../../ark-auth/ark-auth" }
+ark-sdk = { path = "../../../out/ark-sdk/py-sdk/dist/ark_sdk-0.1.32-py3-none-any.whl" }
 
 [tool.coverage.run]
 data_file = "coverage/.coverage"
