@@ -143,7 +143,7 @@ jobs:
             prebuild: "make ark-api-a2a-deps && mkdir -p services/ark-api-a2a/out && cp out/ark-sdk/py-sdk/dist/ark_sdk-*.whl services/ark-api-a2a/out/"
           - path: services/ark-api
             image: ark-api
-            prebuild: "make ark-api-deps && mkdir -p services/ark-api/ark-api/out && cp out/ark-sdk/py-sdk/dist/ark_sdk-*.whl services/ark-api/ark-api/out/ && cp -r services/ark-auth services/ark-api/"
+            prebuild: "make ark-api-deps && mkdir -p services/ark-api/ark-api/out && cp out/ark-sdk/py-sdk/dist/ark_sdk-*.whl services/ark-api/ark-api/out/ && echo 'Debug: Checking if ark-auth exists' && ls -la services/ark-auth/ && echo 'Debug: Copying ark-auth' && cp -r services/ark-auth services/ark-api/ && echo 'Debug: Verifying copy' && ls -la services/ark-api/ark-auth/"
           - path: services/ark-dashboard
             image: ark-dashboard
             prebuild: "make ark-dashboard-deps"
