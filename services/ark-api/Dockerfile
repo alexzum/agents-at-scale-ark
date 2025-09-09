@@ -30,7 +30,9 @@ COPY ark-api/tests/ ./tests/
 COPY ark-api/*.py ./
 
 # Add ark-sdk wheel as a dependency and sync all dependencies
-RUN uv add file://$(ls /tmp/wheels/ark*.whl) && \
+RUN WHEEL_FILE=$(ls /tmp/wheels/ark*.whl | head -n1) && \
+  if [ -z "$WHEEL_FILE" ]; then echo "No wheel file found in /tmp/wheels/"; exit 1; fi && \
+  uv add file://$WHEEL_FILE && \
   uv sync --frozen --no-install-project
 
 ENV HOME=/home/ark
