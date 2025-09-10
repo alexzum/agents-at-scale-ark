@@ -29,7 +29,6 @@ COPY ark-api/src/ ./src/
 COPY ark-api/tests/ ./tests/
 COPY ark-api/*.py ./
 
-# Authentication is now handled by ark-sdk, no need for separate ark-auth package
 # Add ark-sdk wheel as a dependency and sync all dependencies
 RUN uv add file://$(ls /tmp/wheels/ark*.whl) && \
   uv sync --frozen --no-install-project
