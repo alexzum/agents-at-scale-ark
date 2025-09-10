@@ -52,20 +52,3 @@ async def validate_token(authorization: str = Header(..., alias="Authorization")
         raise create_auth_exception("Token validation failed")
 
 
-def get_current_user(token_payload: dict = Depends(validate_token)) -> dict:
-    """
-    FastAPI dependency to get the current user from token payload.
-    
-    Args:
-        token_payload: The validated token payload
-        
-    Returns:
-        The user information from the token
-    """
-    return {
-        "sub": token_payload.get("sub"),
-        "email": token_payload.get("email"),
-        "name": token_payload.get("name"),
-        "roles": token_payload.get("roles", []),
-        "permissions": token_payload.get("permissions", []),
-    }

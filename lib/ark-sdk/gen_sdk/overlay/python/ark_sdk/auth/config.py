@@ -17,7 +17,6 @@ class AuthConfig(BaseSettings):
     jwks_cache_ttl: int = 3600  # 1 hour
     
     # Token validation settings
-    token_validation_timeout: int = 30  # seconds
     token_validation_retries: int = 3
     
     class Config:
