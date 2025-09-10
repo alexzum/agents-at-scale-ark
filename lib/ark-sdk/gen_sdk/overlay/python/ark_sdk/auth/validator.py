@@ -68,7 +68,6 @@ class TokenValidator:
                 }
             )
             
-            logger.debug(f"Token validated successfully for subject: {payload.get('sub')}")
             return payload
             
         except ExpiredSignatureError as e:

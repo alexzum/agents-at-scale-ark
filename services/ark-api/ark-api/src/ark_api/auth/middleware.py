@@ -61,7 +61,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
                     content={"detail": "Authentication failed"}
                 )
         else:
-            logger.debug(f"Route is public, skipping auth: {path}")
+            pass  # Route is public, skip authentication
         
         # Continue to the next middleware/route handler
         response = await call_next(request)
