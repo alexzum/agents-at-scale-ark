@@ -12,7 +12,7 @@ from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from .config import is_route_authenticated
-from ark_auth.dependencies import validate_token
+from ark_sdk.auth.dependencies import validate_token
 
 logger = logging.getLogger(__name__)
 
