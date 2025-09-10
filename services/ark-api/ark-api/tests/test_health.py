@@ -1,8 +1,12 @@
 """Tests for health check endpoints."""
+import os
 import unittest
 from unittest.mock import patch, AsyncMock
 from fastapi.testclient import TestClient
 from kubernetes_asyncio.client.rest import ApiException
+
+# Set environment variable to skip authentication before importing the app
+os.environ["ARK_SKIP_AUTH"] = "true"
 
 
 class TestHealthEndpoints(unittest.TestCase):
