@@ -12,6 +12,10 @@ class AuthConfig(BaseSettings):
     jwt_audience: Optional[str] = None
     jwt_issuer: Optional[str] = None
     
+    # OKTA settings (for backward compatibility)
+    okta_issuer: Optional[str] = None
+    okta_audience: Optional[str] = None
+    
     # Key fetching settings
     jwks_url: Optional[str] = None
     jwks_cache_ttl: int = 3600  # 1 hour
@@ -20,5 +24,5 @@ class AuthConfig(BaseSettings):
     token_validation_retries: int = 3
     
     class Config:
-        env_prefix = "ARK_AUTH_"
+        env_prefix = "ARK_"
         case_sensitive = False

@@ -53,18 +53,22 @@ class TokenValidator:
             # Get the signing key
             signing_key = jwks_client.get_signing_key_from_jwt(token)
             
+            # Use OKTA values as fallback if JWT values are not set
+            audience = self.config.jwt_audience or self.config.okta_audience
+            issuer = self.config.jwt_issuer or self.config.okta_issuer
+            
             # Decode and validate the token
             payload = decode(
                 token,
                 signing_key.key,
                 algorithms=[self.config.jwt_algorithm],
-                audience=self.config.jwt_audience,
-                issuer=self.config.jwt_issuer,
+                audience=audience,
+                issuer=issuer,
                 options={
                     "verify_signature": True,
                     "verify_exp": True,
-                    "verify_aud": self.config.jwt_audience is not None,
-                    "verify_iss": self.config.jwt_issuer is not None,
+                    "verify_aud": audience is not None,
+                    "verify_iss": issuer is not None,
                 }
             )
             
