@@ -4,11 +4,14 @@ from unittest.mock import patch, AsyncMock
 from fastapi.testclient import TestClient
 from kubernetes_asyncio.client.rest import ApiException
 
-from tests.test_base import BaseTestCase
 
-
-class TestHealthEndpoints(BaseTestCase):
+class TestHealthEndpoints(unittest.TestCase):
     """Test cases for health check endpoints."""
+    
+    def setUp(self):
+        """Set up test client."""
+        from ark_api.main import app
+        self.client = TestClient(app)
     
     def test_health_check_success(self):
         """Test successful health check."""

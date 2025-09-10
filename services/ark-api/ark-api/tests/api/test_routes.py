@@ -5,11 +5,14 @@ from unittest.mock import Mock, patch, AsyncMock
 from fastapi.testclient import TestClient
 from kubernetes_asyncio.client.rest import ApiException
 
-from tests.test_base import BaseTestCase
 
-
-class TestNamespacesEndpoint(BaseTestCase):
+class TestNamespacesEndpoint(unittest.TestCase):
     """Test cases for the /namespaces endpoint."""
+    
+    def setUp(self):
+        """Set up test client."""
+        from ark_api.main import app
+        self.client = TestClient(app)
     
     @patch('ark_api.api.v1.namespaces.ApiClient')
     @patch('ark_api.api.v1.namespaces.client.CoreV1Api')
@@ -44,8 +47,13 @@ class TestNamespacesEndpoint(BaseTestCase):
         self.assertEqual(data["items"][1]["name"], "kube-system")
     
 
-class TestSecretsEndpoint(BaseTestCase):
+class TestSecretsEndpoint(unittest.TestCase):
     """Test cases for the /namespaces/{namespace}/secrets endpoint."""
+    
+    def setUp(self):
+        """Set up test client."""
+        from ark_api.main import app
+        self.client = TestClient(app)
     
     @patch('ark_api.api.v1.secrets.ApiClient')
     @patch('ark_api.api.v1.secrets.client.CoreV1Api')
@@ -198,8 +206,13 @@ class TestSecretsEndpoint(BaseTestCase):
         mock_api_instance.list_namespaced_secret.assert_called_once_with("test-namespace-123_prod")
 
 
-class TestSecretGetEndpoint(BaseTestCase):
+class TestSecretGetEndpoint(unittest.TestCase):
     """Test cases for the GET /namespaces/{namespace}/secrets/{secret_name} endpoint."""
+    
+    def setUp(self):
+        """Set up test client."""
+        from ark_api.main import app
+        self.client = TestClient(app)
     
     @patch('ark_api.api.v1.secrets.ApiClient')
     @patch('ark_api.api.v1.secrets.client.CoreV1Api')
@@ -232,8 +245,13 @@ class TestSecretGetEndpoint(BaseTestCase):
         self.assertEqual(data["secret_length"], 10)  # length of "test-token"
 
 
-class TestSecretCreateEndpoint(BaseTestCase):
+class TestSecretCreateEndpoint(unittest.TestCase):
     """Test cases for the POST /namespaces/{namespace}/secrets endpoint."""
+    
+    def setUp(self):
+        """Set up test client."""
+        from ark_api.main import app
+        self.client = TestClient(app)
     
     @patch('ark_api.api.v1.secrets.ApiClient')
     @patch('ark_api.api.v1.secrets.client.CoreV1Api')
@@ -369,8 +387,13 @@ class TestSecretCreateEndpoint(BaseTestCase):
         self.assertIn("already exists", data["detail"])
 
 
-class TestSecretUpdateEndpoint(BaseTestCase):
+class TestSecretUpdateEndpoint(unittest.TestCase):
     """Test cases for the PUT /namespaces/{namespace}/secrets/{secret_name} endpoint."""
+    
+    def setUp(self):
+        """Set up test client."""
+        from ark_api.main import app
+        self.client = TestClient(app)
     
     @patch('ark_api.api.v1.secrets.ApiClient')
     @patch('ark_api.api.v1.secrets.client.CoreV1Api')
@@ -456,8 +479,13 @@ class TestSecretUpdateEndpoint(BaseTestCase):
         self.assertIn("not found", data["detail"])
 
 
-class TestSecretDeleteEndpoint(BaseTestCase):
+class TestSecretDeleteEndpoint(unittest.TestCase):
     """Test cases for the DELETE /namespaces/{namespace}/secrets/{secret_name} endpoint."""
+    
+    def setUp(self):
+        """Set up test client."""
+        from ark_api.main import app
+        self.client = TestClient(app)
     
     @patch('ark_api.api.v1.secrets.ApiClient')
     @patch('ark_api.api.v1.secrets.client.CoreV1Api')
@@ -531,8 +559,13 @@ class TestSecretDeleteEndpoint(BaseTestCase):
         self.assertIn("Forbidden", data["detail"])
 
 
-class TestAgentsEndpoint(BaseTestCase):
+class TestAgentsEndpoint(unittest.TestCase):
     """Test cases for the /namespaces/{namespace}/agents endpoint."""
+    
+    def setUp(self):
+        """Set up test client."""
+        from ark_api.main import app
+        self.client = TestClient(app)
     
     @patch('ark_api.api.v1.agents.with_ark_client')
     def test_list_agents_success(self, mock_ark_client):
@@ -833,8 +866,13 @@ class TestAgentsEndpoint(BaseTestCase):
         mock_client.agents.a_delete.assert_called_once_with("test-agent")
 
 
-class TestModelsEndpoint(BaseTestCase):
+class TestModelsEndpoint(unittest.TestCase):
     """Test cases for the /namespaces/{namespace}/models endpoint."""
+    
+    def setUp(self):
+        """Set up test client."""
+        from ark_api.main import app
+        self.client = TestClient(app)
     
     @patch('ark_api.api.v1.models.with_ark_client')
     def test_list_models_success(self, mock_ark_client):
@@ -1240,8 +1278,13 @@ class TestModelsEndpoint(BaseTestCase):
         mock_client.models.a_delete.assert_called_once_with("gpt-model")
 
 
-class TestQueriesEndpoint(BaseTestCase):
+class TestQueriesEndpoint(unittest.TestCase):
     """Test cases for the /namespaces/{namespace}/queries endpoint."""
+    
+    def setUp(self):
+        """Set up test client."""
+        from ark_api.main import app
+        self.client = TestClient(app)
     
     @patch('ark_api.api.v1.queries.with_ark_client')
     def test_list_queries_success(self, mock_ark_client):
@@ -1582,8 +1625,13 @@ class TestQueriesEndpoint(BaseTestCase):
         mock_client.queries.a_delete.assert_called_once_with("test-query")
 
 
-class TestTeamsEndpoint(BaseTestCase):
+class TestTeamsEndpoint(unittest.TestCase):
     """Test cases for the /namespaces/{namespace}/teams endpoint."""
+    
+    def setUp(self):
+        """Set up test client."""
+        from ark_api.main import app
+        self.client = TestClient(app)
     
     @patch('ark_api.api.v1.teams.with_ark_client')
     def test_list_teams_success(self, mock_ark_client):

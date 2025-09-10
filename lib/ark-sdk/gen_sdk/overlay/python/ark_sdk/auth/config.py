@@ -12,7 +12,7 @@ class AuthConfig(BaseSettings):
     jwt_audience: Optional[str] = None
     jwt_issuer: Optional[str] = None
     
-    # OKTA settings (for backward compatibility)
+    # OKTA settings (primary configuration)
     okta_issuer: Optional[str] = None
     okta_audience: Optional[str] = None
     

@@ -4,8 +4,8 @@ import asyncio
 import logging
 from typing import Optional, Dict, Any
 import httpx
-from pyjwt import decode, PyJWKClient
-from pyjwt.exceptions import InvalidTokenError, ExpiredSignatureError, DecodeError
+from jwt import decode, PyJWKClient
+from jwt.exceptions import InvalidTokenError, ExpiredSignatureError, DecodeError
 
 from .exceptions import TokenValidationError, InvalidTokenError as AuthInvalidTokenError, ExpiredTokenError
 from .config import AuthConfig

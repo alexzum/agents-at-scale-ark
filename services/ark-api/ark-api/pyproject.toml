@@ -16,6 +16,9 @@ dependencies = [
     "pyhelm3>=0.4.0",
     "coverage>=7.10.4",
     "python-dotenv>=1.0.0",
+    "pyjwt>=2.10.1",
+    "pyjwt-key-fetcher>=0.8.0",
+    "pydantic-settings>=2.10.1",
     "ark-sdk",
 ]
 
