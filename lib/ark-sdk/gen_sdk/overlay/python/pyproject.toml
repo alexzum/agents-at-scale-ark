@@ -29,6 +29,8 @@ dependencies = [
   "typing-extensions (>=4.7.1)",
   "kubernetes>=32.0.0",
   "kubernetes_asyncio>=32.0.0",
+  "fastapi>=0.104.0",
+  "uvicorn[standard]>=0.24.0",
 ]
 
 [project.optional-dependencies]
