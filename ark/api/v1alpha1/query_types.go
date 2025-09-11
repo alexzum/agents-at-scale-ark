@@ -98,13 +98,33 @@ type TokenUsage struct {
 	TotalTokens      int64 `json:"totalTokens,omitempty"`
 }
 
+type ToolCall struct {
+	Name       string `json:"name,omitempty"`
+	Parameters string `json:"parameters,omitempty"`
+	Result     string `json:"result,omitempty"`
+	Error      string `json:"error,omitempty"`
+	Duration   string `json:"duration,omitempty"`
+}
+
+type TeamResponse struct {
+	AgentName  string     `json:"agentName,omitempty"`
+	AgentType  string     `json:"agentType,omitempty"`
+	Turn       int        `json:"turn,omitempty"`
+	Content    string     `json:"content,omitempty"`
+	ToolCalls  []ToolCall `json:"toolCalls,omitempty"`
+	TokenUsage TokenUsage `json:"tokenUsage,omitempty"`
+	Duration   string     `json:"duration,omitempty"`
+	Error      string     `json:"error,omitempty"`
+}
+
 type QueryStatus struct {
 	// +kubebuilder:default="pending"
 	// +kubebuilder:validation:Enum=pending;running;evaluating;error;done;canceled
-	Phase       string             `json:"phase,omitempty"`
-	Responses   []Response         `json:"responses,omitempty"`
-	Evaluations []EvaluationResult `json:"evaluations,omitempty"`
-	TokenUsage  TokenUsage         `json:"tokenUsage,omitempty"`
+	Phase         string             `json:"phase,omitempty"`
+	Responses     []Response         `json:"responses,omitempty"`
+	TeamResponses []TeamResponse     `json:"teamResponses,omitempty"`
+	Evaluations   []EvaluationResult `json:"evaluations,omitempty"`
+	TokenUsage    TokenUsage         `json:"tokenUsage,omitempty"`
 	// +kubebuilder:validation:Optional
 	Duration *metav1.Duration `json:"duration,omitempty"`
 }

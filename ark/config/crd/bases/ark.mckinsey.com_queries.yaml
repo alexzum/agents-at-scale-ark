@@ -350,6 +350,50 @@ spec:
                       type: object
                   type: object
                 type: array
+              teamResponses:
+                items:
+                  properties:
+                    agentName:
+                      type: string
+                    agentType:
+                      type: string
+                    content:
+                      type: string
+                    duration:
+                      type: string
+                    error:
+                      type: string
+                    tokenUsage:
+                      properties:
+                        completionTokens:
+                          format: int64
+                          type: integer
+                        promptTokens:
+                          format: int64
+                          type: integer
+                        totalTokens:
+                          format: int64
+                          type: integer
+                      type: object
+                    toolCalls:
+                      items:
+                        properties:
+                          duration:
+                            type: string
+                          error:
+                            type: string
+                          name:
+                            type: string
+                          parameters:
+                            type: string
+                          result:
+                            type: string
+                        type: object
+                      type: array
+                    turn:
+                      type: integer
+                  type: object
+                type: array
               tokenUsage:
                 properties:
                   completionTokens:

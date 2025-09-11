@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"slices"
+	"time"
 
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -215,7 +216,37 @@ func (t *Team) executeMemberAndAccumulate(ctx context.Context, member TeamMember
 		"strategy":   t.Strategy,
 	})
 
+	startTime := time.Now()
 	memberNewMessages, err := member.Execute(ctx, userInput, *messages)
+	duration := time.Since(startTime)
+
+	// Capture response data for visibility
+	if capture := ResponseCaptureFromContext(ctx); capture != nil {
+		response := arkv1alpha1.TeamResponse{
+			AgentName: member.GetName(),
+			AgentType: member.GetType(),
+			Turn:      turn,
+			Duration:  duration.String(),
+		}
+
+		if err != nil {
+			response.Error = err.Error()
+		}
+
+		// Extract content from member messages
+		if len(memberNewMessages) > 0 {
+			response.Content = extractTeamResponseContent(memberNewMessages)
+		}
+
+		// Extract tool calls if available (implementation depends on member type)
+		if agent, ok := member.(*Agent); ok {
+			response.ToolCalls = extractToolCalls(memberNewMessages)
+			response.TokenUsage = extractTokenUsage(agent, memberNewMessages)
+		}
+
+		capture.AddTeamResponse(response)
+	}
+
 	if err != nil {
 		if IsTerminateTeam(err) {
 			memberTracker.CompleteWithTermination(err.Error())
@@ -255,4 +286,55 @@ func loadTeamMember(ctx context.Context, k8sClient client.Client, memberSpec ark
 	default:
 		return nil, fmt.Errorf("unsupported member type %s for member %s in team %s", memberSpec.Type, memberSpec.Name, teamName)
 	}
+}
+
+// extractTeamResponseContent extracts the text content from messages for response capture
+func extractTeamResponseContent(messages []Message) string {
+	if len(messages) == 0 {
+		return ""
+	}
+
+	// Get the last message as the main response
+	lastMessage := messages[len(messages)-1]
+	switch {
+	case lastMessage.OfAssistant != nil:
+		return lastMessage.OfAssistant.Content.OfString.Value
+	case lastMessage.OfTool != nil:
+		return lastMessage.OfTool.Content.OfString.Value
+	case lastMessage.OfUser != nil:
+		return lastMessage.OfUser.Content.OfString.Value
+	default:
+		return ""
+	}
+}
+
+// extractToolCalls extracts tool call information from messages
+func extractToolCalls(messages []Message) []arkv1alpha1.ToolCall {
+	var toolCalls []arkv1alpha1.ToolCall
+
+	for _, message := range messages {
+		if message.OfAssistant != nil && message.OfAssistant.ToolCalls != nil {
+			for _, toolCall := range message.OfAssistant.ToolCalls {
+				tc := arkv1alpha1.ToolCall{
+					Name: toolCall.Function.Name,
+				}
+				
+				// Extract parameters as JSON string
+				if toolCall.Function.Arguments != "" {
+					tc.Parameters = toolCall.Function.Arguments
+				}
+				
+				toolCalls = append(toolCalls, tc)
+			}
+		}
+	}
+
+	return toolCalls
+}
+
+// extractTokenUsage extracts token usage from agent execution (placeholder implementation)
+func extractTokenUsage(agent *Agent, messages []Message) arkv1alpha1.TokenUsage {
+	// This is a placeholder - actual implementation would need to track
+	// token usage during agent execution or retrieve from operation tracker
+	return arkv1alpha1.TokenUsage{}
 }

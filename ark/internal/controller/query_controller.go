@@ -595,9 +595,17 @@ func (r *QueryReconciler) executeTeam(ctx context.Context, query arkv1alpha1.Que
 
 	userMessage := genai.NewUserMessage(resolvedInput)
 
+	// Create context with response capture for team execution
+	ctx, responseCapture := genai.ContextWithResponseCapture(ctx)
+
 	responseMessages, err := team.Execute(ctx, userMessage, messages)
 	if err != nil {
 		return nil, err
+	}
+
+	// Store captured team responses in the query status
+	if len(responseCapture.GetTeamResponses()) > 0 {
+		r.storeTeamResponses(ctx, query, responseCapture.GetTeamResponses())
 	}
 
 	// Save new messages to memory (user message + response messages)
@@ -844,6 +852,26 @@ func (r *QueryReconciler) executeEvaluation(ctx context.Context, obj arkv1alpha1
 		if updateErr := r.updateStatus(ctx, &obj, statusDone); updateErr != nil {
 			log.Error(updateErr, "Failed to update status")
 		}
+	}
+}
+
+// storeTeamResponses stores the captured team responses in the query status
+func (r *QueryReconciler) storeTeamResponses(ctx context.Context, query arkv1alpha1.Query, teamResponses []arkv1alpha1.TeamResponse) {
+	log := logf.FromContext(ctx)
+	
+	// Get the current query to update its status
+	var currentQuery arkv1alpha1.Query
+	if err := r.Get(ctx, types.NamespacedName{Name: query.Name, Namespace: query.Namespace}, &currentQuery); err != nil {
+		log.Error(err, "Failed to get current query for team response update")
+		return
+	}
+	
+	// Update the team responses
+	currentQuery.Status.TeamResponses = teamResponses
+	
+	// Update the status
+	if err := r.Status().Update(ctx, &currentQuery); err != nil {
+		log.Error(err, "Failed to update query status with team responses")
 	}
 }
 
