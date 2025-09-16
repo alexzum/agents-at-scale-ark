@@ -23,6 +23,10 @@ inputs:
     description: 'Whether to push the image to registry'
     required: false
     default: 'false'
+  load:
+    description: 'Whether to load the image to local docker (for single platform only)'
+    required: false
+    default: 'false'
   prebuild:
     description: 'Optional prebuild command to run before docker build'
     required: false
@@ -49,6 +53,7 @@ runs:
         context: ${{ inputs.path }}
         platforms: ${{ inputs.platforms }}
         push: ${{ inputs.push }}
+        load: ${{ inputs.load }}
         tags: ${{ inputs.registry && format('{0}/{1}:{2}', inputs.registry, inputs.image, inputs.tag) || format('{0}:{1}', inputs.image, inputs.tag) }}
         build-args: |
           VERSION=${{ inputs.tag }}

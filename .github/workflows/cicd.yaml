@@ -189,7 +189,7 @@ jobs:
         uses: astral-sh/setup-uv@v6
 
       - name: Login to Docker Registry
-        # Skip login for fork PRs since we won't be pushing
+        # Only login if we're going to push (not a fork PR)
         if: needs.setup-container-cache-registry.outputs.is-fork-pr != 'true'
         uses: docker/login-action@v3
         with:
@@ -204,8 +204,9 @@ jobs:
           tag: ${{ github.sha }}
           registry: ${{ needs.setup-container-cache-registry.outputs.ci-cache-registry }}
           platforms: linux/amd64
-          # Only push if not a fork PR
+          # Fork PRs: load locally, others: push to registry
           push: ${{ needs.setup-container-cache-registry.outputs.is-fork-pr != 'true' }}
+          load: ${{ needs.setup-container-cache-registry.outputs.is-fork-pr == 'true' }}
           prebuild: ${{ matrix.prebuild }}
 
 
@@ -229,7 +230,7 @@ jobs:
 
   e2e-quickstart:
     needs: [setup-container-cache-registry, build-containers]
-    # Skip for fork PRs since containers aren't pushed
+    # Skip for fork PRs since containers can't be shared between jobs
     if: needs.setup-container-cache-registry.outputs.is-fork-pr != 'true'
     runs-on: ubuntu-24.04
     steps:
@@ -341,7 +342,7 @@ jobs:
 
   e2e-smoke-test:
     needs: [setup-container-cache-registry, build-containers]
-    # Skip for fork PRs since containers aren't pushed
+    # Skip for fork PRs since containers can't be shared between jobs
     if: needs.setup-container-cache-registry.outputs.is-fork-pr != 'true'
     runs-on: ubuntu-24.04
     steps:
@@ -470,7 +471,7 @@ jobs:
 
   e2e-tests-standard:
     needs: [setup-container-cache-registry, build-containers]
-    # Skip for fork PRs since containers aren't pushed
+    # Skip for fork PRs since containers can't be shared between jobs
     if: needs.setup-container-cache-registry.outputs.is-fork-pr != 'true'
     runs-on: ubuntu-24.04
     steps:
@@ -510,7 +511,7 @@ jobs:
 
   e2e-tests-evaluated:
     needs: [setup-container-cache-registry, build-containers]
-    # Skip for fork PRs since containers aren't pushed
+    # Skip for fork PRs since containers can't be shared between jobs
     if: needs.setup-container-cache-registry.outputs.is-fork-pr != 'true'
     runs-on: ubuntu-24.04
     steps:
