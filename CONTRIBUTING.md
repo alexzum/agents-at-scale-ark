@@ -12,6 +12,14 @@ There are quite a few ways to contribute, such as:
 * **Contribute a fix or feature**: If you're interested in contributing fixes to code or documentation, first read our guidelines for contributing developers below for an explanation of how to get set up and the process you'll follow. Once you are ready to contribute, feel free to pick one of the issues and create a PR.
 * **Contribute to the documentation**: You can help us improve the [documentation](https://mckinsey.github.io/agents-at-scale-ark/) online. Send us feedback as a GitHub issue or start a documentation discussion on GitHub. You are also welcome to raise a PR with a bug fix or addition to the documentation.
 
+### Contributing from a Fork
+
+When contributing from a forked repository, please ensure:
+1. **GitHub Actions is enabled** on your fork (Settings → Actions → General → Allow all actions)
+2. **Workflow permissions** are set to "Read and write" (Settings → Actions → General → Workflow permissions)
+
+This allows the CI/CD pipeline to build and test your changes using your fork's GitHub Container Registry.
+
 ## Code of conduct
 
 The ARK team pledges to foster and maintain a friendly community. We enforce a [Code of Conduct](./CODE_OF_CONDUCT.md) to ensure every contributor is welcomed and treated with respect.

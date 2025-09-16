@@ -47,9 +47,11 @@ runs:
           # EXTERNAL PR: Use the fork's registry
           # The fork owner's GITHUB_TOKEN has write access to their own namespace
           # Example: ghcr.io/forked-owner/forked-repo-name
+          # NOTE: Fork owner must have GitHub Actions enabled on their fork
           REGISTRY="ghcr.io/${{ github.event.pull_request.head.repo.full_name }}"
           IS_FORK_PR="true"
           echo "External PR detected - using fork's registry: $REGISTRY"
+          echo "::notice::Fork PRs require GitHub Actions to be enabled on the fork. If builds fail with 'permission_denied', please enable Actions in your fork's settings."
         else
           # INTERNAL PR or PUSH: Use the organization's registry
           # Default format: ghcr.io/organization/repository
