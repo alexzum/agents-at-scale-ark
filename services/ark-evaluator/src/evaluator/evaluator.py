@@ -40,7 +40,7 @@ class LLMEvaluator:
             
             # Resolve agent instructions if scope includes agent-aware criteria
             agent_instructions = None
-            if self._requires_agent_context(params):
+            if self._requires_agent_instructions(params):
                 logger.info("Attempting to resolve agent instructions...")
                 agent_instructions = await self._resolve_agent_context(request)
                 if agent_instructions:
@@ -88,10 +88,10 @@ class LLMEvaluator:
                 tokenUsage=TokenUsage()  # Default to zero tokens on error
             )
     
-    def _requires_agent_context(self, params: EvaluationParameters) -> bool:
-        """Check if evaluation scope requires agent context"""
+    def _requires_agent_instructions(self, params: EvaluationParameters) -> bool:
+        """Check if evaluation scope requires agent instructions"""
         if not params or not params.scope:
-            logger.info(f"No agent context required: params={params}, scope={params.scope if params else None}")
+            logger.info(f"No agent instructions required: params={params}, scope={params.scope if params else None}")
             return False
         
         scope_lower = params.scope.lower()
@@ -102,7 +102,7 @@ class LLMEvaluator:
         
         return requires_context
     
-    async def _resolve_agent_context(self, request: EvaluationRequest) -> Optional[AgentContext]:
+    async def _resolve_agent_context(self, request: EvaluationRequest) -> Optional[AgentInstructions]:
         """Resolve agent context from the first agent target in responses"""
         try:
             # Find first agent response
@@ -190,16 +190,18 @@ class LLMEvaluator:
                     3. Completeness: Do the responses provide comprehensive information?
                     4. Conciseness: Do the responses provide a concise information?
                     5. Clarity: Are the responses clear and easy to understand?
-                    6. Usefulness: How helpful are the responses to the user?"""
+                    6. Usefulness: How helpful are the responses to the user?
+                    7. Context_Precision: How precise is the retrieved context in relation to the query?
+                    8. Context_Recall: How well does the response recall relevant information from the provided context?"""
         
         scope_criteria = ""
         scope_instructions = ""
-        if agent_instructions and self._requires_agent_context(params):
+        if agent_instructions and self._requires_agent_instructions(params):
             logger.info(f"Adding scope instructions for agent: {agent_instructions.name}")
             scope_criteria = """
-                    7. Compliance: Does the response stay within the agent's intended scope and domain?
-                    8. Appropriateness: Is the response appropriate given the input type and agent's specialty?
-                    9. Refusal Handling: If input is outside scope, does the agent properly refuse with explanation?"""
+                    9. Compliance: Does the response stay within the agent's intended scope and domain?
+                    10. Appropriateness: Is the response appropriate given the input type and agent's specialty?
+                    11. Refusal Handling: If input is outside scope, does the agent properly refuse with explanation?"""
 
             # Add strict scope evaluation instructions
             scope_instructions = f"""
@@ -221,7 +223,7 @@ class LLMEvaluator:
                     """
             logger.info("Scope instructions added to prompt")
         else:
-            logger.info(f"No scope instructions added. Agent instructions: {agent_instructions is not None}, requires context: {self._requires_agent_context(params) if params else False}")
+            logger.info(f"No scope instructions added. Agent instructions: {agent_instructions is not None}, requires instructions: {self._requires_agent_instructions(params) if params else False}")
 
         # Add ADDITIONAL CONTEXT section if evaluation context is provided
         context_section = ""
@@ -234,7 +236,7 @@ class LLMEvaluator:
 
                     {params.context}
 
-                    This context represents the reference material or retrieval results that should be used to assess accuracy and relevance.
+                    This context represents the reference material or retrieval results that should be used to assess accuracy, relevance, context precision, and context recall.
                     """
 
         prompt = f"""{evaluator_role}
@@ -262,7 +264,7 @@ class LLMEvaluator:
                     SCORE: [0-1]
                     PASSED: [true/false] (by default true if SCORE >= 0.7)
                     REASONING: [Brief explanation of your evaluation focusing on scope compliance]
-                    CRITERIA_SCORES: relevance=[0-1], accuracy=[0-1], completeness=[0-1], conciseness=[0-1], clarity=[0-1], usefulness=[0-1]{self._get_scope_criteria_format(params)}
+                    CRITERIA_SCORES: relevance=[0-1], accuracy=[0-1], completeness=[0-1], conciseness=[0-1], clarity=[0-1], usefulness=[0-1], context_precision=[0-1], context_recall=[0-1]{self._get_scope_criteria_format(params)}
                     for CRITERIA_SCORES, only include the criteria in {evaluation_scope}
 
                     Be objective and thorough in your assessment. PRIORITIZE scope compliance over other factors.
@@ -297,7 +299,7 @@ class LLMEvaluator:
     
     def _get_scope_criteria_format(self, params: EvaluationParameters) -> str:
         """Add scope criteria to format string if needed"""
-        if params and self._requires_agent_context(params):
+        if params and self._requires_agent_instructions(params):
             return ", compliance=[0-1], appropriateness=[0-1], refusal_handling=[0-1]"
         return ""
     

@@ -1,0 +1,15 @@
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Evaluator
+metadata:
+  name: context-enhanced-evaluator
+spec:
+  description: "Enhanced evaluator service testing context precision and recall with RAGAS metrics"
+  address:
+    value: http://ark-evaluator.default.svc.cluster.local:8000/evaluate
+  parameters:
+  - name: model.name
+    value: context-enhanced-evaluation-model
+  - name: min-score
+    value: "0.7"
+  - name: scope
+    value: "relevance,accuracy,context_precision,context_recall"

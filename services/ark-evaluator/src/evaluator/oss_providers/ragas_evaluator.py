@@ -55,7 +55,7 @@ class RagasEvaluator:
                 faithfulness,
                 LLMContextPrecisionWithoutReference,
                 LLMContextRecall,
-                context_entity_recall
+                ContextEntityRecall
             )
             from ragas.metrics.base import MetricWithLLM, MetricWithEmbeddings
             from ragas.run_config import RunConfig
@@ -71,7 +71,7 @@ class RagasEvaluator:
             'faithfulness': faithfulness,
             'context_precision': LLMContextPrecisionWithoutReference,
             'context_recall': LLMContextRecall,
-            'context_entity_recall': context_entity_recall,
+            'context_entity_recall': ContextEntityRecall,
             'helpfulness': answer_relevancy,
             'clarity': answer_similarity
         }
