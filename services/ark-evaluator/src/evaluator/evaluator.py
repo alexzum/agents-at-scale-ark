@@ -3,7 +3,7 @@ from typing import Dict, Any, Optional
 from .types import EvaluationRequest, EvaluationResponse, EvaluationParameters, TokenUsage
 from .llm_client import LLMClient
 from .model_resolver import ModelResolver
-from .agent_resolver import AgentResolver, AgentContext
+from .agent_resolver import AgentResolver, AgentInstructions
 
 logger = logging.getLogger(__name__)
 
@@ -38,20 +38,20 @@ class LLMEvaluator:
             logger.info(f"  - api_version: {model.api_version}")
             logger.info(f"  - api_key: {model.api_key[:8] if model.api_key else 'None'}...{model.api_key[-4:] if model.api_key and len(model.api_key) > 8 else ''}")
             
-            # Resolve agent context if scope includes agent-aware criteria
-            agent_context = None
+            # Resolve agent instructions if scope includes agent-aware criteria
+            agent_instructions = None
             if self._requires_agent_context(params):
-                logger.info("Attempting to resolve agent context...")
-                agent_context = await self._resolve_agent_context(request)
-                if agent_context:
-                    logger.info(f"Agent context resolved: name={agent_context.name}, hints={len(agent_context.scope_hints)}")
+                logger.info("Attempting to resolve agent instructions...")
+                agent_instructions = await self._resolve_agent_context(request)
+                if agent_instructions:
+                    logger.info(f"Agent instructions resolved: name={agent_instructions.name}, hints={len(agent_instructions.scope_hints)}")
                 else:
-                    logger.warning("Agent context resolution failed")
+                    logger.warning("Agent instructions resolution failed")
             else:
-                logger.info("Agent context not required for this evaluation scope")
+                logger.info("Agent instructions not required for this evaluation scope")
             
             # Prepare evaluation prompt
-            evaluation_prompt = self._build_evaluation_prompt(request, params, golden_examples, agent_context)
+            evaluation_prompt = self._build_evaluation_prompt(request, params, golden_examples, agent_instructions)
             logger.info(f"Generated evaluation prompt length: {len(evaluation_prompt)} characters")
             
             # Get LLM evaluation
@@ -130,7 +130,7 @@ class LLMEvaluator:
             logger.warning(f"Failed to resolve agent context: {str(e)}")
             return None
     
-    def _build_evaluation_prompt(self, request: EvaluationRequest, params: EvaluationParameters, golden_examples, agent_context: Optional[AgentContext] = None) -> str:
+    def _build_evaluation_prompt(self, request: EvaluationRequest, params: EvaluationParameters, golden_examples, agent_instructions: Optional[AgentInstructions] = None) -> str:
         """
         Build evaluation prompt using LLM-as-a-Judge pattern with golden dataset context
         """
@@ -168,19 +168,19 @@ class LLMEvaluator:
         
         logger.info(f"Using evaluator role: {evaluator_role[:100]}...")
         
-        # Build agent context section
+        # Build agent instructions section
         agent_section = ""
-        if agent_context:
-            scope_text = ", ".join(agent_context.scope_hints) if agent_context.scope_hints else "general purpose"
+        if agent_instructions:
+            scope_text = ", ".join(agent_instructions.scope_hints) if agent_instructions.scope_hints else "general purpose"
             agent_section = f"""
-                    AGENT CONTEXT:
-                    Name: {agent_context.name}
-                    Purpose: {agent_context.description}
+                    AGENT INSTRUCTIONS:
+                    Name: {agent_instructions.name}
+                    Purpose: {agent_instructions.description}
                     Scope: {scope_text}
-                    
+
                     Expected Behavior:
-                    - Should handle: {self._get_expected_inputs(agent_context)}
-                    - Should refuse: {self._get_expected_refusals(agent_context)}
+                    - Should handle: {self._get_expected_inputs(agent_instructions)}
+                    - Should refuse: {self._get_expected_refusals(agent_instructions)}
                     """
         
         # Enhanced criteria definitions
@@ -194,34 +194,48 @@ class LLMEvaluator:
         
         scope_criteria = ""
         scope_instructions = ""
-        if agent_context and self._requires_agent_context(params):
-            logger.info(f"Adding scope instructions for agent: {agent_context.name}")
+        if agent_instructions and self._requires_agent_context(params):
+            logger.info(f"Adding scope instructions for agent: {agent_instructions.name}")
             scope_criteria = """
                     7. Compliance: Does the response stay within the agent's intended scope and domain?
                     8. Appropriateness: Is the response appropriate given the input type and agent's specialty?
                     9. Refusal Handling: If input is outside scope, does the agent properly refuse with explanation?"""
-            
+
             # Add strict scope evaluation instructions
             scope_instructions = f"""
-                    
+
                     CRITICAL SCOPE EVALUATION RULES:
-                    
-                    The agent "{agent_context.name}" is specialized for: {self._get_expected_inputs(agent_context)}
-                    Should refuse: {self._get_expected_refusals(agent_context)}
-                    
+
+                    The agent "{agent_instructions.name}" is specialized for: {self._get_expected_inputs(agent_instructions)}
+                    Should refuse: {self._get_expected_refusals(agent_instructions)}
+
                     *** SCOPE VIOLATION PENALTY: If the agent processes input that should be refused, this is a SEVERE violation deserving LOW score (0.0-0.3). ***
-                    
+
                     SCORING GUIDELINES:
                     - If input IS within agent scope AND agent provides good processing: HIGH score (0.8-1.0)
-                    - If input is within agent scope BUT agent refuses unnecessarily: MEDIUM score (0.4-0.7)  
+                    - If input is within agent scope BUT agent refuses unnecessarily: MEDIUM score (0.4-0.7)
                     - If input is outside agent scope AND agent properly refuses with explanation: HIGH score (0.8-1.0)
                     - If input is outside agent scope BUT agent processes it anyway: LOW score (0.0-0.3) - THIS IS CRITICAL
-                    
+
                     IMPORTANT: Analyze the input yourself to determine if it matches the agent's specialty. Look for language markers, syntax patterns, and content type.
                     """
             logger.info("Scope instructions added to prompt")
         else:
-            logger.info(f"No scope instructions added. Agent context: {agent_context is not None}, requires context: {self._requires_agent_context(params) if params else False}")
+            logger.info(f"No scope instructions added. Agent instructions: {agent_instructions is not None}, requires context: {self._requires_agent_context(params) if params else False}")
+
+        # Add ADDITIONAL CONTEXT section if evaluation context is provided
+        context_section = ""
+        if params and params.context:
+            logger.info(f"Adding additional context section, length: {len(params.context)} characters")
+            context_section = f"""
+
+                    ADDITIONAL CONTEXT:
+                    The following context should be considered when evaluating the response:
+
+                    {params.context}
+
+                    This context represents the reference material or retrieval results that should be used to assess accuracy and relevance.
+                    """
 
         prompt = f"""{evaluator_role}
 
@@ -232,6 +246,7 @@ class LLMEvaluator:
                     {response_text}
 
                     {agent_section}
+                    {context_section}
                     {examples_section}
                     {scope_instructions}
                     
@@ -255,29 +270,29 @@ class LLMEvaluator:
 
         return prompt
     
-    def _get_expected_inputs(self, agent_context: AgentContext) -> str:
+    def _get_expected_inputs(self, agent_instructions: AgentInstructions) -> str:
         """Generate expected inputs text based on agent scope hints"""
-        if "java" in agent_context.scope_hints and "javascript" in agent_context.scope_hints:
+        if "java" in agent_instructions.scope_hints and "javascript" in agent_instructions.scope_hints:
             return "Java 8 code for modernization to JavaScript"
-        elif "code-conversion" in agent_context.scope_hints:
+        elif "code-conversion" in agent_instructions.scope_hints:
             return "Code in the agent's source language"
         else:
             return "Inputs within the agent's specialty area"
     
-    def _get_expected_refusals(self, agent_context: AgentContext) -> str:
+    def _get_expected_refusals(self, agent_instructions: AgentInstructions) -> str:
         """Generate expected refusals text based on agent scope hints"""
         refusals = []
-        
-        if "should-refuse-non-scope" in agent_context.scope_hints:
-            if "java" in agent_context.scope_hints:
+
+        if "should-refuse-non-scope" in agent_instructions.scope_hints:
+            if "java" in agent_instructions.scope_hints:
                 refusals.append("Non-Java code (Python, C++, etc.)")
-        
-        if "should-refuse-malformed" in agent_context.scope_hints:
+
+        if "should-refuse-malformed" in agent_instructions.scope_hints:
             refusals.append("Malformed or incomplete code")
-            
+
         if not refusals:
             refusals.append("Inputs outside its intended scope")
-        
+
         return ", ".join(refusals)
     
     def _get_scope_criteria_format(self, params: EvaluationParameters) -> str:
