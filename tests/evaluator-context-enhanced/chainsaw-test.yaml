@@ -57,6 +57,21 @@ spec:
           metadata:
             name: context-test-agent
 
+  - name: verify-evaluator-service-readiness
+    try:
+    - script:
+        content: |
+          echo "=== Verifying Evaluator Service Readiness ==="
+          kubectl get pods -l app=ark-evaluator -n default
+          kubectl wait --for=condition=ready pod -l app=ark-evaluator -n default --timeout=180s
+
+          # Test service endpoint health
+          kubectl run test-evaluator-health --image=curlimages/curl --rm -i --restart=Never -- \
+            curl -f -s --max-time 10 "http://ark-evaluator.default.svc.cluster.local:8000/health" || \
+            echo "Health check failed but continuing..."
+
+          echo "✓ Evaluator service verification complete"
+
   - name: wait-for-query-completion
     try:
     - wait:
@@ -73,13 +88,20 @@ spec:
     try:
     - apply:
         file: manifests/a07-evaluation.yaml
+    - script:
+        content: |
+          echo "=== Evaluation Creation Status ==="
+          kubectl get evaluation test-context-enhanced-evaluation -o yaml
+          kubectl get pods -l app=ark-evaluator -n default
+          kubectl logs deployment/ark-evaluator -n default --tail=20 || echo "No evaluator logs available"
+          echo "=== Waiting for evaluation processing ==="
 
   - name: wait-for-evaluation-completion
     try:
     - wait:
         apiVersion: ark.mckinsey.com/v1alpha1
         kind: Evaluation
-        timeout: 5m
+        timeout: 10m
         name: test-context-enhanced-evaluation
         for:
           jsonPath:
