@@ -1,0 +1,17 @@
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Team
+metadata:
+  name: kyc-context-enhanced-team-gpt4
+  labels:
+    app: kyc-demo-gpt4-RAG
+    category: risk-assessment
+    workflow: context-enhanced-rag
+    use-case: kyc-risk-assessment
+spec:
+  description: "RAG-enhanced team for KYC analysis with context metrics evaluation"
+  members:
+    - name: planner-agent-kyc-gpt4
+      type: agent
+    - name: risk-officer-rag-kyc-gpt4
+      type: agent
+  strategy: sequential

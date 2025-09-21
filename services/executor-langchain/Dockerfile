@@ -13,6 +13,7 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
 # Copy project files
 COPY pyproject.toml setup.cfg README.md ./
 COPY src/ ./src/
+COPY kyc_customer_profile.txt ./
 
 # Copy executor-common wheel
 COPY build-context/*.whl /tmp/

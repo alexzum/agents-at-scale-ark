@@ -35,14 +35,29 @@ def create_chat_client(model) -> ChatOpenAI:
         
         # Azure OpenAI: construct full deployment URL
         full_base_url = f"{base_url.rstrip('/')}/openai/deployments/{model.name}/"
-        
+
+        # Handle JWT tokens for enterprise Azure setups
+        default_headers = {}
+        if api_key.startswith("eyJ"):  # JWT token (starts with eyJ)
+            # For JWT tokens, use api-key header like ARK controller
+            default_headers["api-key"] = api_key
+            # Still set api_key for LangChain compatibility
+            api_key_param = api_key
+        else:
+            # Standard Azure API key
+            api_key_param = api_key
+
         kwargs = {
             "model": model.name,
-            "api_key": SecretStr(api_key),
+            "api_key": SecretStr(api_key_param),
             "base_url": full_base_url,
             "default_query": {"api-version": api_version} if api_version else {},
             "temperature": temperature,
         }
+
+        # Add custom headers for JWT tokens
+        if default_headers:
+            kwargs["default_headers"] = default_headers
         
         if max_tokens:
             kwargs["max_tokens"] = int(max_tokens)
@@ -104,9 +119,51 @@ def create_chat_client(model) -> ChatOpenAI:
 
 def create_embeddings_client(model, embeddings_model_name: Optional[str] = None) -> OpenAIEmbeddings:
     """Create OpenAI embeddings client."""
-    config = model.config
     model_name = embeddings_model_name or model.name
-    
+
+    # Special case: if embeddings_model_name is an OpenAI model, use Azure OpenAI config
+    if embeddings_model_name and embeddings_model_name.startswith("text-embedding"):
+        # Use hardcoded Azure OpenAI configuration for embeddings
+        # This allows using Azure OpenAI for embeddings while using local Ollama for LLM
+        logger.info(f"Using Azure OpenAI configuration for embeddings model: {embeddings_model_name}")
+
+        # Read the secret value from environment variable
+        import os
+        api_key = os.getenv("AZURE_OPENAI_API_KEY", "")
+        if not api_key:
+            raise ValueError("Azure OpenAI API key not available for embeddings - AZURE_OPENAI_API_KEY environment variable not set")
+
+        base_url = "https://azure.prod.ai-gateway.quantumblack.com/80948656-dd10-4633-be49-4ebd6c302368"
+        api_version = "2024-12-01-preview"
+
+        # Handle JWT tokens for enterprise Azure setups
+        default_headers = {}
+        if api_key.startswith("eyJ"):  # JWT token (starts with eyJ)
+            default_headers["api-key"] = api_key
+            api_key_param = api_key
+        else:
+            api_key_param = api_key
+
+        # Azure OpenAI embeddings
+        full_base_url = f"{base_url.rstrip('/')}/openai/deployments/{model_name}/"
+        kwargs = {
+            "model": model_name,
+            "api_key": SecretStr(api_key_param),
+            "base_url": full_base_url,
+            "api_version": api_version,
+            "default_query": {"api-version": api_version} if api_version else {},
+        }
+
+        # Add custom headers for JWT tokens
+        if default_headers:
+            kwargs["default_headers"] = default_headers
+            kwargs["headers"] = default_headers
+
+        return OpenAIEmbeddings(**kwargs)
+
+    # Use the provided model configuration for everything else
+    config = model.config
+
     if model.type == "azure":
         azure_config = config.get("azure", {})
         api_key = azure_config.get("apiKey", "")
@@ -116,14 +173,34 @@ def create_embeddings_client(model, embeddings_model_name: Optional[str] = None)
         if not api_key or not base_url:
             raise ValueError("Azure OpenAI requires apiKey and baseUrl")
             
+        # Handle JWT tokens for enterprise Azure setups
+        default_headers = {}
+        if api_key.startswith("eyJ"):  # JWT token (starts with eyJ)
+            # For JWT tokens, use api-key header like ARK controller
+            default_headers["api-key"] = api_key
+            # Still set api_key for LangChain compatibility
+            api_key_param = api_key
+        else:
+            # Standard Azure API key
+            api_key_param = api_key
+
         # Azure OpenAI embeddings
         full_base_url = f"{base_url.rstrip('/')}/openai/deployments/{model_name}/"
-        return OpenAIEmbeddings(
-            model=model_name,
-            api_key=SecretStr(api_key),
-            base_url=full_base_url,
-            api_version=api_version,
-        )
+        kwargs = {
+            "model": model_name,
+            "api_key": SecretStr(api_key_param),
+            "base_url": full_base_url,
+            "api_version": api_version,
+            "default_query": {"api-version": api_version} if api_version else {},
+        }
+
+        # Add custom headers for JWT tokens
+        if default_headers:
+            kwargs["default_headers"] = default_headers
+            # ALSO try the headers parameter for OpenAIEmbeddings compatibility
+            kwargs["headers"] = default_headers
+
+        return OpenAIEmbeddings(**kwargs)
         
     elif model.type == "openai":
         openai_config = config.get("openai", {})
@@ -145,26 +222,34 @@ def create_embeddings_client(model, embeddings_model_name: Optional[str] = None)
 
 def should_use_rag(agent_config) -> bool:
     """Check if the agent should use RAG based on labels."""
+    logger.info(f"should_use_rag check - hasattr: {hasattr(agent_config, 'labels')}")
+    logger.info(f"should_use_rag check - labels: {getattr(agent_config, 'labels', None)}")
     if not hasattr(agent_config, "labels") or not agent_config.labels:
+        logger.info("should_use_rag: No labels found, returning False")
         return False
-    return agent_config.labels.get("langchain") == "rag"
+    rag_value = agent_config.labels.get("langchain")
+    logger.info(f"should_use_rag: langchain label value = '{rag_value}'")
+    result = rag_value == "rag"
+    logger.info(f"should_use_rag: returning {result}")
+    return result
 
 
 def index_code_files(code_directory: str = ".") -> List[Document]:
-    """Index Python files from local code using text splitting."""
+    """Index Python and text files from local code using text splitting."""
     base_path = Path(code_directory)
-    logger.info(f"Indexing Python files from {base_path}")
+    logger.info(f"Indexing files from {base_path}")
 
-    # Collect Python files from current directory and subdirectories
-    python_files = []
-    for py_file in base_path.rglob("*.py"):
-        # Skip dependencies and cache directories
-        if not any(part in py_file.parts for part in ["__pycache__", ".git", "node_modules", "venv", ".env", "site-packages", ".venv"]):
-            python_files.append(py_file)
+    # Collect Python and text files from current directory and subdirectories
+    files_to_index = []
+    for file_pattern in ["*.py", "*.txt", "*.md"]:
+        for file_path in base_path.rglob(file_pattern):
+            # Skip dependencies and cache directories
+            if not any(part in file_path.parts for part in ["__pycache__", ".git", "node_modules", "venv", ".env", "site-packages", ".venv"]):
+                files_to_index.append(file_path)
 
     # Read and process files
     documents = []
-    for file_path in python_files:
+    for file_path in files_to_index:
         try:
             with open(file_path, "r", encoding="utf-8") as f:
                 content = f.read()
@@ -184,7 +269,7 @@ def index_code_files(code_directory: str = ".") -> List[Document]:
             logger.warning(f"Failed to read {file_path}: {e}")
 
     if not documents:
-        logger.warning("No Python files found to index")
+        logger.warning("No files found to index")
         return []
 
     # Split documents into chunks

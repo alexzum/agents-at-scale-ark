@@ -4,7 +4,7 @@ import logging
 from typing import List, Optional
 from langchain.schema import Document, HumanMessage, AIMessage, SystemMessage
 from langchain_community.vectorstores import FAISS
-from executor_common import BaseExecutor, Message
+from executor_common import BaseExecutor, Message, TokenUsage
 from .utils import (
     create_chat_client,
     create_embeddings_client,
@@ -36,6 +36,9 @@ class LangChainExecutor(BaseExecutor):
             chat_client = create_chat_client(request.agent.model)
 
             # Check if this agent should use RAG
+            logger.info(f"Agent labels: {getattr(request.agent, 'labels', None)}")
+            logger.info(f"Agent has labels attr: {hasattr(request.agent, 'labels')}")
+            logger.info(f"Agent object: {request.agent}")
             use_rag = should_use_rag(request.agent)
 
             # Get RAG context if enabled
@@ -72,6 +75,9 @@ class LangChainExecutor(BaseExecutor):
                 resolved_prompt = self._resolve_prompt(request.agent)
                 langchain_messages.insert(0, SystemMessage(content=resolved_prompt))
 
+            # Log which model is being used for chat completion
+            logger.info(f"Using model for chat completion: {request.agent.model.name} (type: {request.agent.model.type})")
+
             response = await chat_client.ainvoke(langchain_messages)
 
             # Handle response content
@@ -79,6 +85,39 @@ class LangChainExecutor(BaseExecutor):
                 result = str(response.content)
             else:
                 result = str(response)
+
+            # Extract token usage from response
+            token_usage = None
+
+            # Debug: Log response structure to understand token usage location
+            logger.info(f"Response type: {type(response)}")
+            logger.info(f"Response attributes: {dir(response)}")
+            if hasattr(response, "response_metadata"):
+                logger.info(f"Response metadata keys: {list(response.response_metadata.keys()) if response.response_metadata else 'None'}")
+                logger.info(f"Response metadata: {response.response_metadata}")
+            if hasattr(response, "usage_metadata"):
+                logger.info(f"Usage metadata: {response.usage_metadata}")
+
+            if hasattr(response, "usage_metadata") and response.usage_metadata:
+                # LangChain format - usage_metadata is a dictionary
+                usage = response.usage_metadata
+                token_usage = TokenUsage(
+                    prompt_tokens=usage.get("input_tokens", 0),
+                    completion_tokens=usage.get("output_tokens", 0),
+                    total_tokens=usage.get("total_tokens", 0)
+                )
+                logger.info(f"Token usage captured from usage_metadata: {token_usage.prompt_tokens} prompt + {token_usage.completion_tokens} completion = {token_usage.total_tokens} total")
+            elif hasattr(response, "response_metadata") and response.response_metadata:
+                # Check for Azure OpenAI format in response metadata
+                metadata = response.response_metadata
+                if "token_usage" in metadata:
+                    usage = metadata["token_usage"]
+                    token_usage = TokenUsage(
+                        prompt_tokens=usage.get("prompt_tokens", 0),
+                        completion_tokens=usage.get("completion_tokens", 0),
+                        total_tokens=usage.get("total_tokens", 0)
+                    )
+                    logger.info(f"Token usage captured from metadata: {token_usage.prompt_tokens} prompt + {token_usage.completion_tokens} completion = {token_usage.total_tokens} total")
 
             # Create response messages
             response_messages = []
@@ -99,7 +138,7 @@ class LangChainExecutor(BaseExecutor):
                 response_messages.append(error_message)
 
             logger.info(f"LangChain execution completed successfully for agent {request.agent.name}")
-            return response_messages
+            return response_messages, token_usage
 
         except Exception as e:
             logger.error(f"Error in LangChain processing: {str(e)}", exc_info=True)
@@ -156,7 +195,15 @@ class LangChainExecutor(BaseExecutor):
         try:
             # Use vector similarity search
             docs = self.vector_store.similarity_search(query, k=k)
-            logger.debug(f"Found {len(docs)} relevant code sections using vector search")
+            logger.info(f"Found {len(docs)} relevant code sections using vector search")
+
+            # Log full content of all retrieved chunks
+            for i, doc in enumerate(docs):
+                file_path = doc.metadata.get('relative_path', 'unknown')
+                logger.info(f"=== CHUNK {i+1}/{len(docs)}: {file_path} ===")
+                logger.info(f"CONTENT:\n{doc.page_content}")
+                logger.info(f"=== END CHUNK {i+1} ===")
+
             return docs
         except Exception as e:
             logger.error(f"Vector search failed: {e}")

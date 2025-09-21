@@ -1,0 +1,17 @@
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Team
+metadata:
+  name: kyc-context-enhanced-team-smollm2
+  labels:
+    app: kyc-demo-smollm2-135m
+    category: risk-assessment
+    workflow: context-enhanced-rag
+    use-case: kyc-risk-assessment
+spec:
+  description: "RAG-enhanced team for KYC analysis using SmolLM2-135M model"
+  members:
+    - name: planner-agent-kyc-smollm2
+      type: agent
+    - name: risk-officer-rag-kyc-smollm2
+      type: agent
+  strategy: sequential
