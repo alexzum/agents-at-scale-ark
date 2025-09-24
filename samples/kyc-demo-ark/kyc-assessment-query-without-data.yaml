@@ -1,0 +1,14 @@
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Query
+metadata:
+  name: kyc-assessment-query-without-data
+  labels:
+    category: kyc-assessment
+    use-case: risk-evaluation
+spec:
+  input: |
+    Analyze the  KYC profile data for Associated British Foods PLC and generate a comprehensive risk assessment memo. The assessment should include financial risk analysis, regulatory compliance evaluation, and operational risk review. Save the final assessment document with proper formatting.
+    Generate a comprehensive risk assessment memo covering all regulatory requirements and provide risk rating recommendations.
+  targets:
+    - type: team
+      name: kyc-risk-assessment-team

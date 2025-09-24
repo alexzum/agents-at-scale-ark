@@ -1,0 +1,17 @@
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Model
+metadata:
+  name: eval-compatible
+spec:
+  type: openai
+  model:
+    value: gpt-4o-mini
+  config:
+    openai:
+      baseUrl:
+        value: "https://openai.prod.ai-gateway.quantumblack.com/80948656-dd10-4633-be49-4ebd6c302368/v1"
+      apiKey:
+        valueFrom:
+          secretKeyRef:
+            key: token
+            name: azure-openai-secret

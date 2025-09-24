@@ -1,0 +1,20 @@
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Evaluation
+metadata:
+  name: test-final-debug-evaluation
+  namespace: default
+spec:
+  type: query
+  config:
+    queryRef:
+      name: test-final-debug-query
+      namespace: default
+  evaluator:
+    name: metrics-evaluator
+    parameters:
+    - name: query.name
+      value: test-final-debug-query
+    - name: query.namespace
+      value: default
+    - name: min-score
+      value: "0.5"

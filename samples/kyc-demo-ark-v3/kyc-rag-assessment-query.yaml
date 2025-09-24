@@ -1,0 +1,22 @@
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Query
+metadata:
+  name: kyc-rag-assessment-test
+  labels:
+    app: kyc-demo-ark-v3
+    query-type: rag-assessment
+spec:
+  targets:
+    - type: agent
+      name: risk-officer-rag-kyc-v3
+  input: |
+    Please conduct a comprehensive KYC risk assessment for this customer.
+
+    Focus on analyzing:
+    1. The overall risk profile based on available screening results
+    2. The composition and background of key controllers
+    3. Any potential regulatory or compliance concerns
+    4. Geographic risk factors
+    5. Recommended risk rating and rationale
+
+    Provide a complete assessment report following your standard format.

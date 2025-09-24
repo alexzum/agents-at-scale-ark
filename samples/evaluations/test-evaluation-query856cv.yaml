@@ -1,0 +1,12 @@
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Evaluation
+metadata:
+  name: test-eval-query856cv
+  namespace: default
+spec:
+  type: query
+  config:
+    queryRef:
+      name: query856cv
+  evaluator:
+    name: test-evaluator

@@ -44,6 +44,7 @@ type AgentConfig struct {
 	Description  string                `json:"description"`
 	Parameters   []Parameter           `json:"parameters,omitempty"`
 	Model        ExecutionEngineModel  `json:"model"`
+	Labels       map[string]string     `json:"labels,omitempty"`
 	OutputSchema *runtime.RawExtension `json:"outputSchema,omitempty"`
 }
 
@@ -285,6 +286,7 @@ func buildAgentConfig(agent *Agent) (AgentConfig, error) {
 			Type:   agent.Model.Type,
 			Config: modelConfig,
 		},
+		Labels:       agent.Labels,
 		OutputSchema: agent.OutputSchema,
 	}, nil
 }

@@ -1,0 +1,174 @@
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Evaluation
+metadata:
+  name: kyc-team-response-faithfulness
+  labels:
+    app: kyc-demo-ark-v2
+    provider: langfuse
+    evaluation-type: team-response-hallucination
+    use-case: kyc-risk-assessment-validation
+spec:
+  type: direct
+  config:
+    input: |
+      Analyze the following KYC profile data for Associated British Foods PLC and generate a comprehensive risk assessment memo.
+
+      KYC PROFILE DATA:
+      Company: Associated British Foods PLC (UK Company Number: 00293262)
+      Industry: Diversified international food, ingredients, and retail group
+      Employees: 138,000 worldwide
+      Global Operations: 56 countries
+
+      KEY RISK FINDINGS:
+      1. BLACKLIST SCREENING: John Bason (CFO) has similarity to "John Donald Basin" on blacklist (confidence score: 5/10)
+      2. SANCTIONS SCREENING: All key controllers cleared
+      3. LITIGATION: Facing lawsuit from 1,700+ Malawian citizens (7 fatalities)
+      4. OWNERSHIP: Wittington Investments Limited holds 56.1% stake
+      5. FINANCIAL PERFORMANCE: 2% revenue decrease, 12% profit decline, increased net debt
+
+    output: |
+      # KYC Risk Assessment Memo – Associated British Foods PLC
+
+      **Report Date:** 14th September 2025
+
+      ---
+
+      ## 1. Executive Summary
+
+      Associated British Foods PLC ("ABF") is a major diversified international food, ingredients, and retail group operating globally across 56 countries with 138,000 employees. The company's diversified business model and strong majority ownership by Wittington Investments Limited provide operational resilience. However, the assessment identifies material risks primarily stemming from declining financial performance, notable litigation exposure in Malawi, a potential regulatory compliance concern related to key personnel blacklist screening, and operational challenges in African sugar businesses and the UK bioethanol sector. Considering these factors, the overall risk rating assigned is **Medium**. This reflects the balance between the company's scale and established governance against emerging regulatory, financial, and operational issues. Enhanced due diligence and ongoing monitoring are recommended.
+
+      ---
+
+      ## 2. Customer Profile Summary
+
+      | Attribute           | Details                                                    |
+      |---------------------|------------------------------------------------------------|
+      | Company Name        | Associated British Foods PLC                                |
+      | Incorporated (UK No)| 00293262                                                   |
+      | Registered Address  | Weston Centre, 10 Grosvenor Street, London W1K 4QY, UK    |
+      | Industry            | Diversified international food, ingredients, and retail   |
+      | Employees           | 138,000 worldwide                                          |
+      | Operational Footprint| 56 countries; manufacturing in Europe, South Africa, Americas, Asia, Australia |
+      | Ownership           | Wittington Investments Limited (56.1% stake)              |
+
+      ---
+
+      ## 3. Risk Assessment
+
+      ### 3.1 Financial Risk
+
+      - **Performance Trend:** Recent results show a 2% decrease in revenue and a sharper 12% decline in adjusted operating profit, indicating operational headwinds.
+      - **Leverage:** Significant increase in net debt raises concerns about financial flexibility and liquidity.
+      - **Business Scale & Ownership:** Large corporate scale and controlling shareholder support mitigate financial risks partially.
+      - **Transaction Profile:** Engagement in treasury management, FX, hedging, and trade finance services implies complexity but consistent with industry norms.
+
+      **Risk Rating:** Medium financial risk due to declining profitability and higher leverage, offset by diversified operations and stable ownership.
+
+      ---
+
+      ### 3.2 Regulatory Compliance Risk
+
+      - **Blacklist Screening:** A potential name similarity concern flagged for CFO John Bason relative to "John Donald Basin," linked to a cyberattack blacklist (confidence score 5/10). This necessitates enhanced due diligence to exclude false positives and avoid regulatory breaches.
+      - **Sanctions Screening:** No matches found for key controllers, reducing sanctions exposure.
+      - **Litigation:** A class-action lawsuit by over 1,700 Malawian plaintiffs related to flooding deaths implicates significant potential legal, regulatory, and reputational risks.
+      - **Ownership & Governance:** Transparent and stable majority ownership with well-documented voting rights; formal anti-corruption policies enhance control environment.
+      - **Adverse Media:** Operational and regulatory challenges reported, notably in African sugar and UK bioethanol operations.
+
+      **Risk Rating:** Medium regulatory risk, driven by litigation and the flagged blacklist similarity, requiring prompt resolution and enhanced due diligence.
+
+      ---
+
+      ### 3.3 Operational Risk
+
+      - **Geographic Spread & Complexity:** Operations across multiple continents increase exposure to diverse political, environmental, and socio-economic risks.
+      - **Litigation Impact:** The Malawi flooding lawsuit indicates vulnerabilities in community relations and environmental risk management.
+      - **Sector-specific Issues:** Challenges at UK bioethanol plant and African sugar business units may affect operational continuity and regulatory compliance.
+      - **Control Environment:** Presence of formal policies and multiple independent directors supports robust governance but ongoing monitoring needed.
+
+      **Risk Rating:** Medium operational risk due to regional community and regulatory challenges affecting business continuity and reputation.
+
+      ---
+
+      ## 4. Key Controllers and Management
+
+      | Name                  | Position            | Flagged Risk Screening           |
+      |-----------------------|---------------------|---------------------------------|
+      | Michael McLintock      | Chairman            | No issues                       |
+      | George Weston         | CEO                 | No issues                       |
+      | John Bason            | CFO                 | Potential blacklist similarity  |
+      | Emma Susan Adamo      | Director            | No issues                       |
+      | Multiple Independent Directors | Various     | No issues                       |
+
+      ---
+
+      ## 5. Recommended Actions and Documentation Requirements
+
+      ### Documentation to Obtain/Review
+
+      - Enhanced due diligence on CFO John Bason to resolve blacklist screening ambiguity.
+      - Latest audited financial statements and debt schedules.
+      - Detailed legal updates regarding Malawi litigation and risk mitigation plans.
+      - Regulatory compliance audits for UK bioethanol and African sugar businesses.
+      - Anti-corruption and compliance policy adherence documentation.
+      - Transaction monitoring reports, particularly on treasury, FX, and trade finance activities.
+
+      ### Risk Mitigation Recommendations
+
+      - Initiate enhanced ongoing monitoring, focusing on litigation, regulatory exposures, and name screening updates.
+      - Require quarterly financial and legal risk reporting from ABF.
+      - Engage ABF's compliance and risk management teams to confirm remediation action plans.
+      - Maintain cautious exposure levels in treasury accounts and trade finance given evolving risks.
+      - Escalate any new adverse media or regulatory flags immediately to senior risk management.
+
+      ---
+
+      ## 6. Overall Risk Rating
+
+      | Risk Category      | Rating       | Justification                                                   |
+      |--------------------|--------------|-----------------------------------------------------------------|
+      | Financial Risk     | Medium       | Declining profits, increasing net debt                           |
+      | Regulatory Risk   | Medium       | Litigation, blacklist concern on key individual                   |
+      | Operational Risk   | Medium       | Regional exposures, litigation impact, operational challenges    |
+      | **Overall**       | **Medium**   | Balanced risk profile with emerging concerns warranting controls |
+
+      ---
+
+      ## 7. Approval and Next Steps
+
+      This assessment recommends **approval with conditions**, subject to receiving enhanced due diligence outcomes and ongoing review of litigation and compliance developments. Conservative management of transactional and credit risks advised until risk mitigation is validated.
+
+      ---
+
+      **Prepared by:** [Risk Officer]
+      **Date:** 14th September 2025
+
+      ---
+
+      *Document saved and formatted for institutional record-keeping and compliance audit purposes.*
+
+  evaluator:
+    name: langfuse-evaluator
+    parameters:
+      - name: evaluation.context
+        value: |
+          SOURCE KYC DATA PROVIDED:
+          - Company: Associated British Foods PLC (UK Company Number: 00293262)
+          - Industry: Diversified international food, ingredients, and retail group
+          - Employees: 138,000 worldwide
+          - Global Operations: 56 countries
+          - Blacklist Screening: John Bason (CFO) has similarity to "John Donald Basin" on blacklist (confidence score: 5/10)
+          - Sanctions Screening: All key controllers cleared
+          - Litigation: Facing lawsuit from 1,700+ Malawian citizens (7 fatalities)
+          - Ownership: Wittington Investments Limited holds 56.1% stake
+          - Financial Performance: 2% revenue decrease, 12% profit decline, increased net debt
+
+      - name: evaluation.context_source
+        value: "kyc_profile_data_complete"
+
+      # Single metric for hallucination detection
+      - name: metrics
+        value: "faithfulness"
+
+      # High threshold for hallucination detection
+      - name: threshold
+        value: "0.85"

@@ -1,0 +1,34 @@
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Query
+metadata:
+  name: kyc-query-qwen-8b
+  labels:
+    app: kyc-demo-ollama-rag
+    query-type: context-enhanced-workflow
+    workflow: rag-enhanced
+spec:
+  targets:
+    - type: team
+      name: kyc-context-enhanced-team-ollama
+  input: |
+    Conduct a comprehensive KYC risk assessment for Associated British Foods PLC using local Ollama model.
+
+    This assessment workflow should:
+
+    1. **Planning Phase**: Create a mission plan outlining the KYC assessment steps
+    2. **RAG Analysis Phase**: Perform comprehensive risk analysis using semantic search on customer profile data
+
+    The assessment report should include:
+    - Overall risk profile analysis based on available data
+    - Key controller composition and background verification
+    - Leadership names extracted from additional data sources
+    - Screening results analysis with confidence levels
+    - Geographic and regulatory risk factors
+    - Final risk rating (LOW/MEDIUM/HIGH) with detailed justification
+    - Specific recommendations for risk mitigation
+
+    Focus on delivering:
+    - A clear mission plan from the planner
+    - A comprehensive RAG-enhanced risk assessment report from the risk officer
+
+    **Important**: dont include mission plan in your response

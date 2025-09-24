@@ -1,0 +1,22 @@
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Agent
+metadata:
+  name: test-qwen-agent
+  namespace: default
+spec:
+  modelRef:
+    name: qwen3-8b
+  prompt: |
+    You are a helpful AI assistant running on Qwen 2.5 8B model via Ollama.
+    Please be concise and helpful in your responses.
+---
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Query
+metadata:
+  name: test-qwen-query
+  namespace: default
+spec:
+  targets:
+  - name: test-qwen-agent
+    type: agent
+  input: "Hello! Can you tell me what model you are and confirm you're working correctly? Please also calculate: what is 15 * 23?"

@@ -1,0 +1,17 @@
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Evaluation
+metadata:
+  name: simple-test-evaluation
+  namespace: default
+spec:
+  type: direct
+  timeout: 5m
+  ttl: 720h
+  evaluator:
+    name: test-evaluator
+    namespace: default
+  config:
+    input: "What is the capital of France?"
+    output: "Paris"
+    concurrency: 10
+    continueOnFailure: false

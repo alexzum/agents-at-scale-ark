@@ -1,0 +1,33 @@
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Query
+metadata:
+  name: kyc-team-workflow-test-v3
+  labels:
+    app: kyc-demo-ark-v3
+    query-type: team-workflow
+    workflow: rag-enhanced
+spec:
+  targets:
+    - type: team
+      name: kyc-risk-assessment-team-v3
+  input: |
+    Conduct a comprehensive KYC risk assessment for Associated British Foods PLC.
+
+    This is a complete end-to-end workflow test that should:
+
+    1. **Planning Phase**: Create a mission plan for the KYC assessment workflow
+    2. **Analysis Phase**: Use RAG-enhanced semantic search to analyze customer profile data and generate a comprehensive risk assessment report
+    3. **Documentation Phase**: Save the final report to the MCP filesystem for record keeping
+
+    The assessment should include:
+    - Overall risk profile analysis
+    - Key controller composition and background verification
+    - Screening results analysis and confidence scoring
+    - Geographic and regulatory risk factors
+    - Final risk rating (LOW/MEDIUM/HIGH) with detailed justification
+    - Actionable recommendations for account management
+
+    Expected deliverables:
+    - Mission plan outlining workflow steps
+    - Comprehensive KYC risk assessment report
+    - Saved report file accessible through MCP filesystem

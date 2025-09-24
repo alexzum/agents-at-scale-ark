@@ -1,0 +1,19 @@
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Model
+metadata:
+  name: default
+spec:
+  type: openai
+  model:
+    value: gpt-4o-mini
+  config:
+    openai:
+      baseUrl:
+        value: "https://azure.prod.ai-gateway.quantumblack.com/80948656-dd10-4633-be49-4ebd6c302368/"
+      apiKey:
+        valueFrom:
+          secretKeyRef:
+            name: azure-openai-secret
+            key: token
+      apiVersion:
+        value: "2024-02-15"

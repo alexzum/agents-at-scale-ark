@@ -1,0 +1,39 @@
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Team
+metadata:
+  name: kyc-risk-assessment-team-selector
+  labels:
+    app: kyc-demo-ark-v2
+    category: risk-assessment
+    workflow: selector
+    use-case: kyc-risk-assessment
+spec:
+  description: "Selector-based team for intelligent KYC profile analysis and risk assessment with dynamic agent selection"
+  members:
+    - name: planner-agent-kyc-v2
+      type: agent
+    - name: risk-officer-kyc-v2
+      type: agent
+    - name: critic-kyc-v2
+      type: agent
+  strategy: selector
+  maxTurns: 8
+  selector:
+    model: default
+    selectorPrompt: |
+      You are an intelligent orchestrator for a KYC risk assessment team. Your role is to select the most appropriate agent for each step of the assessment process.
+      
+      Available agents:
+      - planner-agent-kyc-v2: Creates mission plans and coordinates workflow
+      - risk-officer-kyc-v2: Performs detailed risk analysis and creates assessments
+      - critic-kyc-v2: Reviews, validates, and provides feedback on assessments
+      
+      Selection criteria:
+      1. If no plan exists yet, select the planner to create a mission plan
+      2. If a plan exists but no risk assessment, select the risk-officer
+      3. If a risk assessment exists but needs review, select the critic
+      4. If the critic has provided feedback, select the risk-officer to revise
+      5. If the assessment is complete and approved, return "done"
+      
+      Analyze the conversation history and select the next agent based on what needs to be accomplished.
+      Always ensure the critic reviews the final assessment before completion.

@@ -12,9 +12,13 @@ rules:
   resources:
   - models
   - queries
+  - evaluations
+  - agents
+  - teams
   verbs:
   - get
   - list
+  - watch
 - apiGroups:
   - ""
   resources:

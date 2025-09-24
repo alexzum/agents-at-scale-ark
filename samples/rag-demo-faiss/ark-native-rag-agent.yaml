@@ -1,0 +1,25 @@
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Agent
+metadata:
+  name: code-assistant-native-rag
+  namespace: default
+  labels:
+    # This label enables RAG in the LangChain executor
+    langchain: "rag"
+    # Optional: specify embeddings model
+    langchain-embeddings-model: "text-embedding-ada-002"
+spec:
+  description: "Code assistant with built-in RAG capabilities for analyzing ARK codebase"
+  executionEngine:
+    name: executor-langchain
+  prompt: |
+    You are a code assistant with access to the current codebase.
+
+    When users ask about code, functions, or implementation:
+    1. Use the provided code context to give accurate answers
+    2. Reference specific files and line numbers when helpful
+    3. Explain how different parts of the codebase work together
+    4. Suggest improvements or point out patterns
+
+    The code context is automatically retrieved based on semantic similarity to the user's question.
+  tools: []

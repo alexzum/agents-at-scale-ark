@@ -45,6 +45,8 @@ spec:
               value: "4"
             - name: UVICORN_WORKER_CLASS
               value: "uvicorn.workers.UvicornWorker"
+            - name: GUNICORN_TIMEOUT
+              value: "180"
           {{- if .Values.livenessProbe }}
           livenessProbe:
             {{- toYaml .Values.livenessProbe | nindent 12 }}

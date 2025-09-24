@@ -1,0 +1,54 @@
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Evaluation
+metadata:
+  name: kyc-event-evaluation-mistral-rag
+  labels:
+    app: kyc-demo-mistral-7b
+    category: event-evaluation
+    use-case: kyc-risk-assessment
+spec:
+  type: event
+  config:
+    queryRef:
+      name: kyc-context-enhanced-query-mistral
+      namespace: default
+    rules:
+      # Rule 1: Team Execution Completeness
+      - name: "all_agents_executed"
+        expression: "agents.was_executed('default/planner-agent-kyc-mistral') and agents.was_executed('default/risk-officer-rag-kyc-mistral')"
+        description: "Verifies both KYC agents executed in the sequential workflow"
+        weight: 3
+
+      # Rule 2: RAG Agent Executed
+      - name: "rag_agent_executed"
+        expression: "agents.was_executed('default/risk-officer-rag-kyc-mistral')"
+        description: "Verifies the RAG-enabled risk officer executed successfully"
+        weight: 2
+
+      # Rule 3: Reasonable Performance
+      - name: "reasonable_execution_time"
+        expression: "query.get_execution_time() <= 120.0"
+        description: "Ensures KYC assessment completes within 2 minutes"
+        weight: 1
+
+      # Rule 4: Check ollama RAG team was executed
+      - name: "team_executed"
+        expression: "teams.was_executed('kyc-context-enhanced-team-mistral')"
+        description: "Confirms the KYC context enhanced team ollama was properly executed"
+        weight: 2
+
+      # Rule 5: Query Completed Successfully
+      - name: "query_completed"
+        expression: "query.get_resolution_status() == 'success'"
+        description: "Verifies the query completed successfully"
+        weight: 2
+
+  evaluator:
+    name: kyc-event-based-evaluator-local
+    parameters:
+    - name: query.name
+      value: kyc-context-enhanced-query-mistral
+    - name: query.namespace
+      value: default
+    - name: min-score
+      value: "0.7"

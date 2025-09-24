@@ -1,0 +1,10 @@
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Query
+metadata:
+  name: test-new-code-query
+  namespace: default
+spec:
+  targets:
+  - type: agent
+    name: test-annotation-pricing-agent
+  input: "Calculate 23 * 19 and tell me what model you are."

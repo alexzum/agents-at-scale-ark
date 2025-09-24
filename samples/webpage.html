@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Evaluations of LLM Agents</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #ffffff;
+            padding: 60px 40px;
+            color: #1a1a1a;
+        }
+        
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            font-size: 42px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #000;
+            letter-spacing: -0.5px;
+        }
+        
+        .subtitle {
+            font-size: 17px;
+            color: #6b7280;
+            margin-bottom: 60px;
+            font-weight: 400;
+        }
+        
+        .charts-wrapper {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 60px;
+            margin-bottom: 40px;
+        }
+        
+        .chart-section {
+            position: relative;
+        }
+        
+        .chart-header {
+            display: flex;
+            align-items: baseline;
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+        
+        .chart-number {
+            font-size: 22px;
+            font-weight: 600;
+            color: #000;
+        }
+        
+        .chart-title {
+            font-size: 22px;
+            font-weight: 600;
+            color: #000;
+        }
+        
+        .chart-subtitle {
+            font-size: 22px;
+            font-weight: 600;
+            color: #000;
+            margin-left: 44px;
+            margin-bottom: 24px;
+            margin-top: -4px;
+        }
+        
+        .metrics-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-left: 44px;
+            margin-bottom: 24px;
+            font-size: 14px;
+        }
+        
+        .metric-item {
+            color: #9333ea;
+            font-weight: 500;
+        }
+        
+        .metric-separator {
+            color: #9333ea;
+            font-weight: 600;
+        }
+        
+        .chart-unit {
+            position: absolute;
+            top: 8px;
+            right: 0;
+            text-align: right;
+            font-size: 13px;
+            color: #6b7280;
+            line-height: 1.4;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 320px;
+            margin-top: 20px;
+        }
+        
+        svg {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .bar {
+            transition: opacity 0.2s ease;
+        }
+        
+        .bar:hover {
+            opacity: 0.85;
+        }
+        
+        .axis-text {
+            font-size: 12px;
+            fill: #9ca3af;
+        }
+        
+        .model-label {
+            font-size: 13px;
+            fill: #6b7280;
+        }
+        
+        .threshold-line {
+            stroke: #f59e0b;
+            stroke-width: 2;
+            stroke-dasharray: 8, 4;
+        }
+        
+        .threshold-label {
+            font-size: 13px;
+            fill: #f59e0b;
+            font-weight: 600;
+        }
+        
+        .legend {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            margin-top: 20px;
+            font-size: 14px;
+            color: #4b5563;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .legend-box {
+            width: 14px;
+            height: 14px;
+            border-radius: 2px;
+        }
+        
+        .legend-line {
+            width: 24px;
+            height: 0;
+            border-top: 2px dashed #f59e0b;
+        }
+        
+        .description {
+            font-size: 13px;
+            color: #6b7280;
+            margin-top: 8px;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Evaluations of LLM Agents</h1>
+        <p class="subtitle">Quality (team execution response), cost, and execution time — with explicit thresholds by metric.</p>
+        
+        <div class="charts-wrapper">
+            <!-- Quality Chart -->
+            <div class="chart-section">
+                <div class="chart-header">
+                    <span class="chart-number">1.</span>
+                    <span class="chart-title">Quality</span>
+                </div>
+                <div class="metrics-list">
+                    <span class="metric-item">Relevance</span>
+                    <span class="metric-separator">•</span>
+                    <span class="metric-item">Accuracy</span>
+                    <span class="metric-separator">•</span>
+                    <span class="metric-item">Context Precision</span>
+                    <span class="metric-separator">•</span>
+                    <span class="metric-item">Context Recall</span>
+                </div>
+                
+                <div class="chart-container">
+                    <svg viewBox="0 0 500 320">
+                        <!-- Y-axis -->
+                        <line x1="40" y1="20" x2="40" y2="270" stroke="#e5e7eb" stroke-width="1"/>
+                        
+                        <!-- Y-axis labels -->
+                        <text x="30" y="25" class="axis-text" text-anchor="end">1.0</text>
+                        
+                        <!-- Threshold line -->
+                        <line x1="40" y1="70" x2="480" y2="70" class="threshold-line"/>
+                        <text x="480" y="67" class="threshold-label" text-anchor="end">Threshold = 0.80</text>
+                        
+                        <!-- Bars for GPT-4 -->
+                        <rect x="60" y="40" width="30" height="230" fill="#3b82f6" class="bar" rx="2"/>
+                        <rect x="95" y="45" width="30" height="225" fill="#3b82f6" class="bar" rx="2"/>
+                        <rect x="130" y="50" width="30" height="220" fill="#3b82f6" class="bar" rx="2"/>
+                        <rect x="165" y="55" width="30" height="215" fill="#3b82f6" class="bar" rx="2"/>
+                        
+                        <!-- Bars for Qwen3-8B -->
+                        <rect x="220" y="60" width="30" height="210" fill="#3b82f6" class="bar" rx="2"/>
+                        <rect x="255" y="70" width="30" height="200" fill="#3b82f6" class="bar" rx="2"/>
+                        <rect x="290" y="80" width="30" height="190" fill="#3b82f6" class="bar" rx="2"/>
+                        <rect x="325" y="85" width="30" height="185" fill="#3b82f6" class="bar" rx="2"/>
+                        
+                        <!-- Bars for SmolLM2 -->
+                        <rect x="380" y="75" width="30" height="195" fill="#3b82f6" class="bar" rx="2"/>
+                        <rect x="415" y="80" width="30" height="190" fill="#3b82f6" class="bar" rx="2"/>
+                        <rect x="450" y="100" width="30" height="170" fill="#3b82f6" class="bar" rx="2"/>
+                        
+                        <!-- X-axis -->
+                        <line x1="40" y1="270" x2="480" y2="270" stroke="#e5e7eb" stroke-width="1"/>
+                        
+                        <!-- Model labels -->
+                        <text x="127" y="295" class="model-label" text-anchor="middle">GPT-4</text>
+                        <text x="287" y="295" class="model-label" text-anchor="middle">Qwen3-8B</text>
+                        <text x="430" y="295" class="model-label" text-anchor="middle">SmolLM2</text>
+                    </svg>
+                </div>
+                
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="legend-box" style="background: #3b82f6;"></div>
+                        <span>Score (0–1)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-line"></div>
+                        <span>Threshold</span>
+                    </div>
+                </div>
+                
+                <p class="description">Higher is better. Scores are averaged over latest evaluation run per model.</p>
+            </div>
+            
+            <!-- Cost Chart -->
+            <div class="chart-section">
+                <div class="chart-header">
+                    <span class="chart-number">2.</span>
+                    <span class="chart-title">Cost</span>
+                </div>
+                <div class="chart-subtitle">Evaluation</div>
+                <div class="chart-unit">
+                    USD / 1K tokens<br>
+                    (est.)
+                </div>
+                
+                <div class="chart-container">
+                    <svg viewBox="0 0 500 320">
+                        <!-- Y-axis -->
+                        <line x1="40" y1="20" x2="40" y2="270" stroke="#e5e7eb" stroke-width="1"/>
+                        
+                        <!-- Y-axis labels -->
+                        <text x="30" y="25" class="axis-text" text-anchor="end">$0.60</text>
+                        
+                        <!-- Threshold line -->
+                        <line x1="40" y1="170" x2="480" y2="170" class="threshold-line"/>
+                        <text x="480" y="167" class="threshold-label" text-anchor="end">Threshold ≤ $0.25</text>
+                        
+                        <!-- Bars -->
+                        <rect x="120" y="50" width="50" height="220" fill="#10b981" class="bar" rx="2"/>
+                        <rect x="225" y="155" width="50" height="115" fill="#10b981" class="bar" rx="2"/>
+                        <rect x="330" y="180" width="50" height="90" fill="#10b981" class="bar" rx="2"/>
+                        
+                        <!-- X-axis -->
+                        <line x1="40" y1="270" x2="480" y2="270" stroke="#e5e7eb" stroke-width="1"/>
+                        
+                        <!-- Model labels -->
+                        <text x="145" y="295" class="model-label" text-anchor="middle">GPT-4</text>
+                        <text x="250" y="295" class="model-label" text-anchor="middle">Qwen3-8B</text>
+                        <text x="355" y="295" class="model-label" text-anchor="middle">SmolLM2</text>
+                    </svg>
+                </div>
+                
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="legend-box" style="background: #10b981;"></div>
+                        <span>Cost (lower is better)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-line"></div>
+                        <span>Threshold</span>
+                    </div>
+                </div>
+                
+                <p class="description">Unit cost normalized to 1K generated tokens including context window.</p>
+            </div>
+            
+            <!-- Execution Time Chart -->
+            <div class="chart-section">
+                <div class="chart-header">
+                    <span class="chart-number">3.</span>
+                    <span class="chart-title">Execution</span>
+                </div>
+                <div class="chart-subtitle">Time Evaluation</div>
+                <div class="chart-unit">
+                    P95 latency<br>
+                    (seconds)
+                </div>
+                
+                <div class="chart-container">
+                    <svg viewBox="0 0 500 320">
+                        <!-- Y-axis -->
+                        <line x1="40" y1="20" x2="40" y2="270" stroke="#e5e7eb" stroke-width="1"/>
+                        
+                        <!-- Y-axis labels -->
+                        <text x="30" y="25" class="axis-text" text-anchor="end">0.40s</text>
+                        
+                        <!-- Threshold line -->
+                        <line x1="40" y1="200" x2="480" y2="200" class="threshold-line"/>
+                        <text x="480" y="197" class="threshold-label" text-anchor="end">Threshold ≤ 0.12s</text>
+                        
+                        <!-- Bars -->
+                        <rect x="120" y="120" width="50" height="150" fill="#94a3b8" class="bar" rx="2"/>
+                        <rect x="225" y="140" width="50" height="130" fill="#94a3b8" class="bar" rx="2"/>
+                        <rect x="330" y="90" width="50" height="180" fill="#94a3b8" class="bar" rx="2"/>
+                        
+                        <!-- X-axis -->
+                        <line x1="40" y1="270" x2="480" y2="270" stroke="#e5e7eb" stroke-width="1"/>
+                        
+                        <!-- Model labels -->
+                        <text x="145" y="295" class="model-label" text-anchor="middle">GPT-4</text>
+                        <text x="250" y="295" class="model-label" text-anchor="middle">Qwen3-8B</text>
+                        <text x="355" y="295" class="model-label" text-anchor="middle">SmolLM2</text>
+                    </svg>
+                </div>
+                
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="legend-box" style="background: #94a3b8;"></div>
+                        <span>Time (lower is better)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-line"></div>
+                        <span>Threshold</span>
+                    </div>
+                </div>
+                
+                <p class="description">Measured from request to first token (server-side). Network variance excluded.</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

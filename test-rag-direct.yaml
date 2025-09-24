@@ -1,0 +1,25 @@
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Query
+metadata:
+  name: test-rag-direct
+  labels:
+    app: test-rag-embeddings
+    query-type: direct-rag-test
+spec:
+  targets:
+    - type: agent
+      name: risk-officer-rag-kyc-ollama
+  input: |
+    Perform a KYC risk assessment for Tesla Inc. using RAG semantic search capabilities.
+
+    Focus on:
+    - Company profile and business model analysis
+    - Regulatory compliance risks in automotive sector
+    - Financial stability indicators
+    - Geographic market exposure
+    - ESG factors and sustainability risks
+
+    Provide a structured risk assessment with:
+    - Overall risk rating (LOW/MEDIUM/HIGH)
+    - Key risk factors identified
+    - Recommendations for risk mitigation

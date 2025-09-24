@@ -8,6 +8,7 @@ from .types import (
     Message,
     ExecutionEngineRequest,
     ExecutionEngineResponse,
+    TokenUsage,
 )
 from .base import BaseExecutor
 from .app import ExecutorApp
@@ -16,12 +17,13 @@ __version__ = "0.1.0"
 
 __all__ = [
     "Parameter",
-    "Model", 
+    "Model",
     "AgentConfig",
     "ToolDefinition",
     "Message",
     "ExecutionEngineRequest",
     "ExecutionEngineResponse",
+    "TokenUsage",
     "BaseExecutor",
     "ExecutorApp",
 ]

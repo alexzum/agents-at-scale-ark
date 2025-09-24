@@ -1,0 +1,17 @@
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Evaluation
+metadata:
+  name: test-metrics-evaluation
+  namespace: default
+spec:
+  type: direct
+  timeout: 5m
+  ttl: 720h
+  evaluator:
+    name: metrics-evaluator
+    namespace: default
+  config:
+    input: "What is machine learning?"
+    output: "Machine learning is a subset of artificial intelligence that enables computers to learn and make decisions from data without being explicitly programmed for every task."
+    concurrency: 10
+    continueOnFailure: false

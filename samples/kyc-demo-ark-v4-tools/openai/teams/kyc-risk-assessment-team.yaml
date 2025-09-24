@@ -1,0 +1,19 @@
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Team
+metadata:
+  name: kyc-risk-assessment-team-v4-tools
+  labels:
+    app: kyc-demo-ark-v4-tools
+    category: risk-assessment
+    workflow: sequential
+    use-case: kyc-risk-assessment
+spec:
+  description: "Sequential team for tool-enhanced KYC profile analysis and risk assessment workflow"
+  members:
+    - name: planner-agent-kyc-v2
+      type: agent
+    - name: risk-officer-kyc-v2
+      type: agent
+    - name: file-manager-kyc-v2
+      type: agent
+  strategy: sequential

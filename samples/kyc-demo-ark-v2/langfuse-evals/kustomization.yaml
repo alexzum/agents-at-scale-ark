@@ -1,0 +1,16 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: kyc-langfuse-evaluation
+
+resources:
+  - langfuse-config.yaml
+  - kyc-faithfulness-evaluator.yaml
+  - kyc-faithfulness-evaluation.yaml
+
+labels:
+  - includeSelectors: true
+    pairs:
+      app: kyc-demo-ark-v2
+      evaluation-provider: langfuse

@@ -117,7 +117,10 @@ class QueryResolver:
             
             # Extract metadata for additional context
             self._extract_basic_metadata(query, metrics)
-            
+
+            # Extract model name from agent targets
+            self._extract_model_name(query, metrics)
+
             logger.info(f"Extracted {len(metrics)} metrics from query {query_name}")
             return metrics
             
@@ -436,12 +439,178 @@ class QueryResolver:
             total_seconds += float(minutes_match.group(1)) * 60
         if seconds_match:
             total_seconds += float(seconds_match.group(1))
-        
+
         if total_seconds == 0:
             # If no match, try to parse as plain number (assume seconds)
             try:
                 total_seconds = float(duration_str)
             except ValueError:
                 raise ValueError(f"Unable to parse duration string: {duration_str}")
-        
+
         return total_seconds
+
+    def _extract_model_name(self, query, metrics: Dict[str, Any]) -> None:
+        """Extract model name from query's agent targets"""
+        try:
+            # Handle both dict and QueryV1alpha1 object formats
+            targets = None
+            query_name = metrics.get("queryName", "unknown")
+
+            logger.info(f"DEBUG: Starting model extraction for query '{query_name}'")
+            logger.info(f"DEBUG: Query type: {type(query)}")
+
+            if isinstance(query, dict):
+                spec = query.get('spec', {})
+                targets = spec.get('targets', [])
+                logger.info(f"DEBUG: Dict query - extracted {len(targets) if targets else 0} targets from spec")
+            else:
+                if hasattr(query, 'spec') and query.spec and hasattr(query.spec, 'targets'):
+                    targets = query.spec.targets
+                    logger.info(f"DEBUG: Object query - extracted {len(targets) if targets else 0} targets from spec")
+                else:
+                    logger.warning(f"DEBUG: Object query has no valid spec.targets")
+
+            if not targets:
+                logger.warning(f"DEBUG: Query {query_name} has no targets - cannot extract model")
+                return
+
+            logger.info(f"DEBUG: Processing {len(targets)} targets for query {query_name}")
+
+            # Look for agent targets and get model name from first agent
+            for i, target in enumerate(targets):
+                if isinstance(target, dict):
+                    target_type = target.get('type')
+                    target_name = target.get('name')
+                    logger.info(f"DEBUG: Target {i}: dict type='{target_type}', name='{target_name}'")
+                else:
+                    target_type = getattr(target, 'type', None)
+                    target_name = getattr(target, 'name', None)
+                    logger.info(f"DEBUG: Target {i}: object type='{target_type}', name='{target_name}'")
+
+                if target_type == 'agent' and target_name:
+                    logger.info(f"DEBUG: Processing agent target: '{target_name}'")
+                    try:
+                        # Look up the agent resource to get model reference
+                        namespace = metrics.get("queryNamespace", "default")
+                        agent_model = self._get_agent_model_name(target_name, namespace)
+                        if agent_model:
+                            metrics["modelName"] = agent_model
+                            logger.info(f"DEBUG: Extracted model name '{agent_model}' from agent '{target_name}'")
+                            return
+                    except Exception as e:
+                        logger.warning(f"Failed to get model name from agent '{target_name}': {e}")
+
+                elif target_type == 'team' and target_name:
+                    logger.info(f"DEBUG: Processing team target: '{target_name}'")
+                    try:
+                        # Look up the team resource to get member agents
+                        namespace = metrics.get("queryNamespace", "default")
+                        logger.info(f"DEBUG: Looking up team '{target_name}' in namespace '{namespace}'")
+                        team_agents = self._get_team_agent_names(target_name, namespace)
+                        logger.info(f"DEBUG: Found {len(team_agents)} agents in team '{target_name}': {team_agents}")
+
+                        # Get model from first agent in team
+                        for agent_name in team_agents:
+                            logger.info(f"DEBUG: Checking agent '{agent_name}' for model reference")
+                            agent_model = self._get_agent_model_name(agent_name, namespace)
+                            if agent_model:
+                                metrics["modelName"] = agent_model
+                                logger.info(f"DEBUG: ✅ SUCCESS: Extracted model name '{agent_model}' from team '{target_name}' via agent '{agent_name}'")
+                                return
+                            else:
+                                logger.warning(f"DEBUG: Agent '{agent_name}' has no valid model reference")
+
+                        logger.warning(f"DEBUG: No agents in team '{target_name}' had valid model references")
+                    except Exception as e:
+                        logger.error(f"DEBUG: Failed to get model name from team '{target_name}': {e}")
+
+                else:
+                    logger.info(f"DEBUG: Skipping target {i}: type='{target_type}', name='{target_name}' (not agent or team)")
+
+            logger.warning(f"DEBUG: ❌ FAILED: Could not extract model name from query {query_name} after checking all targets")
+
+        except Exception as e:
+            logger.error(f"Failed to extract model name: {e}")
+
+    def _get_agent_model_name(self, agent_name: str, namespace: str) -> Optional[str]:
+        """Get model name from agent's modelRef"""
+        try:
+            logger.info(f"DEBUG: Looking up agent '{agent_name}' in namespace '{namespace}'")
+            # Use Custom Objects API to get agent
+            custom_api = client.CustomObjectsApi()
+            agent = custom_api.get_namespaced_custom_object(
+                group="ark.mckinsey.com",
+                version="v1alpha1",
+                namespace=namespace,
+                plural="agents",
+                name=agent_name
+            )
+
+            logger.info(f"DEBUG: Successfully retrieved agent '{agent_name}'")
+
+            # Extract model reference
+            spec = agent.get('spec', {})
+            model_ref = spec.get('modelRef', {})
+            model_name = model_ref.get('name')
+
+            logger.info(f"DEBUG: Agent '{agent_name}' spec keys: {list(spec.keys())}")
+            logger.info(f"DEBUG: Agent '{agent_name}' modelRef: {model_ref}")
+
+            if model_name:
+                logger.info(f"DEBUG: ✅ Found model reference '{model_name}' in agent '{agent_name}'")
+                return model_name
+            else:
+                logger.warning(f"DEBUG: ❌ Agent '{agent_name}' has no modelRef.name")
+                return None
+
+        except Exception as e:
+            logger.error(f"DEBUG: ❌ Failed to lookup agent '{agent_name}' in namespace '{namespace}': {e}")
+            return None
+
+    def _get_team_agent_names(self, team_name: str, namespace: str) -> list:
+        """Get list of agent names from team's members"""
+        try:
+            logger.info(f"DEBUG: Looking up team '{team_name}' in namespace '{namespace}'")
+            # Use Custom Objects API to get team
+            custom_api = client.CustomObjectsApi()
+            team = custom_api.get_namespaced_custom_object(
+                group="ark.mckinsey.com",
+                version="v1alpha1",
+                namespace=namespace,
+                plural="teams",
+                name=team_name
+            )
+
+            logger.info(f"DEBUG: Successfully retrieved team '{team_name}'")
+
+            # Extract team members
+            spec = team.get('spec', {})
+            members = spec.get('members', [])
+
+            logger.info(f"DEBUG: Team '{team_name}' spec keys: {list(spec.keys())}")
+            logger.info(f"DEBUG: Team '{team_name}' has {len(members)} total members")
+
+            agent_names = []
+            for i, member in enumerate(members):
+                if isinstance(member, dict):
+                    member_type = member.get('type')
+                    member_name = member.get('name')
+                    logger.info(f"DEBUG: Member {i}: dict type='{member_type}', name='{member_name}'")
+                else:
+                    member_type = getattr(member, 'type', None)
+                    member_name = getattr(member, 'name', None)
+                    logger.info(f"DEBUG: Member {i}: object type='{member_type}', name='{member_name}'")
+
+                # Only collect agent members
+                if member_type == 'agent' and member_name:
+                    agent_names.append(member_name)
+                    logger.info(f"DEBUG: ✅ Added agent member '{member_name}' from team '{team_name}'")
+                else:
+                    logger.info(f"DEBUG: ⏭️ Skipping member {i}: not an agent (type='{member_type}')")
+
+            logger.info(f"DEBUG: ✅ Team '{team_name}' has {len(agent_names)} agent members: {agent_names}")
+            return agent_names
+
+        except Exception as e:
+            logger.error(f"DEBUG: ❌ Failed to lookup team '{team_name}' in namespace '{namespace}': {e}")
+            return []

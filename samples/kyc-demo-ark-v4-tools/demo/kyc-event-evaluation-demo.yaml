@@ -1,0 +1,54 @@
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Evaluation
+metadata:
+  name: kyc-event-evaluation-demo
+  labels:
+    app: kyc-demo-ark-v4-tools
+    category: event-evaluation
+    use-case: kyc-risk-assessment
+spec:
+  type: event
+  config:
+    queryRef:
+      name: kyc-assessment-query-demo
+      namespace: default
+    rules:
+      # Rule 1: Date Tool Usage Check
+      - name: "date_tool_called"
+        expression: "tools.was_called('get-current-date')"
+        description: "Verifies the risk officer called the get-current-date tool"
+        weight: 2
+
+      # Rule 2: MCP File Write Tool Usage Check
+      - name: "mcp_write_tool_called"
+        expression: "tools.was_called('mcp-filesys-write-file')"
+        description: "Verifies the file manager used MCP write tool to save assessment"
+        weight: 2
+
+      # Rule 3: Team Execution Completeness
+      - name: "all_agents_executed"
+        expression: "agents.was_executed('default/planner-agent-kyc-v2') and agents.was_executed('default/risk-officer-kyc-v2') and agents.was_executed('default/file-manager-kyc-v2')"
+        description: "Verifies all three KYC agents executed in the sequential workflow"
+        weight: 2
+
+      # Rule 4: Reasonable Performance
+      - name: "reasonable_execution_time"
+        expression: "query.get_execution_time() <= 120.0"
+        description: "Ensures KYC assessment completes within 2 minutes"
+        weight: 1
+
+      # Rule 5: Check v4-tools team was executed
+      - name: "team_executed"
+        expression: "teams.was_executed('kyc-risk-assessment-team-v4-tools')"
+        description: "Confirms the KYC risk assessment team v4-tools was properly executed"
+        weight: 1
+
+  evaluator:
+    name: kyc-event-based-evaluator
+    parameters:
+    - name: query.name
+      value: kyc-assessment-query-demo
+    - name: query.namespace
+      value: default
+    - name: min-score
+      value: "0.7"

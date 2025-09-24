@@ -262,7 +262,6 @@ class LLMEvaluator:
 
                     Provide your evaluation in the following format:
                     SCORE: [0-1]
-                    PASSED: [true/false] (by default true if SCORE >= 0.7)
                     REASONING: [Brief explanation of your evaluation focusing on scope compliance]
                     CRITERIA_SCORES: relevance=[0-1], accuracy=[0-1], completeness=[0-1], conciseness=[0-1], clarity=[0-1], usefulness=[0-1], context_precision=[0-1], context_recall=[0-1]{self._get_scope_criteria_format(params)}
                     for CRITERIA_SCORES, only include the criteria in {evaluation_scope}
@@ -330,9 +329,6 @@ class LLMEvaluator:
                 except ValueError:
                     score = "0.0"
                     passed = False
-            elif line.startswith('PASSED:'):
-                passed_str = line.split(':', 1)[1].strip().lower()
-                passed = passed_str == 'true'
             elif line.startswith('REASONING:'):
                 metadata['reasoning'] = line.split(':', 1)[1].strip()
             elif line.startswith('CRITERIA_SCORES:'):

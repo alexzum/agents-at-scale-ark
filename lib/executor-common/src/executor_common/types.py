@@ -1,6 +1,6 @@
 """Shared types for execution engine services."""
 
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from pydantic import BaseModel
 
 
@@ -53,7 +53,15 @@ class ExecutionEngineRequest(BaseModel):
     tools: List[ToolDefinition] = []
 
 
+class TokenUsage(BaseModel):
+    """Token usage information from LLM calls."""
+    prompt_tokens: int = 0
+    completion_tokens: int = 0
+    total_tokens: int = 0
+
+
 class ExecutionEngineResponse(BaseModel):
     """Response from agent execution."""
     messages: List[Message]
     error: str = ""
+    token_usage: Optional[TokenUsage] = None

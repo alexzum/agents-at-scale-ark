@@ -1,0 +1,23 @@
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Evaluator
+metadata:
+  name: kyc-context-quality-evaluator-v4
+  labels:
+    app: kyc-demo-ark-v4-RAG
+    category: evaluation
+    type: context-quality
+  namespace: default
+spec:
+  address:
+    value: http://ark-evaluator.default.svc.cluster.local:8000/evaluate
+  description: Evaluator for KYC assessments with RAG context quality metrics support
+  parameters:
+  - name: model.name
+    value: default
+  - name: scope
+    value: relevance,accuracy,completeness,clarity,context_precision,context_recall
+  - name: min-score
+    value: "0.75"
+  - name: evaluator-role
+    value: |
+      You are evaluating a KYC risk assessment based on the provided context chunks retrieved by the RAG system. MANDATORY OUTPUT FORMAT - You MUST include ALL these lines: SCORE: [number between 0 and 1] PASSED: [true or false] REASONING: [your evaluation explanation] CRITERIA_SCORES: relevance=0.95, accuracy=0.9, context_precision=0.9, context_recall=0.75 For CRITERIA_SCORES, evaluate each metric from 0 to 1: - relevance: How well the response addresses the KYC risk assessment query - accuracy: How correct the information is based on the retrieved chunks - context_precision: How precisely the retrieved context chunks are used - context_recall: How well all critical context information (especially blacklist findings) is utilized Key evaluation focus: - Did the assessment identify Muhammad Anwar's blacklist status from Chunk 5? - Were the compliance and regulatory findings from Chunks 1-4 properly analyzed? - Was the risk assessment comprehensive and accurate based on the retrieved data?

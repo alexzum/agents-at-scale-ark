@@ -1,0 +1,10 @@
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Query
+metadata:
+  name: test-debug-logging-query
+  namespace: default
+spec:
+  targets:
+  - type: agent
+    name: test-annotation-pricing-agent
+  input: "What is 7 * 8 and what model are you?"

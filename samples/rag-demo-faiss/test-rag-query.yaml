@@ -1,0 +1,19 @@
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Query
+metadata:
+  name: test-rag-semantics
+  namespace: default
+  labels:
+    app: rag-demo
+    test-type: semantic-retrieval
+spec:
+  input: |
+    I'm planning to work from home next week. What do I need to know about:
+    1. How many days I can work remotely
+    2. What equipment support is available
+    3. Any mandatory meeting requirements
+
+    Please provide specific policy details.
+  targets:
+    - type: agent
+      name: hr-assistant-rag

@@ -1,0 +1,28 @@
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Query
+metadata:
+  name: test-team-response-capture
+  labels:
+    category: kyc-assessment
+    use-case: response-capture-test
+spec:
+  input: |
+    Analyze the following simplified KYC profile data for Tech Innovations Corp and generate a risk assessment memo focusing on response visibility testing.
+
+    KYC PROFILE DATA:
+    Company: Tech Innovations Corp
+    Address: 123 Silicon Valley Blvd, San Francisco, CA 94103
+    Industry: Software Technology
+    Employees: 50
+    Global Operations: US only
+
+    KEY RISK FINDINGS:
+    1. NEW COMPANY: Recently incorporated (6 months old)
+    2. HIGH GROWTH: 300% revenue growth in 6 months
+    3. VENTURE FUNDED: $5M Series A funding
+    4. MINIMAL HISTORY: Limited operational track record
+
+    Generate a brief risk assessment memo and demonstrate multi-agent coordination.
+  targets:
+    - type: team
+      name: kyc-risk-assessment-team

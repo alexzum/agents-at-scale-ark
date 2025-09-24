@@ -1,0 +1,24 @@
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Evaluation
+metadata:
+  name: test-qwen-llm-metrics-evaluation
+  labels:
+    app: qwen-test
+    category: llm-metrics-evaluation
+    use-case: cost-verification
+spec:
+  type: query
+  config:
+    queryRef:
+      name: test-qwen-query
+      namespace: default
+
+  evaluator:
+    name: kyc-llm-metrics-evaluator-v4-local
+    parameters:
+    - name: query.name
+      value: test-qwen-query
+    - name: query.namespace
+      value: default
+    - name: min-score
+      value: "0.1"

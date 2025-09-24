@@ -1,0 +1,61 @@
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Evaluation
+metadata:
+  name: kyc-team-response-condensed
+  labels:
+    app: kyc-demo-ark-v2
+    provider: langfuse
+    evaluation-type: team-response-condensed
+    use-case: kyc-hallucination-detection
+spec:
+  type: direct
+  config:
+    input: |
+      Analyze the KYC profile data for Associated British Foods PLC and provide a risk assessment.
+
+    output: |
+      # KYC Risk Assessment - Associated British Foods PLC
+
+      **Overall Risk Rating: MEDIUM**
+
+      ## Executive Summary
+      Associated British Foods PLC operates across 56 countries with 138,000 employees. The company presents medium risk due to declining financial performance (2% revenue decrease, 12% profit decline), litigation exposure in Malawi (1,700+ plaintiffs, 7 fatalities), and a potential blacklist match for CFO John Bason (5/10 confidence score).
+
+      ## Key Risk Factors
+      1. **Financial Risk:** Revenue decreased 2%, profit declined 12%, increased net debt
+      2. **Regulatory Risk:** CFO blacklist similarity to "John Donald Basin" requires enhanced due diligence
+      3. **Litigation Risk:** Class-action lawsuit from Malawian citizens regarding flooding deaths
+      4. **Operational Risk:** Challenges in African sugar and UK bioethanol operations
+
+      ## Recommendations
+      - Enhanced due diligence on CFO John Bason
+      - Monitor Malawi litigation developments
+      - Quarterly financial and legal risk reporting
+      - Conservative exposure management until risks are mitigated
+
+      Approval recommended with enhanced monitoring conditions.
+
+  evaluator:
+    name: langfuse-evaluator
+    parameters:
+      - name: evaluation.context
+        value: |
+          SOURCE KYC DATA:
+          - Company: Associated British Foods PLC (UK Company Number: 00293262)
+          - Operations: 56 countries, 138,000 employees
+          - Financial: 2% revenue decrease, 12% profit decline, increased net debt
+          - Blacklist: CFO John Bason similarity to "John Donald Basin" (5/10 confidence)
+          - Sanctions: All controllers cleared
+          - Litigation: 1,700+ Malawian citizens lawsuit (7 fatalities)
+          - Ownership: Wittington Investments Limited (56.1% stake)
+
+      - name: evaluation.context_source
+        value: "kyc_condensed_data"
+
+      # Single metric for hallucination detection
+      - name: metrics
+        value: "faithfulness"
+
+      # High threshold for hallucination detection
+      - name: threshold
+        value: "0.85"

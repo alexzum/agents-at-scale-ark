@@ -36,6 +36,7 @@ def main():
             'worker_connections': 1000,
             'max_requests': 1000,
             'max_requests_jitter': 100,
+            'timeout': int(os.getenv("GUNICORN_TIMEOUT", "180")),  # 3 minutes default, configurable
         }
         
         StandaloneApplication(app, options).run()

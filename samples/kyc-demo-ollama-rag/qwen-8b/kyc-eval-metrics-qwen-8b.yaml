@@ -1,0 +1,25 @@
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Evaluation
+metadata:
+  name: kyc-llm-metrics-evaluation-qwen-8b-rag
+  labels:
+    app: kyc-demo-ollama-rag
+    category: llm-metrics-evaluation
+    use-case: kyc-performance-monitoring
+    evaluation-type: query-metrics
+spec:
+  type: query
+  config:
+    queryRef:
+      name: kyc-query-qwen-8b
+      namespace: default
+
+  evaluator:
+    name: kyc-llm-metrics-evaluator-v4-local
+    parameters:
+    - name: query.name
+      value: kyc-query-qwen-8b
+    - name: query.namespace
+      value: default
+    - name: min-score
+      value: "0.5"

@@ -1,0 +1,20 @@
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Evaluation
+metadata:
+  name: test-new-code-evaluation
+  namespace: default
+spec:
+  type: query
+  config:
+    queryRef:
+      name: test-new-code-query
+      namespace: default
+  evaluator:
+    name: metrics-evaluator
+    parameters:
+    - name: query.name
+      value: test-new-code-query
+    - name: query.namespace
+      value: default
+    - name: min-score
+      value: "0.5"

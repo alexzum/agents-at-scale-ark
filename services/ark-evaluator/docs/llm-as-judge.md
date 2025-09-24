@@ -40,6 +40,59 @@ Practical value and actionability of the response:
 - **Practical Value**: Is the response useful for the intended purpose?
 - **Problem Resolution**: Does the response help solve the user's problem?
 
+## Context-Aware Evaluation Criteria
+
+For applications with retrieved context (such as RAG systems), ARK Evaluator supports additional evaluation criteria that assess how well responses utilize the provided context:
+
+### 6. Context Precision (0-1)
+How precisely the response uses the retrieved context chunks:
+- **Relevance Filtering**: Are only relevant context chunks used in the response?
+- **Noise Reduction**: Does the response avoid using irrelevant or low-quality context?
+- **Precision Focus**: Is the response focused on the most relevant information from context?
+
+*Note: Requires `context` parameter or retrieved context chunks to be evaluated*
+
+### 7. Context Recall (0-1)
+How completely the response utilizes available relevant context:
+- **Information Coverage**: Does the response use all relevant information from the context?
+- **Completeness**: Are important details from the context included in the response?
+- **Recall Efficiency**: Is the response missing key information that was available in the context?
+
+*Note: Requires `context` parameter or retrieved context chunks to be evaluated*
+
+### 8. Context Entity Recall (0-1)
+How well the response recalls specific entities mentioned in the context:
+- **Entity Extraction**: Are relevant entities from the context properly identified?
+- **Entity Usage**: Are context entities appropriately referenced in the response?
+- **Entity Completeness**: Are all relevant entities from the context considered?
+
+*Note: Requires `context` parameter or retrieved context chunks to be evaluated*
+
+### 9. Faithfulness (0-1)
+How faithful the response is to the provided context:
+- **Factual Consistency**: Does the response contradict information in the context?
+- **Grounding**: Is the response properly grounded in the provided context?
+- **Hallucination Detection**: Does the response avoid adding information not supported by context?
+
+*Note: Requires `context` parameter or retrieved context chunks to be evaluated*
+
+### Context-Dependent Evaluation
+
+These context-aware criteria can be used in two ways:
+
+1. **LLM-based Evaluation** (default): Uses the evaluating LLM to assess context usage
+2. **RAGAS Algorithmic Evaluation** (via Langfuse provider): Uses specialized RAGAS algorithms for more precise context assessment
+
+**Usage Example:**
+```json
+{
+  "parameters": {
+    "scope": "relevance,accuracy,context_precision,context_recall",
+    "context": "Your retrieved context chunks here..."
+  }
+}
+```
+
 ## Supported LLM Providers
 
 ARK Evaluator supports multiple LLM providers for evaluation:

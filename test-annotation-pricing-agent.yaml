@@ -1,0 +1,11 @@
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Agent
+metadata:
+  name: test-annotation-pricing-agent
+  namespace: default
+spec:
+  modelRef:
+    name: qwen3b-local
+  description: "Test agent for annotation-based pricing"
+  prompt: |
+    You are a helpful assistant. Always identify yourself as the specific model you are (including version) and confirm that you're working correctly when asked.

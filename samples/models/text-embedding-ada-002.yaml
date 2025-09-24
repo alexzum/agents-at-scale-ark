@@ -1,0 +1,35 @@
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Model
+metadata:
+  name: text-embedding-ada-002
+  annotations:
+    # Pricing information in USD per million tokens
+    pricing.ark.mckinsey.com/input-cost: "0.100"     # OpenAI embeddings pricing
+    pricing.ark.mckinsey.com/output-cost: "0.000"    # No output tokens for embeddings
+    pricing.ark.mckinsey.com/currency: "USD"
+    pricing.ark.mckinsey.com/unit: "per-million-tokens"
+
+    # Model characteristics
+    model.ark.mckinsey.com/context-window: "8191"
+    model.ark.mckinsey.com/deployment-type: "cloud"
+    model.ark.mckinsey.com/provider: "azure-openai"
+
+    # Usage metadata
+    ops.ark.mckinsey.com/purpose: "embeddings-only"
+    ops.ark.mckinsey.com/cost-tier: "low"
+    ops.ark.mckinsey.com/recommended-use: "rag,vector-search,semantic-search"
+spec:
+  type: azure
+  model:
+    value: text-embedding-ada-002
+  config:
+    azure:
+      baseUrl:
+        value: "https://azure.prod.ai-gateway.quantumblack.com/80948656-dd10-4633-be49-4ebd6c302368"
+      apiKey:
+        valueFrom:
+          secretKeyRef:
+            name: azure-openai-secret
+            key: token
+      apiVersion:
+        value: "2024-12-01-preview"

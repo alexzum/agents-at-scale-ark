@@ -1,0 +1,19 @@
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Query
+metadata:
+  name: simple-team-response-test
+  labels:
+    category: test
+    use-case: response-capture-validation
+spec:
+  input: |
+    Please provide a brief analysis of the following simple business scenario without accessing any files:
+    
+    Company: TestCorp Inc
+    Industry: Software
+    Request: Opening a basic business account
+    
+    Please provide your analysis and recommendations without using any file tools or external data sources.
+  targets:
+    - type: team
+      name: kyc-risk-assessment-team

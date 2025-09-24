@@ -1,0 +1,17 @@
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Query
+metadata:
+  name: test-native-rag-code
+  namespace: default
+spec:
+  input: |
+    How does the LangChain executor implement RAG?
+
+    Show me the specific functions involved in:
+    1. Detecting if RAG should be used
+    2. Creating the vector store
+    3. Retrieving relevant code context
+
+  targets:
+    - type: agent
+      name: code-assistant-native-rag

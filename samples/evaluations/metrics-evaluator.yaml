@@ -1,0 +1,22 @@
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Evaluator
+metadata:
+  name: metrics-evaluator
+  namespace: default
+spec:
+  description: "Deterministic metrics evaluator for objective assessment"
+  address:
+    value: "http://ark-evaluator.default.svc.cluster.local:8000/evaluate-metrics"
+  parameters:
+    - name: maxTokens
+      value: "1000"
+    - name: maxCostPerQuery
+      value: "0.05"
+    - name: tokenWeight
+      value: "0.3"
+    - name: costWeight
+      value: "0.3"
+    - name: performanceWeight
+      value: "0.2"
+    - name: qualityWeight
+      value: "0.2"

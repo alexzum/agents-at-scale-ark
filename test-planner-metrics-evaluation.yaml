@@ -1,0 +1,25 @@
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Evaluation
+metadata:
+  name: test-planner-metrics-evaluation
+  labels:
+    app: token-usage-test
+    category: llm-metrics-evaluation
+    use-case: token-cost-validation
+    evaluation-type: query-metrics
+spec:
+  type: query
+  config:
+    queryRef:
+      name: test-planner-token-usage
+      namespace: default
+
+  evaluator:
+    name: kyc-llm-metrics-evaluator-v4-local
+    parameters:
+    - name: query.name
+      value: test-planner-token-usage
+    - name: query.namespace
+      value: default
+    - name: min-score
+      value: "0.5"

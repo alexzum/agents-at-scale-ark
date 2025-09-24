@@ -1,0 +1,10 @@
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Query
+metadata:
+  name: test-annotation-pricing-query
+  namespace: default
+spec:
+  targets:
+  - type: agent
+    name: test-annotation-pricing-agent
+  input: "Calculate 42 * 17 and confirm your model name and that you're working correctly."

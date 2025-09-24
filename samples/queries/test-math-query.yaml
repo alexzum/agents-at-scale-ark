@@ -1,0 +1,9 @@
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Query
+metadata:
+  name: test-math-query
+spec:
+  input: "What is 25 * 17 + 8?"
+  targets:
+    - type: agent
+      name: math

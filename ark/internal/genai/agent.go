@@ -26,6 +26,7 @@ type Agent struct {
 	Recorder        EventEmitter
 	ExecutionEngine *arkv1alpha1.ExecutionEngineRef
 	Annotations     map[string]string
+	Labels          map[string]string
 	OutputSchema    *runtime.RawExtension
 	client          client.Client
 }
@@ -306,6 +307,7 @@ func MakeAgent(ctx context.Context, k8sClient client.Client, crd *arkv1alpha1.Ag
 		Recorder:        eventRecorder,
 		ExecutionEngine: crd.Spec.ExecutionEngine,
 		Annotations:     crd.Annotations,
+		Labels:          crd.Labels,
 		OutputSchema:    crd.Spec.OutputSchema,
 		client:          k8sClient,
 	}, nil

@@ -1,0 +1,41 @@
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Evaluation
+metadata:
+  name: kyc-ragas-faithfulness
+  labels:
+    app: kyc-demo-ark-v2
+    provider: langfuse
+    evaluation-type: ragas-faithfulness
+    use-case: hallucination-detection
+spec:
+  type: direct
+  config:
+    input: |
+      Based on the company profile data, what is the CFO's blacklist screening result?
+
+    output: |
+      The CFO John Bason has a blacklist screening result showing similarity to "John Donald Basin" with a confidence score of 5/10, requiring enhanced due diligence.
+
+  evaluator:
+    name: langfuse-evaluator
+    parameters:
+      - name: evaluation.context
+        value: |
+          COMPANY PROFILE DATA:
+          - Company: Associated British Foods PLC (UK Company Number: 00293262)
+          - CFO: John Bason
+          - Blacklist Screening: John Bason has similarity to "John Donald Basin" on blacklist (confidence score: 5/10)
+          - Sanctions Screening: All key controllers cleared
+          - Financial Performance: 2% revenue decrease, 12% profit decline
+          - Litigation: Facing lawsuit from 1,700+ Malawian citizens (7 fatalities)
+
+      - name: evaluation.context_source
+        value: "company_kyc_profile"
+
+      # Use RAGAS faithfulness metric specifically
+      - name: metrics
+        value: "faithfulness"
+
+      # High threshold - faithfulness should be very high (low hallucination)
+      - name: threshold
+        value: "0.9"

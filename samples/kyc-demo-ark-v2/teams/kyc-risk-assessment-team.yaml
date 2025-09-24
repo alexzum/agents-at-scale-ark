@@ -1,0 +1,19 @@
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Team
+metadata:
+  name: kyc-risk-assessment-team-v2
+  labels:
+    app: kyc-demo-ark-v2
+    category: risk-assessment
+    workflow: round-robin
+    use-case: kyc-risk-assessment
+spec:
+  description: "Round-robin team for flexible KYC profile analysis and risk assessment workflow"
+  members:
+    - name: planner-agent-kyc-v2
+      type: agent
+    - name: risk-officer-kyc-v2
+      type: agent
+    - name: critic-kyc-v2
+      type: agent
+  strategy: sequential

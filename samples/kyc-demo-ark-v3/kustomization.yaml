@@ -1,0 +1,27 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: kyc-risk-assessment-demo
+
+resources:
+  - agents/planner-agent.yaml
+  # - agents/file-manager-agent.yaml  # Temporarily disabled due to MCP server issues
+  - agents/risk-officer-agent.yaml
+  - agents/critic-agent.yaml
+  - teams/kyc-risk-assessment-team.yaml
+  - tools/get-current-date-tool.yaml
+  - kyc-assessment-query-with-data.yaml
+  - kyc-assessment-query-with-data-events.yaml
+  - kyc-planner-evaluator.yaml
+  - kyc-planner-query-evaluation.yaml
+  - kyc-event-based-evaluator.yaml
+  - kyc-event-evaluation.yaml
+  - kyc-response-evaluator.yaml
+  - kyc-response-evaluation.yaml
+
+labels:
+  - includeSelectors: true
+    pairs:
+      app: kyc-demo-ark
+      use-case: kyc-risk-assessment

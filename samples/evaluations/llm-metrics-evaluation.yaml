@@ -1,0 +1,17 @@
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Evaluation
+metadata:
+  name: llm-metrics-evaluation
+  namespace: default
+spec:
+  type: direct
+  timeout: 10m
+  ttl: 720h
+  evaluator:
+    name: test-evaluator
+    namespace: default
+  config:
+    input: "Explain the concept of machine learning and provide three real-world applications."
+    output: "Machine learning is a subset of artificial intelligence that enables computers to learn and make decisions from data without being explicitly programmed. Three real-world applications include: 1) Image recognition in medical diagnosis, 2) Recommendation systems in e-commerce platforms, 3) Natural language processing in virtual assistants."
+    concurrency: 5
+    continueOnFailure: false

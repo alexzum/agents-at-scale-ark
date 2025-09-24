@@ -1,0 +1,19 @@
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Evaluation
+metadata:
+  name: final-test
+  namespace: default
+spec:
+  config:
+    concurrency: 10
+    continueOnFailure: false
+    input: What is 6 + 9?
+    output: "15"
+  evaluator:
+    name: test-evaluator-llm
+    parameters:
+      - name: model.name
+        value: eval-compatible
+  timeout: 5m
+  ttl: 720h
+  type: direct

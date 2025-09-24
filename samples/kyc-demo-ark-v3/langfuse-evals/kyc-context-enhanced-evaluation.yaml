@@ -1,0 +1,67 @@
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Evaluation
+metadata:
+  name: kyc-context-enhanced-evaluation
+  labels:
+    app: kyc-demo-ark-v3
+    provider: langfuse
+    evaluation-type: context-enhanced-assessment
+    use-case: kyc-risk-assessment
+spec:
+  type: query
+  config:
+    queryRef:
+      name: kyc-context-enhanced-query
+
+  evaluator:
+    name: langfuse-evaluator
+    parameters:
+      # Context data for evaluation
+      - name: evaluation.context
+        value: |
+          Customer Profile: Associated British Foods PLC
+          - Revenue: £18.0bn (2% YoY decline)
+          - Profit: £1.4bn (12% YoY decline)
+          - Employees: 138,000 in 56 countries
+          - Risk Indicators: Financial performance declining
+
+          Key Controllers Screening Results:
+          - Michael McLintock (Chairman): CLEAR on all checks
+          - George Weston (CEO): CLEAR on all checks
+          - John Bason (CFO): POTENTIAL MATCH on blacklist (confidence: 5/10)
+          - Emma Adamo (Director): CLEAR on all checks
+          - Ruth Cairnie (Director): CLEAR on all checks
+
+          Geographic Risk:
+          - Operations in 56 countries including high-risk jurisdictions
+          - Significant presence in emerging markets
+          - Regulatory exposure across multiple jurisdictions
+
+          Compliance Issues:
+          - Litigation: 1,700+ plaintiffs regarding 7 fatalities in Malawi operations
+          - Regulatory scrutiny in multiple jurisdictions
+          - ESG concerns related to labor practices
+
+          Risk Assessment Factors:
+          - Financial health: MEDIUM concern (declining revenue/profit)
+          - Screening results: MEDIUM concern (potential CFO blacklist match)
+          - Geographic exposure: HIGH (multiple high-risk jurisdictions)
+          - Regulatory/Legal: HIGH (ongoing litigation, multi-jurisdictional exposure)
+
+      - name: evaluation.context_source
+        value: "kyc_profile_rag_database"
+
+      # Use our new context metrics
+      - name: scope
+        value: "relevance,accuracy,completeness,context_precision,context_recall"
+
+      # Minimum score threshold
+      - name: min-score
+        value: "0.7"
+
+      # Custom evaluator role for KYC assessment
+      - name: evaluator-role
+        value: |
+          You are a senior KYC compliance expert evaluating the quality of a risk assessment.
+          Assess how well the response uses the provided context data, whether it accurately
+          identifies risk factors, and if the risk rating is justified based on the evidence.

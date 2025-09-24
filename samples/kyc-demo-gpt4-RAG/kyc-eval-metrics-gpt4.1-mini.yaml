@@ -1,0 +1,25 @@
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Evaluation
+metadata:
+  name: kyc-llm-metrics-evaluation-gpt4.1-mini-rag
+  labels:
+    app: kyc-demo-gpt4-RAG
+    category: llm-metrics-evaluation
+    use-case: kyc-performance-monitoring
+    evaluation-type: query-metrics
+spec:
+  type: query
+  config:
+    queryRef:
+      name: kyc-context-enhanced-query-gpt4.1-mini
+      namespace: default
+
+  evaluator:
+    name: kyc-llm-metrics-evaluator-v4-local
+    parameters:
+    - name: query.name
+      value: kyc-context-enhanced-query-gpt4.1-mini
+    - name: query.namespace
+      value: default
+    - name: min-score
+      value: "0.5"

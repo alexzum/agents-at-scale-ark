@@ -58,13 +58,25 @@ class ExecutorApp:
                     f"Processing execution request for agent: {request.agent.name}"
                 )
 
-                response_messages = await self.executor.execute_agent(request)
+                result = await self.executor.execute_agent(request)
+
+                # Handle both old format (just messages) and new format (messages, token_usage)
+                if isinstance(result, tuple) and len(result) == 2:
+                    response_messages, token_usage = result
+                else:
+                    response_messages = result
+                    token_usage = None
 
                 logger.info(
                     f"Execution successful, returned {len(response_messages)} messages"
                 )
 
-                return ExecutionEngineResponse(messages=response_messages, error="")
+                if token_usage:
+                    logger.info(
+                        f"Token usage: {token_usage.prompt_tokens} prompt + {token_usage.completion_tokens} completion = {token_usage.total_tokens} total"
+                    )
+
+                return ExecutionEngineResponse(messages=response_messages, error="", token_usage=token_usage)
 
             except ValidationError as e:
                 error_msg = f"Request validation failed for agent {request.agent.name}: {str(e)}"

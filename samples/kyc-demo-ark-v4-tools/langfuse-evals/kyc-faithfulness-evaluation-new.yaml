@@ -1,0 +1,38 @@
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Evaluation
+metadata:
+  name: kyc-faithfulness-evaluation-new
+  labels:
+    app: kyc-demo-ark-v2
+    provider: langfuse
+    evaluation-type: faithfulness-assessment
+    use-case: kyc-risk-assessment
+spec:
+  type: direct
+  config:
+    input: |
+      What is the risk level for Associated British Foods with 2% revenue decline and CFO blacklist match?
+
+    output: |
+      The risk level is MEDIUM due to financial decline and potential CFO blacklist match requiring enhanced due diligence.
+
+  evaluator:
+    name: langfuse-evaluator
+    parameters:
+      - name: evaluation.context
+        value: |
+          Company has 2% revenue decline, 12% profit decline, and CFO John Bason has 5/10 confidence blacklist match.
+          The company operates in 56 countries with 138,000 employees.
+          All controllers cleared sanctions screening except the potential CFO match.
+          There is ongoing litigation with 1,700+ plaintiffs regarding 7 fatalities in Malawi.
+
+      - name: evaluation.context_source
+        value: "kyc_profile_data"
+
+      # Multi-dimensional check using RAGAS metric names
+      - name: metrics
+        value: "faithfulness,answer_relevancy,answer_correctness"
+
+      # Standard threshold for faithfulness
+      - name: threshold
+        value: "0.8"

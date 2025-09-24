@@ -1,0 +1,22 @@
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Query
+metadata:
+  name: test-planner-token-usage
+  labels:
+    app: token-usage-test
+    query-type: planner-test
+spec:
+  targets:
+    - type: agent
+      name: planner-agent-kyc-gpt4
+  input: |
+    Create a mission plan for conducting a KYC risk assessment for Microsoft Corporation.
+
+    Available data sources:
+    - Corporate registration documents
+    - Financial statements for last 3 years
+    - Ownership structure and key personnel information
+    - Regulatory compliance history
+    - Geographic presence across 50+ countries
+
+    Please provide a detailed step-by-step mission plan that outlines how the team should approach this KYC assessment to ensure comprehensive risk evaluation.

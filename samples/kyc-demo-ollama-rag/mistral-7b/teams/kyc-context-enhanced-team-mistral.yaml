@@ -1,0 +1,17 @@
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Team
+metadata:
+  name: kyc-context-enhanced-team-mistral
+  labels:
+    app: kyc-demo-mistral-7b
+    category: risk-assessment
+    workflow: context-enhanced-rag
+    use-case: kyc-risk-assessment
+spec:
+  description: "RAG-enhanced team for KYC analysis using Mistral-7B model"
+  members:
+    - name: planner-agent-kyc-mistral
+      type: agent
+    - name: risk-officer-rag-kyc-mistral
+      type: agent
+  strategy: sequential

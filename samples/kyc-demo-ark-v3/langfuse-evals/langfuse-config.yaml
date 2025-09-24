@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: langfuse-kyc-config
+  labels:
+    app: kyc-demo-ark-v2
+    component: langfuse-config
+    use-case: kyc-risk-assessment
+data:
+  host: "http://langfuse-web.telemetry.svc.cluster.local:3000"
+  project: "kyc-risk-assessment"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: langfuse-kyc-secrets
+  labels:
+    app: kyc-demo-ark-v2
+    component: langfuse-secrets
+    use-case: kyc-risk-assessment
+type: Opaque
+stringData:
+  # NOTE: Replace these with actual API keys from your Langfuse dashboard
+  # Go to Settings -> API Keys in Langfuse UI to generate these
+  public_key: "lf_pk_1234567890"  # Default Langfuse key
+  secret_key: "lf_sk_1234567890"  # Default Langfuse key

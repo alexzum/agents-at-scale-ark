@@ -1,0 +1,48 @@
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Evaluator
+metadata:
+  name: kyc-llm-metrics-evaluator-v4-local
+  labels:
+    app: kyc-demo-ark-v4-tools
+    category: llm-metrics
+    type: performance-monitoring
+spec:
+  description: "LLM performance metrics evaluator for KYC assessment queries using local Ollama model"
+  address:
+    value: "http://ark-evaluator.default.svc.cluster.local:8000/evaluate-metrics"
+  parameters:
+    # Token usage thresholds
+    - name: maxTokens
+      value: "20000"  # Allow for comprehensive KYC analysis with tools
+    - name: tokenEfficiencyThreshold
+      value: "0.3"    # Good completion/prompt ratio
+
+    # Cost management
+    - name: maxCostPerQuery
+      value: "0.50"   # Higher budget for complex KYC with tools
+    - name: costEfficiencyThreshold
+      value: "0.7"
+
+    # Performance requirements
+    - name: maxDuration
+      value: "60.0"   # 1 minute max for KYC assessment
+    - name: minTokensPerSecond
+      value: "5.0"    # Reasonable throughput for complex workflow
+
+    # Quality standards
+    - name: minResponseLength
+      value: "200"    # More lenient minimum for various model outputs
+    - name: maxResponseLength
+      value: "25000"  # More lenient maximum for comprehensive KYC reports
+    - name: responseCompletenessThreshold
+      value: "0.8"    # High completeness for financial analysis
+
+    # Scoring weights (adjust based on priorities)
+    - name: tokenWeight
+      value: "0.2"    # Token efficiency
+    - name: costWeight
+      value: "0.3"    # Cost control critical
+    - name: performanceWeight
+      value: "0.3"    # Speed matters for UX
+    - name: qualityWeight
+      value: "0.2"    # Quality measured elsewhere

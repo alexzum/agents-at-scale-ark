@@ -1,0 +1,91 @@
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Evaluation
+metadata:
+  name: kyc-hallucination-evaluation
+  labels:
+    app: kyc-demo-ark-v2
+    provider: langfuse
+    evaluation-type: hallucination-detection
+    use-case: kyc-risk-assessment
+spec:
+  type: direct
+  config:
+    input: |
+      Analyze the following KYC profile data for Associated British Foods PLC and generate a comprehensive risk assessment memo.
+
+      KYC PROFILE DATA:
+      Company: Associated British Foods PLC (UK Company Number: 00293262)
+      Industry: Diversified international food, ingredients, and retail group
+      Employees: 138,000 worldwide
+      Global Operations: 56 countries
+
+      KEY RISK FINDINGS:
+      1. BLACKLIST SCREENING: John Bason (CFO) has similarity to "John Donald Basin" on blacklist (confidence score: 5/10)
+      2. SANCTIONS SCREENING: All key controllers cleared
+      3. LITIGATION: Facing lawsuit from 1,700+ Malawian citizens (7 fatalities)
+      4. OWNERSHIP: Wittington Investments Limited holds 56.1% stake
+      5. FINANCIAL PERFORMANCE: 2% revenue decrease, 12% profit decline, increased net debt
+
+    output: |
+      # KYC Risk Assessment Report
+
+      **Report Date:** 14th September 2025
+
+      ## Executive Summary
+      Associated British Foods PLC is a UK-based multinational with operations in 56 countries and 138,000 employees.
+      The company presents MEDIUM risk due to litigation exposure, financial performance decline, and a potential blacklist match.
+
+      ## Risk Assessment
+
+      ### Financial Risk
+      - Revenue decreased by 2% and operating profit declined by 12%
+      - Significant increase in net debt raises liquidity concerns
+      - Overall Financial Risk: MEDIUM
+
+      ### Regulatory Risk
+      - CFO John Bason has potential blacklist match (5/10 confidence) requiring enhanced due diligence
+      - All other controllers cleared on sanctions screening
+      - Ongoing litigation with 1,700+ plaintiffs regarding 7 fatalities
+      - Overall Regulatory Risk: MEDIUM
+
+      ### Operational Risk
+      - Global operations across 56 countries increases complexity
+      - Litigation in Malawi poses reputational risk
+      - Overall Operational Risk: MEDIUM
+
+      ## Risk Rating
+      **Overall Risk Rating: MEDIUM**
+
+      Justification: Combination of financial decline, litigation exposure, and potential blacklist match warrant enhanced monitoring.
+
+      ## Recommendations
+      1. Conduct enhanced due diligence on CFO John Bason
+      2. Monitor Malawi litigation developments
+      3. Review financial metrics quarterly
+      4. Implement transaction monitoring for treasury activities
+
+  evaluator:
+    name: langfuse-evaluator
+    parameters:
+      - name: evaluation.context
+        value: |
+          KYC DATA PROVIDED:
+          - Company: Associated British Foods PLC, UK Company Number: 00293262
+          - Employees: 138,000 worldwide
+          - Operations: 56 countries
+          - Ownership: Wittington Investments Limited holds 56.1%
+          - Financial: 2% revenue decrease, 12% profit decline, increased net debt
+          - Blacklist: John Bason (CFO) similarity to "John Donald Basin" (5/10 confidence)
+          - Sanctions: All controllers cleared
+          - Litigation: 1,700+ plaintiffs, 7 fatalities in Malawi
+
+      - name: evaluation.context_source
+        value: "kyc_profile_data"
+
+      # Focus on hallucination detection
+      - name: metrics
+        value: "faithfulness"
+
+      # High threshold for hallucination detection
+      - name: threshold
+        value: "0.9"
