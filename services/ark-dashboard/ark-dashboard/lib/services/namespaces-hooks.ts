@@ -36,6 +36,7 @@ export const useCreateNamespace = (props?: useCreateNamespaceProps) => {
       })
 
       queryClient.invalidateQueries({ queryKey: [GET_CONTEXT_QUERY_KEY] })
+      queryClient.invalidateQueries({ queryKey: [GET_ALL_NAMESPACES_QUERY_KEY] })
 
       if(props?.onSuccess) {
         props.onSuccess(name)

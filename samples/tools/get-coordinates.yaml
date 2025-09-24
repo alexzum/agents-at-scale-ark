@@ -3,14 +3,11 @@ kind: Tool
 metadata:
   name: get-coordinates
 spec:
-  type: http
+  type: fetcher
   description: "Returns coordinates for the given city name"
-  inputSchema:
-    type: object
-    properties:
-      city:
-        type: string
-        description: City name to get coordinates for
-    required: ["city"]
-  http:
+  tool:
+    name: get-coordinates
+    description: "Returns coordinates for the given city name"
+    inputSchema: eyJ0eXBlIjoib2JqZWN0IiwicHJvcGVydGllcyI6eyJjaXR5Ijp7InR5cGUiOiJzdHJpbmciLCJkZXNjcmlwdGlvbiI6IkNpdHkgbmFtZSB0byBnZXQgY29vcmRpbmF0ZXMgZm9yIn19LCJyZXF1aXJlZCI6WyJjaXR5Il19Cg==
+  fetcher:
     url: https://geocoding-api.open-meteo.com/v1/search?name={city}&count=1

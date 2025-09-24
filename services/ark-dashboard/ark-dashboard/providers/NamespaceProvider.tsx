@@ -2,7 +2,7 @@
 
 import { toast } from '@/components/ui/use-toast';
 import { Namespace } from '@/lib/services';
-import { useCreateNamespace, useGetContext } from '@/lib/services/namespaces-hooks';
+import { useCreateNamespace, useGetContext, useGetAllNamespaces } from '@/lib/services/namespaces-hooks';
 import { usePathname, useSearchParams, useRouter } from 'next/navigation';
 import type { PropsWithChildren } from 'react';
 import {
@@ -32,10 +32,6 @@ const NamespaceProvider = ({ children }: PropsWithChildren) => {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const namespaceFromQueryParams = searchParams.get('namespace') || "default";
-  const [availableNamespaces] = useState<Namespace[]>([{
-    name: namespaceFromQueryParams,
-    id: 0
-  }]);
   const [namespaceResolved, setNamespaceResolved] = useState(false);
 
   const {
@@ -43,6 +39,11 @@ const NamespaceProvider = ({ children }: PropsWithChildren) => {
     isPending,
     error
   } = useGetContext()
+
+  const {
+    data: availableNamespaces = [],
+    isPending: namespacesLoading
+  } = useGetAllNamespaces()
   
   const createQueryString = useCallback(
     (name: string, value: string) => {
@@ -81,18 +82,17 @@ const NamespaceProvider = ({ children }: PropsWithChildren) => {
   }, [error])
 
   useEffect(() => {
-    if(data && data.namespace !== namespaceFromQueryParams) {
-      setNamespace(data.namespace)
-    } else {
+    // Mark namespace as resolved once we have context data
+    // Don't override user's namespace selection with context
+    if(data) {
       setNamespaceResolved(true)
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data, namespaceFromQueryParams])
+  }, [data])
 
   const context = useMemo<NamespaceContext>(() => ({
     availableNamespaces,
     createNamespace,
-    isPending,
+    isPending: isPending || namespacesLoading,
     namespace: namespaceFromQueryParams,
     namespaceResolved,
     setNamespace
@@ -100,6 +100,7 @@ const NamespaceProvider = ({ children }: PropsWithChildren) => {
     availableNamespaces,
     createNamespace,
     isPending,
+    namespacesLoading,
     namespaceFromQueryParams,
     namespaceResolved,
     setNamespace

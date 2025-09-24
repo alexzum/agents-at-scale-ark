@@ -2256,6 +2256,8 @@ export interface components {
             message: {
                 [key: string]: unknown;
             };
+            /** Sequence */
+            sequence?: number | null;
         };
         /**
          * MemoryResponse

@@ -1,0 +1,22 @@
+# Customer Service Team
+# Coordinates inquiry routing, account services, and loan advisory agents
+
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Team
+metadata:
+  name: customer-service-team
+  namespace: demo-bank
+  labels:
+    category: banking
+    capability: customer-service
+    workflow: sequential
+spec:
+  description: "Customer service team providing comprehensive banking assistance"
+  members:
+    - name: inquiry-router
+      type: agent
+    - name: account-helper
+      type: agent  
+    - name: loan-advisor
+      type: agent
+  strategy: "sequential"

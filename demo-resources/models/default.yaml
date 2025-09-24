@@ -1,0 +1,33 @@
+# Default Model for Banking Demo
+# Uses demo-bank-secrets for standalone operation
+
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Model
+metadata:
+  name: default
+  namespace: demo-bank
+spec:
+  type: azure
+  model:
+    valueFrom:
+      secretKeyRef:
+        key: model-version
+        name: demo-bank-secrets
+  config:
+    azure:
+      apiKey:
+        valueFrom:
+          secretKeyRef:
+            key: api-key
+            name: demo-bank-secrets
+      apiVersion:
+        valueFrom:
+          secretKeyRef:
+            key: api-version
+            name: demo-bank-secrets
+      baseUrl:
+        valueFrom:
+          secretKeyRef:
+            key: base-url
+            name: demo-bank-secrets
+  pollInterval: 1m

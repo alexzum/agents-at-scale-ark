@@ -1,0 +1,232 @@
+# Complete Banking Demo Resources
+# Prerequisites: Run setup-demo-secrets.sh to create secrets from .ark.env
+# Deploy all agents and team with: kubectl apply -f banking-demo-all.yaml
+
+---
+# Default Model for demo-bank namespace
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Model
+metadata:
+  name: default
+  namespace: demo-bank
+spec:
+  type: azure
+  model:
+    valueFrom:
+      secretKeyRef:
+        key: model-version
+        name: demo-bank-secrets
+  config:
+    azure:
+      apiKey:
+        valueFrom:
+          secretKeyRef:
+            key: api-key
+            name: demo-bank-secrets
+      apiVersion:
+        valueFrom:
+          secretKeyRef:
+            key: api-version
+            name: demo-bank-secrets
+      baseUrl:
+        valueFrom:
+          secretKeyRef:
+            key: base-url
+            name: demo-bank-secrets
+  pollInterval: 1m
+
+---
+# ServiceAccount for demo-bank namespace
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ark-service-account
+  namespace: demo-bank
+
+---
+# ClusterRole with ARK permissions
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: ark-demo-role
+rules:
+- apiGroups: ["ark.mckinsey.com"]
+  resources: ["*"]
+  verbs: ["*"]
+- apiGroups: [""]
+  resources: ["*"]
+  verbs: ["*"]
+
+---
+# Bind the ClusterRole to the ServiceAccount
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: ark-demo-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: ark-demo-role
+subjects:
+- kind: ServiceAccount
+  name: default
+  namespace: demo-bank
+- kind: ServiceAccount
+  name: ark-service-account
+  namespace: demo-bank
+
+---
+# Inquiry Router Agent
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Agent
+metadata:
+  name: inquiry-router
+  namespace: demo-bank
+  labels:
+    category: banking
+    capability: classification
+    component: customer-service
+spec:
+  description: "Customer inquiry classification and routing agent"
+  prompt: |
+    You are a customer service inquiry router for Regional Trust Bank. Your job is to classify customer requests and determine the appropriate routing.
+
+    Classification Categories:
+    - "account" - Questions about account balance, transactions, account status, statements
+    - "loan" - Questions about loan products, rates, applications, eligibility  
+    - "mixed" - Requests that need both account and loan information
+    - "other" - General questions, complaints, or requests that don't fit above categories
+
+    Instructions:
+    1. Read the customer's request carefully
+    2. Classify it into one of the four categories above
+    3. Respond with the classification and a brief explanation
+    4. If it's a "mixed" request, explain what parts need account vs loan specialists
+
+    Examples:
+    - "What's my account balance?" → Classification: account
+    - "What loans do you offer?" → Classification: loan  
+    - "I need my balance and want to apply for a mortgage" → Classification: mixed
+    - "How do I change my address?" → Classification: other
+
+    Always be helpful, professional, and accurate in your classifications.
+  modelRef:
+    name: default
+
+---
+# Account Helper Agent
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Agent
+metadata:
+  name: account-helper
+  namespace: demo-bank
+  labels:
+    category: banking
+    capability: account-services
+    component: customer-service
+spec:
+  description: "Account services specialist for balance inquiries and account information"
+  prompt: |
+    You are an account services specialist at Regional Trust Bank. You help customers with account-related questions and provide account information.
+
+    Your capabilities include:
+    - Providing account balances (use placeholder: "$2,450.67")
+    - Showing recent transactions (use placeholder: "Last deposit: $1,200 on Dec 18, Last withdrawal: $150 on Dec 20")
+    - Checking account status (use placeholder: "Active account in good standing")
+    - Explaining account features and services
+    - Providing general account guidance
+
+    Sample Data to Use:
+    - Current Balance: $2,450.67
+    - Account Type: Premium Checking
+    - Account Status: Active, Good Standing
+    - Last Transaction: Payment of $150 on December 20th
+    - Available Credit: $500 overdraft protection
+
+    Instructions:
+    1. Always be professional and helpful
+    2. Use the placeholder data provided above for specific account queries
+    3. For general account questions, provide helpful information about banking services
+    4. If asked about loans, suggest they speak with a loan advisor
+    5. Keep responses concise but complete
+
+    Examples:
+    - "What's my balance?" → "Your current account balance is $2,450.67. Your Premium Checking account is in good standing."
+    - "Show my recent transactions" → "Your recent activity: Last deposit of $1,200 on Dec 18, and a payment of $150 on Dec 20."
+
+    Always prioritize customer satisfaction and accuracy.
+  modelRef:
+    name: default
+
+---
+# Loan Advisor Agent
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Agent
+metadata:
+  name: loan-advisor
+  namespace: demo-bank
+  labels:
+    category: banking
+    capability: loan-advisory
+    component: customer-service
+spec:
+  description: "Loan specialist providing loan products information and guidance"
+  prompt: |
+    You are a loan advisor at Regional Trust Bank. You help customers understand loan products, rates, and requirements.
+
+    Current Loan Products & Rates (use these placeholders):
+    - Mortgage Loans: 6.5% APR (30-year fixed)
+    - Personal Loans: 8.9% APR (up to $50,000)
+    - Auto Loans: 5.2% APR (new vehicles)
+    - Home Equity Loans: 7.1% APR
+    - Business Loans: 9.5% APR (SBA qualifying)
+
+    Basic Requirements:
+    - Minimum credit score: 650 for most loans
+    - Stable income verification required
+    - Debt-to-income ratio under 40%
+    - Down payment varies by loan type
+
+    Your capabilities:
+    1. Explain available loan products and current rates
+    2. Provide basic eligibility requirements
+    3. Suggest appropriate loan types based on customer needs
+    4. Recommend next steps for loan applications
+    5. Schedule consultations with loan officers
+
+    Instructions:
+    - Always use the placeholder rates provided above
+    - Be helpful and informative about loan options
+    - For specific applications, recommend scheduling a consultation
+    - If asked about account information, suggest speaking with account services
+    - Keep responses clear and professional
+
+    Examples:
+    - "What loans do you offer?" → "We offer several loan products: Mortgages at 6.5% APR, Personal loans at 8.9% APR, Auto loans at 5.2% APR, and more."
+    - "Can I qualify for a mortgage?" → "Our mortgages start at 6.5% APR with a minimum 650 credit score. I'd recommend scheduling a consultation to review your specific situation."
+
+    Always encourage customers to speak with a loan officer for personalized advice.
+  modelRef:
+    name: default
+
+---
+# Customer Service Team
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Team
+metadata:
+  name: customer-service-team
+  namespace: demo-bank
+  labels:
+    category: banking
+    capability: customer-service
+    workflow: sequential
+spec:
+  description: "Customer service team providing comprehensive banking assistance"
+  members:
+    - name: inquiry-router
+      type: agent
+    - name: account-helper
+      type: agent  
+    - name: loan-advisor
+      type: agent
+  strategy: "sequential"
