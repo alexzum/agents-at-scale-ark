@@ -1,23 +1,34 @@
 apiVersion: ark.mckinsey.com/v1alpha1
 kind: Model
 metadata:
-  # The 'default' model is used by agents if they do not have a model explicitly
-  # set.
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"ark.mckinsey.com/v1alpha1","kind":"Model","metadata":{"annotations":{},"name":"default","namespace":"default"},"spec":{"config":{"azure":{"apiKey":{"valueFrom":{"secretKeyRef":{"key":"token","name":"azure-openai-secret"}}},"apiVersion":{"value":"2024-12-01-preview"},"baseUrl":{"value":"https://azure.prod.ai-gateway.quantumblack.com/80948656-dd10-4633-be49-4ebd6c302368"}}},"model":{"value":"gpt-4.1-mini"},"type":"azure"}}
+    ops.ark.mckinsey.com/cost-tier: premium
+    pricing.ark.mckinsey.com/currency: USD
+    pricing.ark.mckinsey.com/input-cost: "0.00015"
+    pricing.ark.mckinsey.com/output-cost: "0.0006"
+    pricing.ark.mckinsey.com/unit: per-thousand-tokens
+  creationTimestamp: "2025-09-10T10:34:26Z"
+  generation: 1
   name: default
+  namespace: default
+  resourceVersion: "1923242"
+  uid: 5e62a907-8c51-4d15-a2fb-b6d0801f7abb
 spec:
-  type: azure
-  model:
-    value: gpt-4.1-mini
   config:
     azure:
-      baseUrl:
-        value: "https://lxo.openai.azure.com"
       apiKey:
         valueFrom:
           secretKeyRef:
-            # This secret is created by following the setup instructions in the README
-            name: default-model-token
             key: token
+            name: azure-openai-secret
       apiVersion:
-        value: "2024-12-01-preview" 
-
+        value: 2024-12-01-preview
+      baseUrl:
+        value: https://azure.prod.ai-gateway.quantumblack.com/80948656-dd10-4633-be49-4ebd6c302368
+  model:
+    value: gpt-4.1-mini
+  type: azure
+status:
+  phase: ready

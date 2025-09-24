@@ -6,7 +6,6 @@ This document provides a guide to the organization of ARK sample configurations 
 ```
 samples/
 ├── evaluator/                    # Central evaluator definitions
-├── evaluators/                   # Legacy evaluator files
 ├── models/                      # Model configurations
 ├── kyc-demo-gpt4-RAG/           # GPT-4.1-mini demonstrations
 ├── kyc-demo-ollama-rag/         # Local Ollama model demonstrations
@@ -22,12 +21,13 @@ samples/
 ### **`models/`** - Model Configurations
 ```
 models/
-├── text-embedding-ada-002.yaml
+├── default.yaml                     # Default GPT-4.1-mini with AI Gateway config (update instance ID)
+├── text-embedding-ada-002.yaml      # Azure OpenAI embeddings
 ├── local-ollama-gemma2-2b.yaml
 ├── local-ollama-mistral-7b.yaml
 ├── local-ollama-smollm2135.yaml
 ├── local-ollama.yaml (references qwen-8b model)
-└── [other model configurations (irrelevant)]
+└── [other model configurations]
 ```
 
 ### **`evaluator/`** - Centralized Evaluator Definitions
@@ -122,7 +122,8 @@ smollm2-135m/
   - `ark-dashboard-devspace` or `ark-dashboard`
   - `ark-evaluator`
   - `executor-langchain`
-- **Default model configured**: You must configure your default model to use `gpt-4.1-mini`
+- **Default model configured**: Default model is pre-configured in `samples/models/default.yaml` with GPT-4.1-mini and AI Gateway settings
+  - **⚠️ Important**: Update the `baseUrl` instance ID in `default.yaml` to match your AI Gateway instance
 
 ### Running Query
 
