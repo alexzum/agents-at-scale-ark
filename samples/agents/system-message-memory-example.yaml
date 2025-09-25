@@ -1,0 +1,12 @@
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Agent
+metadata:
+  name: system-message-memory-example
+  annotations:
+    # Include system message in memory for this agent (optional)
+    ark.mckinsey.com/include-system-message-in-memory: "true"
+spec:
+  description: An agent that includes its system message in memory for debugging purposes.
+  prompt: |
+    You are a helpful assistant that includes its system message in memory.
+    This is useful for debugging and understanding the agent's behavior.
