@@ -4,7 +4,6 @@ package controller
 
 import (
 	"context"
-	"time"
 
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -74,22 +73,28 @@ func (r *ModelReconciler) processModel(ctx context.Context, model arkv1alpha1.Mo
 	// Check current condition
 	currentCondition := meta.FindStatusCondition(model.Status.Conditions, ModelAvailable)
 
-	// Probe the model
-	probeErr := r.probeModel(ctx, model)
+	// Probe the model to test whether it is available
+	result := r.probeModel(ctx, model)
 
-	// Determine new status
+	// Determine new status based on probe result
 	var newStatus metav1.ConditionStatus
 	var reason, message string
 
-	if probeErr != nil {
+	if !result.Available {
 		newStatus = metav1.ConditionFalse
 		reason = "ProbeFailed"
-		message = probeErr.Error()
-		modelTracker.Fail(probeErr)
+		message = result.Message
+		modelTracker.Fail(result.DetailedError)
+
+		// Log the failure with detailed error for debugging
+		log.Info("model probe failed",
+			"model", model.Name,
+			"status", result.Message,
+			"details", result.DetailedError)
 	} else {
 		newStatus = metav1.ConditionTrue
 		reason = "Available"
-		message = "Model is available and probed successfully"
+		message = result.Message
 		modelTracker.Complete("probed")
 	}
 
@@ -106,21 +111,20 @@ func (r *ModelReconciler) processModel(ctx context.Context, model arkv1alpha1.Mo
 	return ctrl.Result{RequeueAfter: model.Spec.PollInterval.Duration}, nil
 }
 
-func (r *ModelReconciler) probeModel(ctx context.Context, model arkv1alpha1.Model) error {
+func (r *ModelReconciler) probeModel(ctx context.Context, model arkv1alpha1.Model) genai.ProbeResult {
 	resolvedModel, err := genai.LoadModel(ctx, r.Client, &arkv1alpha1.AgentModelRef{
 		Name:      model.Name,
 		Namespace: model.Namespace,
 	}, model.Namespace)
 	if err != nil {
-		return err
+		return genai.ProbeResult{
+			Available:     false,
+			Message:       "Failed to load model configuration",
+			DetailedError: err,
+		}
 	}
 
-	probeCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
-
-	testMessages := []genai.Message{genai.NewUserMessage("Hello")}
-	_, err = resolvedModel.ChatCompletion(probeCtx, testMessages, nil)
-	return err
+	return genai.ProbeModel(ctx, resolvedModel)
 }
 
 // setCondition sets a condition on the Model
