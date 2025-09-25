@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"regexp"
+	"strings"
 
 	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/packages/param"
@@ -29,6 +31,107 @@ type Agent struct {
 	Labels          map[string]string
 	OutputSchema    *runtime.RawExtension
 	client          client.Client
+}
+
+type MistralToolCall struct {
+	Name      string `json:"name"`
+	Arguments string `json:"arguments"`
+}
+
+func (a *Agent) isMistralModel() bool {
+	if a.Model == nil {
+		return false
+	}
+	return strings.Contains(strings.ToLower(a.Model.Model), "mistral")
+}
+
+func extractMistralToolCalls(content string) []MistralToolCall {
+	var toolCalls []MistralToolCall
+
+	content = strings.TrimSpace(content)
+	if content == "" {
+		return toolCalls
+	}
+
+	toolCalls = parseJSONToolCalls(content)
+
+	return toolCalls
+}
+
+func parseJSONToolCalls(content string) []MistralToolCall {
+	var toolCalls []MistralToolCall
+
+	namePattern := regexp.MustCompile(`"name"\s*:\s*"([^"]+)"`)
+	nameMatches := namePattern.FindAllStringSubmatch(content, -1)
+
+	if len(nameMatches) == 0 {
+		return toolCalls
+	}
+
+	argumentsPattern := regexp.MustCompile(`"arguments"\s*:\s*(\{.*?\})`)
+	argMatches := argumentsPattern.FindAllStringSubmatch(content, -1)
+
+	if len(nameMatches) != len(argMatches) {
+		argumentsPattern = regexp.MustCompile(`"arguments"\s*:\s*(\{.*\})`)
+		argMatches = argumentsPattern.FindAllStringSubmatch(content, -1)
+	}
+
+	minLen := len(nameMatches)
+	if len(argMatches) < minLen {
+		minLen = len(argMatches)
+	}
+
+	for i := 0; i < minLen; i++ {
+		if len(nameMatches[i]) >= 2 && len(argMatches[i]) >= 2 {
+			arguments := argMatches[i][1]
+
+			var testObj map[string]interface{}
+			if err := json.Unmarshal([]byte(arguments), &testObj); err == nil {
+				toolCalls = append(toolCalls, MistralToolCall{
+					Name:      nameMatches[i][1],
+					Arguments: arguments,
+				})
+			}
+		}
+	}
+
+	return toolCalls
+}
+
+func convertMistralToOpenAIToolCalls(mistralCalls []MistralToolCall) []openai.ChatCompletionMessageToolCall {
+	openAICalls := make([]openai.ChatCompletionMessageToolCall, 0, len(mistralCalls))
+
+	for i, call := range mistralCalls {
+		openAICalls = append(openAICalls, openai.ChatCompletionMessageToolCall{
+			ID:   fmt.Sprintf("mistral_call_%d", i),
+			Type: "function",
+			Function: openai.ChatCompletionMessageToolCallFunction{
+				Name:      call.Name,
+				Arguments: call.Arguments,
+			},
+		})
+	}
+	return openAICalls
+}
+
+func cleanToolCallsFromContent(content string) string {
+	jsonPattern := regexp.MustCompile(`\[\s*\{\s*"name"\s*:\s*"[^"]+"\s*,\s*"arguments"\s*:\s*\{[^}]*\}\s*\}\s*\]`)
+	content = jsonPattern.ReplaceAllString(content, "")
+
+	simplePattern := regexp.MustCompile(`\{\s*"name"\s*:\s*"[^"]+"\s*,\s*"arguments"\s*:\s*\{[^}]*\}\s*\}`)
+	content = simplePattern.ReplaceAllString(content, "")
+
+	return strings.TrimSpace(content)
+}
+
+func (a *Agent) processMistralToolCalls(choice *openai.ChatCompletionChoice) bool {
+	mistralCalls := extractMistralToolCalls(choice.Message.Content)
+	if len(mistralCalls) > 0 {
+		choice.Message.ToolCalls = convertMistralToOpenAIToolCalls(mistralCalls)
+		choice.Message.Content = cleanToolCallsFromContent(choice.Message.Content)
+		return true
+	}
+	return false
 }
 
 // FullName returns the namespace/name format for the agent
@@ -229,7 +332,13 @@ func (a *Agent) executeLocally(ctx context.Context, userInput Message, history [
 		newMessages = append(newMessages, assistantMessage)
 
 		if len(choice.Message.ToolCalls) == 0 {
-			return newMessages, nil
+			if a.isMistralModel() && a.processMistralToolCalls(&choice) {
+				assistantMessage = a.processAssistantMessage(choice)
+				agentMessages[len(agentMessages)-1] = assistantMessage
+				newMessages[len(newMessages)-1] = assistantMessage
+			} else {
+				return newMessages, nil
+			}
 		}
 
 		if err := a.executeToolCalls(ctx, choice.Message.ToolCalls, &agentMessages, &newMessages); err != nil {
