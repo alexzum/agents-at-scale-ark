@@ -133,12 +133,55 @@ quickstart() {
     # Check ark controller status, will warn the user if not deployed.
     check_ark_controller
 
-    # Webhook health check
+    # Webhook health check - ensure webhook is ready before creating resources
     echo "testing webhook connectivity..."
-    if ! kubectl get agent sample-agent >/dev/null 2>&1; then
-        echo -e "${yellow}warning${nc}: webhook may not be ready, restarting controller..."
-        kubectl delete pod -l app.kubernetes.io/name=ark-controller -n ark-system
-        kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=ark-controller -n ark-system --timeout=60s
+
+    # Function to test if webhook is ready
+    test_webhook() {
+        # Try to do a dry-run create of a minimal model to test webhook
+        kubectl apply --dry-run=server -f - <<EOF >/dev/null 2>&1
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Model
+metadata:
+  name: webhook-test-$$
+spec:
+  model:
+    value: test
+  type: openai
+  baseURL:
+    value: http://test
+EOF
+    }
+
+    # Check if webhook is ready with retries
+    webhook_ready=false
+    max_retries=10
+    retry_count=0
+
+    while [ $retry_count -lt $max_retries ]; do
+        if test_webhook; then
+            webhook_ready=true
+            break
+        fi
+
+        if [ $retry_count -eq 0 ]; then
+            echo -e "${yellow}warning${nc}: webhook not ready, waiting..."
+        elif [ $retry_count -eq 3 ]; then
+            echo -e "${yellow}warning${nc}: webhook still not ready, restarting controller..."
+            kubectl delete pod -l app.kubernetes.io/name=ark-controller -n ark-system >/dev/null 2>&1
+            kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=ark-controller -n ark-system --timeout=60s >/dev/null 2>&1
+        fi
+
+        sleep 2
+        retry_count=$((retry_count + 1))
+    done
+
+    if [ "$webhook_ready" = true ]; then
+        echo -e "${green}✔${nc} webhook is ready"
+    else
+        echo -e "${red}error${nc}: webhook failed to become ready after $max_retries attempts"
+        echo "You may need to check the controller logs: kubectl logs -n ark-system deployment/ark-controller"
+        exit 1
     fi
 
     # Check for default model (cluster is now running and kubectl should work)
