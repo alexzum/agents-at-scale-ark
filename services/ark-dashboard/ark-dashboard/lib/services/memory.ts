@@ -15,9 +15,11 @@ export interface MemoryMessage {
 
 // Stored conversation message from memory service
 export interface StoredMessage {
-  role: "user" | "assistant";
+  role: "user" | "assistant" | "system";
   content: string;
   name?: string;
+  agent_prompt?: string;
+  agent_name?: string;
 }
 
 // Session conversation data
@@ -117,6 +119,8 @@ export const memoryService = {
     queryId: string;
     message: { role: string; content: string; name?: string };
     sequence?: number;
+    agent_prompt?: string;
+    agent_name?: string;
   }[]> {
     try {
       let url = `/api/v1/namespaces/${namespace}/memory-messages`;
@@ -137,6 +141,8 @@ export const memoryService = {
           sessionId: string;
           queryId: string;
           message: { role: string; content: string; name?: string };
+          agent_prompt?: string;
+          agent_name?: string;
         }[];
       }>(url);
       return response?.items || [];

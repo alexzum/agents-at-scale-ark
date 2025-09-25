@@ -23,6 +23,7 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
 	arkv1alpha1 "mckinsey.com/ark/api/v1alpha1"
+	"mckinsey.com/ark/internal/annotations"
 	"mckinsey.com/ark/internal/genai"
 	"mckinsey.com/ark/internal/telemetry"
 )
@@ -633,9 +634,36 @@ func (r *QueryReconciler) executeAgent(ctx context.Context, query arkv1alpha1.Qu
 		return nil, err
 	}
 
-	// Save new messages to memory (user message + response messages)
-	newMessages := append([]genai.Message{userMessage}, responseMessages...)
-	if err := memory.AddMessages(ctx, query.Name, newMessages); err != nil {
+	// Check if agent has annotation to log prompt in memory
+	var agentPrompt, agentFullName string
+	var messagesToLog []genai.Message
+
+	if agent.Annotations != nil && agent.Annotations[annotations.IncludeSystemMessageInMemory] == "true" {
+		// Get the resolved prompt for logging
+		resolvedPrompt, err := agent.ResolvePrompt(ctx)
+		if err != nil {
+			// If prompt resolution fails, use the original prompt
+			resolvedPrompt = agent.Prompt
+		}
+		agentPrompt = resolvedPrompt
+		agentFullName = agent.FullName()
+
+		// Only include system message if this is the start of conversation (no existing messages)
+		if len(messages) == 0 {
+			// Include system message with prompt in memory logs
+			systemMessage := genai.NewSystemMessage(resolvedPrompt)
+			messagesToLog = append([]genai.Message{systemMessage}, userMessage)
+			messagesToLog = append(messagesToLog, responseMessages...)
+		} else {
+			// Standard logging without system message
+			messagesToLog = append([]genai.Message{userMessage}, responseMessages...)
+		}
+	} else {
+		// Standard logging without system message
+		messagesToLog = append([]genai.Message{userMessage}, responseMessages...)
+	}
+
+	if err := memory.AddMessagesWithAgent(ctx, query.Name, messagesToLog, agentPrompt, agentFullName); err != nil {
 		return nil, fmt.Errorf("failed to save new messages to memory: %w", err)
 	}
 
@@ -673,9 +701,61 @@ func (r *QueryReconciler) executeTeam(ctx context.Context, query arkv1alpha1.Que
 		return nil, err
 	}
 
-	// Save new messages to memory (user message + response messages)
-	newMessages := append([]genai.Message{userMessage}, responseMessages...)
-	if err := memory.AddMessages(ctx, query.Name, newMessages); err != nil {
+	// Check if any team members have the prompt logging annotation
+	var messagesToLog []genai.Message
+	var agentPrompt, agentName string
+
+	log := logf.FromContext(ctx)
+	log.Info("Checking team members for prompt logging annotation", "team", team.FullName(), "memberCount", len(team.Members), "existingMessages", len(messages))
+
+	// Check team members for prompt logging annotation
+	for i, member := range team.Members {
+		log.Info("Checking team member", "index", i, "memberName", member.GetName(), "memberType", member.GetType())
+
+		if agent, ok := member.(*genai.Agent); ok {
+			log.Info("Found agent member", "agentName", agent.FullName(), "hasAnnotations", agent.Annotations != nil)
+			if agent.Annotations != nil {
+				log.Info("Agent annotations", "annotations", agent.Annotations)
+				if agent.Annotations[annotations.IncludeSystemMessageInMemory] == "true" {
+					log.Info("Found agent with prompt logging annotation", "agentName", agent.FullName())
+
+					// Get the resolved prompt for logging
+					resolvedPrompt, err := agent.ResolvePrompt(ctx)
+					if err != nil {
+						// If prompt resolution fails, use the original prompt
+						resolvedPrompt = agent.Prompt
+					}
+					agentPrompt = resolvedPrompt
+					agentName = agent.FullName()
+
+					// Only include system message if this is the start of conversation (no existing messages)
+					if len(messages) == 0 {
+						log.Info("Start of conversation - adding system message", "prompt", resolvedPrompt)
+						// Include system message with prompt in memory logs
+						systemMessage := genai.NewSystemMessage(resolvedPrompt)
+						messagesToLog = append([]genai.Message{systemMessage}, userMessage)
+						messagesToLog = append(messagesToLog, responseMessages...)
+					} else {
+						log.Info("Continuing conversation - not adding system message")
+						// Standard logging without system message
+						messagesToLog = append([]genai.Message{userMessage}, responseMessages...)
+					}
+					break // Use the first agent with the annotation
+				}
+			}
+		} else {
+			log.Info("Member is not an agent", "memberType", member.GetType())
+		}
+	}
+
+	// If no agent has the annotation, use standard logging
+	if messagesToLog == nil {
+		messagesToLog = append([]genai.Message{userMessage}, responseMessages...)
+		log.Info("Using standard logging (no agent with annotation found)")
+	}
+
+	log.Info("Sending messages to memory", "messageCount", len(messagesToLog), "agentPrompt", agentPrompt, "agentName", agentName)
+	if err := memory.AddMessagesWithAgent(ctx, query.Name, messagesToLog, agentPrompt, agentName); err != nil {
 		return nil, fmt.Errorf("failed to save new messages to memory: %w", err)
 	}
 

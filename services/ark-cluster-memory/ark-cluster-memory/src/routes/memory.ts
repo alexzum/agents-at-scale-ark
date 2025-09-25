@@ -42,9 +42,14 @@ export function createMemoryRouter(memory: MemoryStore): Router {
    */
   router.post('/messages', (req, res) => {
     try {
-      const { session_id, query_id, messages } = req.body;
+      const { session_id, query_id, messages, agent_prompt, agent_name } = req.body;
       
-      console.log(`POST /messages - session_id: ${session_id}, query_id: ${query_id}, messages: ${messages?.length}`);
+      console.log(`POST /messages - session_id: ${session_id}, query_id: ${query_id}, messages: ${messages?.length}, agent: ${agent_name}, agent_prompt: ${agent_prompt ? 'present' : 'missing'}`);
+      
+      // Log the first message to see its structure
+      if (messages && messages.length > 0) {
+        console.log('First message:', JSON.stringify(messages[0], null, 2));
+      }
       
       if (!session_id) {
         res.status(400).json({ error: 'session_id is required' });
@@ -61,8 +66,8 @@ export function createMemoryRouter(memory: MemoryStore): Router {
         return;
       }
       
-      // Store messages with full metadata
-      memory.addMessagesWithMetadata(session_id, query_id, messages);
+      // Store messages with full metadata including agent prompt
+      memory.addMessagesWithMetadata(session_id, query_id, messages, agent_prompt, agent_name);
       res.status(200).send();
     } catch (error) {
       console.error('Failed to add messages:', error);

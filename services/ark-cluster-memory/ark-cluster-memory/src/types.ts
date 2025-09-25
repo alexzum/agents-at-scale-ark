@@ -6,6 +6,8 @@ export interface StoredMessage {
   query_id: string;
   message: Message;
   sequence: number;
+  agent_prompt?: string;
+  agent_name?: string;
 }
 
 export interface AddMessageRequest {

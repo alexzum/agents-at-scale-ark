@@ -75,7 +75,7 @@ func (a *Agent) executeWithExecutionEngine(ctx context.Context, userInput Messag
 		return nil, fmt.Errorf("failed to build agent config: %w", err)
 	}
 
-	resolvedPrompt, err := a.resolvePrompt(ctx)
+	resolvedPrompt, err := a.ResolvePrompt(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("agent %s prompt resolution failed: %w", a.FullName(), err)
 	}
@@ -92,7 +92,7 @@ func (a *Agent) executeWithA2AExecutionEngine(ctx context.Context, userInput Mes
 }
 
 func (a *Agent) prepareMessages(ctx context.Context, userInput Message, history []Message) ([]Message, error) {
-	resolvedPrompt, err := a.resolvePrompt(ctx)
+	resolvedPrompt, err := a.ResolvePrompt(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("agent %s prompt resolution failed: %w", a.FullName(), err)
 	}

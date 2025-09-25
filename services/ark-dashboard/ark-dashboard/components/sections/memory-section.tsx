@@ -46,6 +46,8 @@ export function MemorySection({
     queryId: string;
     message: { role: string; content: string; name?: string };
     sequence?: number;
+    agent_prompt?: string;
+    agent_name?: string;
   }[]>([]);
   const [loading, setLoading] = useState(true);
   const [availableMemories, setAvailableMemories] = useState<MemoryResource[]>([]);
@@ -561,6 +563,19 @@ export function MemorySection({
                       <pre className="text-xs text-gray-900 dark:text-gray-100 whitespace-pre-wrap">
                         {JSON.stringify(messageRecord.message, null, 2)}
                       </pre>
+                      {(messageRecord as any).agent_prompt && (
+                        <div className="mt-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded border-l-4 border-blue-400">
+                          <div className="text-xs font-semibold text-blue-800 dark:text-blue-200">Agent Prompt:</div>
+                          <div className="text-xs text-blue-700 dark:text-blue-300 mt-1">
+                            {(messageRecord as any).agent_prompt}
+                          </div>
+                          {(messageRecord as any).agent_name && (
+                            <div className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                              Agent: {(messageRecord as any).agent_name}
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </td>
                   </tr>
                 ))

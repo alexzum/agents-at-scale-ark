@@ -13,7 +13,7 @@ import (
 	arkv1alpha1 "mckinsey.com/ark/api/v1alpha1"
 )
 
-func (a *Agent) resolvePrompt(ctx context.Context) (string, error) {
+func (a *Agent) ResolvePrompt(ctx context.Context) (string, error) {
 	templateData := make(map[string]any)
 
 	agentParams, err := a.resolveParameters(ctx)

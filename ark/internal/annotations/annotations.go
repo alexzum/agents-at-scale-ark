@@ -51,3 +51,8 @@ const (
 	StreamingEnabled = ARKPrefix + "streaming-enabled"
 	StreamingURL     = ARKPrefix + "streaming-url"
 )
+
+// Memory logging annotations
+const (
+	IncludeSystemMessageInMemory = ARKPrefix + "include-system-message-in-memory"
+)

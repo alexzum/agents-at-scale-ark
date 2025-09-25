@@ -198,7 +198,7 @@ func TestAgentParameterResolution(t *testing.T) {
 			}
 
 			// Test parameter resolution
-			got, err := tt.agent.resolvePrompt(ctx)
+			got, err := tt.agent.ResolvePrompt(ctx)
 
 			if (err != nil) != tt.wantErr {
 				t.Errorf("resolvePrompt() error = %v, wantErr %v", err, tt.wantErr)

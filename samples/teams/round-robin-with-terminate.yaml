@@ -2,6 +2,8 @@ apiVersion: ark.mckinsey.com/v1alpha1
 kind: Agent
 metadata:
   name: agent-rr
+  annotations:
+    ark.mckinsey.com/include-system-message-in-memory: "true"
 spec:
   prompt: Append "Bazinga!" to the user input and say it. If you see Bazinga 3 times, end the conversation.
   tools:

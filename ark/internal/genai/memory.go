@@ -37,6 +37,7 @@ func getMemoryTimeout() time.Duration {
 
 type MemoryInterface interface {
 	AddMessages(ctx context.Context, queryID string, messages []Message) error
+	AddMessagesWithAgent(ctx context.Context, queryID string, messages []Message, agentPrompt, agentName string) error
 	GetMessages(ctx context.Context) ([]Message, error)
 	Close() error
 }
@@ -50,9 +51,11 @@ type Config struct {
 }
 
 type MessagesRequest struct {
-	SessionID string                                   `json:"session_id"`
-	QueryID   string                                   `json:"query_id"`
-	Messages  []openai.ChatCompletionMessageParamUnion `json:"messages"`
+	SessionID   string                                   `json:"session_id"`
+	QueryID     string                                   `json:"query_id"`
+	Messages    []openai.ChatCompletionMessageParamUnion `json:"messages"`
+	AgentPrompt string                                   `json:"agent_prompt,omitempty"`
+	AgentName   string                                   `json:"agent_name,omitempty"`
 }
 
 type MessageRecord struct {

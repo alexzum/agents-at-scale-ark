@@ -17,6 +17,11 @@ func (n *NoopMemory) AddMessages(ctx context.Context, queryID string, messages [
 	return nil
 }
 
+func (n *NoopMemory) AddMessagesWithAgent(ctx context.Context, queryID string, messages []Message, agentPrompt, agentName string) error {
+	logf.FromContext(ctx).V(2).Info("NoopMemory: AddMessagesWithAgent called - messages discarded", "queryId", queryID, "count", len(messages), "agentName", agentName)
+	return nil
+}
+
 func (n *NoopMemory) GetMessages(ctx context.Context) ([]Message, error) {
 	logf.FromContext(ctx).V(2).Info("NoopMemory: GetMessages called - returning empty slice")
 	return []Message{}, nil
