@@ -44,13 +44,6 @@ export function createMemoryRouter(memory: MemoryStore): Router {
     try {
       const { session_id, query_id, messages, agent_prompt, agent_name } = req.body;
       
-      console.log(`POST /messages - session_id: ${session_id}, query_id: ${query_id}, messages: ${messages?.length}, agent: ${agent_name}, agent_prompt: ${agent_prompt ? 'present' : 'missing'}`);
-      
-      // Log the first message to see its structure
-      if (messages && messages.length > 0) {
-        console.log('First message:', JSON.stringify(messages[0], null, 2));
-      }
-      
       if (!session_id) {
         res.status(400).json({ error: 'session_id is required' });
         return;

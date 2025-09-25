@@ -563,15 +563,15 @@ export function MemorySection({
                       <pre className="text-xs text-gray-900 dark:text-gray-100 whitespace-pre-wrap">
                         {JSON.stringify(messageRecord.message, null, 2)}
                       </pre>
-                      {(messageRecord as any).agent_prompt && (
+                      {messageRecord.agent_prompt && (
                         <div className="mt-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded border-l-4 border-blue-400">
                           <div className="text-xs font-semibold text-blue-800 dark:text-blue-200">Agent Prompt:</div>
                           <div className="text-xs text-blue-700 dark:text-blue-300 mt-1">
-                            {(messageRecord as any).agent_prompt}
+                            {messageRecord.agent_prompt}
                           </div>
-                          {(messageRecord as any).agent_name && (
+                          {messageRecord.agent_name && (
                             <div className="text-xs text-blue-600 dark:text-blue-400 mt-1">
-                              Agent: {(messageRecord as any).agent_name}
+                              Agent: {messageRecord.agent_name}
                             </div>
                           )}
                         </div>
