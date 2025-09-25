@@ -201,12 +201,12 @@ func TestAgentParameterResolution(t *testing.T) {
 			got, err := tt.agent.ResolvePrompt(ctx)
 
 			if (err != nil) != tt.wantErr {
-				t.Errorf("resolvePrompt() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("ResolvePrompt() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 
 			if got != tt.wantPrompt {
-				t.Errorf("resolvePrompt() = %v, want %v", got, tt.wantPrompt)
+				t.Errorf("ResolvePrompt() = %v, want %v", got, tt.wantPrompt)
 			}
 		})
 	}

@@ -83,21 +83,7 @@ func (a *Agent) executeWithExecutionEngine(ctx context.Context, userInput Messag
 
 	toolDefinitions := buildToolDefinitions(a.Tools)
 
-	responseMessages, err := engineClient.Execute(ctx, a.ExecutionEngine, agentConfig, userInput, history, toolDefinitions, a.Recorder)
-	if err != nil {
-		return nil, err
-	}
-
-	// Include the system message (prompt) in the returned messages only if annotation allows it
-	// AND this is the first time this agent is being executed in this session
-	newMessages := []Message{}
-	if a.shouldIncludeSystemMessageInMemory() && a.isFirstExecutionInSession(ctx, history) {
-		systemMessage := NewSystemMessage(resolvedPrompt)
-		newMessages = append(newMessages, systemMessage)
-	}
-	newMessages = append(newMessages, responseMessages...)
-
-	return newMessages, nil
+	return engineClient.Execute(ctx, a.ExecutionEngine, agentConfig, userInput, history, toolDefinitions, a.Recorder)
 }
 
 func (a *Agent) executeWithA2AExecutionEngine(ctx context.Context, userInput Message) ([]Message, error) {
@@ -227,14 +213,6 @@ func (a *Agent) executeLocally(ctx context.Context, userInput Message, history [
 
 	newMessages := []Message{}
 
-	// Include the system message (prompt) in the returned messages only if annotation allows it
-	// AND this is the first time this agent is being executed in this session
-	if a.shouldIncludeSystemMessageInMemory() && len(agentMessages) > 0 && a.isFirstExecutionInSession(ctx, history) {
-		// The first message is always the system message (prompt)
-		systemMessage := agentMessages[0]
-		newMessages = append(newMessages, systemMessage)
-	}
-
 	for {
 		if ctx.Err() != nil {
 			return newMessages, ctx.Err()
@@ -273,42 +251,6 @@ func (a *Agent) GetType() string {
 
 func (a *Agent) GetDescription() string {
 	return a.Description
-}
-
-// shouldIncludeSystemMessageInMemory checks if the agent has an annotation to include system messages in memory
-// By default, system messages are NOT included in memory to avoid cluttering conversation history
-func (a *Agent) shouldIncludeSystemMessageInMemory() bool {
-	if a.Annotations == nil {
-		return false
-	}
-	// Check for annotation: ark.mckinsey.com/include-system-message-in-memory
-	// If set to "true", system messages will be included in memory
-	return a.Annotations["ark.mckinsey.com/include-system-message-in-memory"] == "true"
-}
-
-// isFirstExecutionInSession checks if this is the first time this agent is being executed in the current session
-// by checking if there are any system messages from this agent already in the history
-func (a *Agent) isFirstExecutionInSession(ctx context.Context, history []Message) bool {
-	// For now, we'll use a simpler approach: check if there are any system messages in the history
-	// that match this agent's prompt. This is not perfect but should work for most cases.
-
-	// Get the resolved prompt for this agent
-	resolvedPrompt, err := a.resolvePrompt(ctx)
-	if err != nil {
-		// If we can't resolve the prompt, assume it's the first execution
-		return true
-	}
-
-	// Check if there are any system messages in the history that match this agent's prompt
-	// This is a heuristic approach - if we find a system message with the same content,
-	// it's likely from a previous execution of this agent
-	for _, msg := range history {
-		if msg.OfSystem != nil && msg.OfSystem.Content.OfString.Value == resolvedPrompt {
-			return false // This agent has already been executed in this session
-		}
-	}
-
-	return true // This is the first execution for this agent in this session
 }
 
 // ValidateExecutionEngine checks if the specified ExecutionEngine resource exists
