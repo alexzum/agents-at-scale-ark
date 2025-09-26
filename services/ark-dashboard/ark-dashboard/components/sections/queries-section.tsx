@@ -195,14 +195,12 @@ export const QueriesSection = forwardRef<{ openAddEditor: () => void }>(function
       | "done"
       | "error"
       | "running"
-      | "evaluating"
       | "canceled"
       | "default";
     const variant = [
       "done",
       "error",
       "running",
-      "evaluating",
       "canceled"
     ].includes(status || "")
       ? normalizedStatus
@@ -487,7 +485,7 @@ export const QueriesSection = forwardRef<{ openAddEditor: () => void }>(function
 });
 
 interface StatusDotProps {
-  variant: "done" | "error" | "running" | "evaluating" | "canceled" | "default";
+  variant: "done" | "error" | "running" | "canceled" | "default";
   onCancel?: () => void;
 }
 
@@ -500,8 +498,6 @@ function StatusDot({ variant, onCancel }: StatusDotProps) {
         return "bg-red-300";
       case "running":
         return "bg-blue-300";
-      case "evaluating":
-        return "bg-yellow-300";
       case "canceled":
         return "bg-gray-300";
       default:
@@ -517,8 +513,6 @@ function StatusDot({ variant, onCancel }: StatusDotProps) {
         return "Error";
       case "running":
         return "Running";
-      case "evaluating":
-        return "Evaluating";
       case "canceled":
         return "Canceled";
       default:

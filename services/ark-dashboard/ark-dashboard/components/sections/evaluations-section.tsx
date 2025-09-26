@@ -44,7 +44,7 @@ const StatusDot = ({
   variant,
   onCancel
 }: {
-  variant: "done" | "error" | "running" | "evaluating" | "canceled" | "default";
+  variant: "done" | "error" | "running" | "canceled" | "default";
   onCancel?: () => void;
 }) => {
   const getColor = () => {
@@ -55,8 +55,6 @@ const StatusDot = ({
         return "bg-red-500";
       case "running":
         return "bg-blue-500 animate-pulse";
-      case "evaluating":
-        return "bg-yellow-500 animate-pulse";
       case "canceled":
         return "bg-gray-500";
       default:
@@ -524,14 +522,12 @@ export const EvaluationsSection = forwardRef<
       | "done"
       | "error"
       | "running"
-      | "evaluating"
       | "canceled"
       | "default";
     const variant = [
       "done",
       "error",
       "running",
-      "evaluating",
       "canceled"
     ].includes(status || "")
       ? normalizedStatus
@@ -541,7 +537,7 @@ export const EvaluationsSection = forwardRef<
       <StatusDot
         variant={variant}
         onCancel={
-          status === "running" || status === "evaluating"
+          status === "running"
             ? () => handleCancel(evaluationName)
             : undefined
         }

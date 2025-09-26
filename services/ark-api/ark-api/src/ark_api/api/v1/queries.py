@@ -63,8 +63,6 @@ def query_to_detail_response(query: dict) -> QueryDetailResponse:
         timeout=spec.get("timeout"),
         ttl=spec.get("ttl"),
         cancel=spec.get("cancel"),
-        evaluators=spec.get("evaluators"),
-        evaluatorSelector=spec.get("evaluatorSelector"),
         metadata=metadata,
         status=query.get("status")
     )
@@ -115,10 +113,6 @@ async def create_query(
             spec["ttl"] = query.ttl
         if query.cancel is not None:
             spec["cancel"] = query.cancel
-        if query.evaluators:
-            spec["evaluators"] = [e.model_dump() for e in query.evaluators]
-        if query.evaluatorSelector:
-            spec["evaluatorSelector"] = query.evaluatorSelector.model_dump()
         
         # Create the QueryV1alpha1 object
         metadata = {
@@ -183,10 +177,6 @@ async def update_query(
             spec["ttl"] = query.ttl
         if query.cancel is not None:
             spec["cancel"] = query.cancel
-        if query.evaluators is not None:
-            spec["evaluators"] = [e.model_dump() for e in query.evaluators]
-        if query.evaluatorSelector is not None:
-            spec["evaluatorSelector"] = query.evaluatorSelector.model_dump()
         
         # Update the resource - need to update the entire resource object
         current_dict = current.to_dict()

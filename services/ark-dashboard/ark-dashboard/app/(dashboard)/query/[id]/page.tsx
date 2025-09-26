@@ -33,6 +33,7 @@ import type { components } from "@/lib/api/generated/types";
 import { useMarkdownProcessor } from "@/lib/hooks/use-markdown-processor";
 import {
   agentsService,
+  evaluationsService,
   memoriesService,
   modelsService,
   teamsService,
@@ -302,6 +303,7 @@ function QueryDetailContent() {
 
   const [query, setQuery] = useState<TypedQueryDetailResponse | null>(null)
   const [loading, setLoading] = useState(true)
+  const [evaluationCount, setEvaluationCount] = useState(0)
   const [availableTargets, setAvailableTargets] = useState<Array<{name: string, type: 'agent' | 'model' | 'team' | 'tool'}>>([])
   const [targetsLoading, setTargetsLoading] = useState(false)
   const [availableMemories, setAvailableMemories] = useState<Array<{name: string}>>([])
@@ -512,10 +514,19 @@ function QueryDetailContent() {
       try {
         const queryData = await queriesService.get(queryId)
         setQuery(queryData as TypedQueryDetailResponse)
-        
+
         // Set streaming state based on annotation
         const isStreamingEnabled = (queryData as TypedQueryDetailResponse).metadata?.[ARK_ANNOTATIONS.STREAMING_ENABLED] === "true"
         setStreaming(isStreamingEnabled)
+
+        // Load evaluation count
+        try {
+          const evaluationSummary = await evaluationsService.getEvaluationSummary(queryId)
+          setEvaluationCount(evaluationSummary.total || 0)
+        } catch (error) {
+          console.error('Failed to load evaluation count:', error)
+          setEvaluationCount(0)
+        }
       } catch (error) {
         toast({
           variant: "destructive",
@@ -747,22 +758,6 @@ function QueryDetailContent() {
                     {query.selector ? "Configured" : "—"}
                   </td>
                 </tr>
-                <tr className="border-b border-gray-100 dark:border-gray-800">
-                  <td className={FIELD_HEADING_STYLES}>
-                    Evaluators
-                  </td>
-                  <td className="px-3 py-2 text-xs text-gray-700 dark:text-gray-300">
-                    {query.evaluators?.length ? `${query.evaluators.length} evaluator(s)` : "—"}
-                  </td>
-                </tr>
-                <tr>
-                  <td className={FIELD_HEADING_STYLES}>
-                    Eval. Selector
-                  </td>
-                  <td className="px-3 py-2 text-xs text-gray-700 dark:text-gray-300">
-                    {query.evaluatorSelector ? "Configured" : "—"}
-                  </td>
-                </tr>
               </tbody>
             </table>
           </div>
@@ -811,7 +806,7 @@ function QueryDetailContent() {
                     Evaluations
                   </td>
                   <td className="px-3 py-2 text-xs text-gray-700 dark:text-gray-300">
-                    {query.status?.evaluations?.length || 0}
+                    {evaluationCount}
                   </td>
                 </tr>
               </tbody>

@@ -46,7 +46,6 @@ type QueryReconciler struct {
 // +kubebuilder:rbac:groups=ark.mckinsey.com,resources=agents,verbs=get;list
 // +kubebuilder:rbac:groups=ark.mckinsey.com,resources=teams,verbs=get;list
 // +kubebuilder:rbac:groups=ark.mckinsey.com,resources=models,verbs=get;list
-// +kubebuilder:rbac:groups=ark.mckinsey.com,resources=evaluators,verbs=get;list
 // +kubebuilder:rbac:groups="",resources=events,verbs=create;list;watch;patch
 // +kubebuilder:rbac:groups="",resources=serviceaccounts,verbs=impersonate
 
@@ -119,8 +118,6 @@ func (r *QueryReconciler) handleQueryExecution(ctx context.Context, req ctrl.Req
 		return ctrl.Result{
 			RequeueAfter: time.Until(expiry),
 		}, nil
-	case statusEvaluating:
-		return r.handleEvaluationPhase(ctx, req, obj)
 	case statusRunning:
 		return r.handleRunningPhase(ctx, req, obj)
 	default:
@@ -131,16 +128,6 @@ func (r *QueryReconciler) handleQueryExecution(ctx context.Context, req ctrl.Req
 		}
 		return ctrl.Result{}, nil
 	}
-}
-
-func (r *QueryReconciler) handleEvaluationPhase(ctx context.Context, req ctrl.Request, obj arkv1alpha1.Query) (ctrl.Result, error) {
-	r.cleanupExistingOperation(req.NamespacedName)
-	opCtx, cancel := context.WithCancel(ctx)
-	r.operations.Store(req.NamespacedName, cancel)
-	recorder := genai.NewQueryRecorder(&obj, r.Recorder)
-	tokenCollector := genai.NewTokenUsageCollector(recorder)
-	go r.executeEvaluation(opCtx, obj, req.NamespacedName, tokenCollector)
-	return ctrl.Result{}, nil
 }
 
 func (r *QueryReconciler) handleRunningPhase(ctx context.Context, req ctrl.Request, obj arkv1alpha1.Query) (ctrl.Result, error) {
@@ -207,28 +194,11 @@ func (r *QueryReconciler) executeQueryAsync(opCtx context.Context, obj arkv1alph
 		TotalTokens:      tokenSummary.TotalTokens,
 	}
 
-	evaluators, evalErr := r.resolveEvaluators(opCtx, obj, impersonatedClient)
-	if evalErr != nil {
-		log.Error(evalErr, "Failed to resolve evaluators")
-		_ = r.updateStatus(opCtx, &obj, statusError)
-		return
-	}
-
-	if len(evaluators) > 0 {
-		_ = r.updateStatus(opCtx, &obj, statusEvaluating)
-		cleanupCache = false
-	} else {
-		_ = r.updateStatus(opCtx, &obj, statusDone)
-	}
+	_ = r.updateStatus(opCtx, &obj, statusDone)
 
 	duration := &metav1.Duration{Duration: time.Since(startTime)}
-	if len(evaluators) > 0 {
-		_ = r.updateStatusWithDuration(opCtx, &obj, statusEvaluating, duration)
-		cleanupCache = false
-	} else {
-		r.finalizeEventStream(opCtx, eventStream)
-		_ = r.updateStatusWithDuration(opCtx, &obj, statusDone, duration)
-	}
+	r.finalizeEventStream(opCtx, eventStream)
+	_ = r.updateStatusWithDuration(opCtx, &obj, statusDone, duration)
 }
 
 // finalizeEventStream sends the completion message to the event stream and
@@ -364,48 +334,6 @@ func (r *QueryReconciler) resolveSelector(ctx context.Context, selector *metav1.
 	}
 
 	return targets, nil
-}
-
-func (r *QueryReconciler) resolveEvaluators(ctx context.Context, query arkv1alpha1.Query, impersonatedClient client.Client) ([]arkv1alpha1.EvaluatorRef, error) {
-	var allEvaluators []arkv1alpha1.EvaluatorRef
-
-	allEvaluators = append(allEvaluators, query.Spec.Evaluators...)
-
-	if query.Spec.EvaluatorSelector != nil {
-		evaluators, err := r.resolveEvaluatorSelector(ctx, query.Spec.EvaluatorSelector, query.Namespace, impersonatedClient)
-		if err != nil {
-			return nil, fmt.Errorf("failed to resolve evaluator selector: %w", err)
-		}
-		allEvaluators = append(allEvaluators, evaluators...)
-	}
-
-	return allEvaluators, nil
-}
-
-func (r *QueryReconciler) resolveEvaluatorSelector(ctx context.Context, selector *metav1.LabelSelector, namespace string, impersonatedClient client.Client) ([]arkv1alpha1.EvaluatorRef, error) {
-	evaluators := make([]arkv1alpha1.EvaluatorRef, 0, 5)
-
-	labelSelector, err := metav1.LabelSelectorAsSelector(selector)
-	if err != nil {
-		return nil, fmt.Errorf("invalid label selector: %w", err)
-	}
-
-	var evaluatorList arkv1alpha1.EvaluatorList
-	if err := impersonatedClient.List(ctx, &evaluatorList, &client.ListOptions{
-		Namespace:     namespace,
-		LabelSelector: labelSelector,
-	}); err != nil {
-		return nil, fmt.Errorf("failed to list evaluators: %w", err)
-	}
-
-	for _, evaluator := range evaluatorList.Items {
-		evaluators = append(evaluators, arkv1alpha1.EvaluatorRef{
-			Name:      evaluator.Name,
-			Namespace: evaluator.Namespace,
-		})
-	}
-
-	return evaluators, nil
 }
 
 func (r *QueryReconciler) reconcileQueue(ctx context.Context, query arkv1alpha1.Query, impersonatedClient client.Client, memory genai.MemoryInterface, tokenCollector *genai.TokenUsageCollector) ([]arkv1alpha1.Response, genai.EventStreamInterface, error) {
@@ -884,52 +812,6 @@ func (r *QueryReconciler) cleanupExistingOperation(namespacedName types.Namespac
 		r.operations.Delete(namespacedName)
 	} else {
 		logf.Log.Info("No existing operation found to cleanup", "query", namespacedName.String())
-	}
-}
-
-func (r *QueryReconciler) executeEvaluation(ctx context.Context, obj arkv1alpha1.Query, namespacedName types.NamespacedName, tokenCollector *genai.TokenUsageCollector) {
-	log := logf.FromContext(ctx)
-	defer func() {
-		if r := recover(); r != nil {
-			log.Error(fmt.Errorf("evaluation goroutine panic: %v", r), "Evaluation goroutine panicked")
-		}
-		r.operations.Delete(namespacedName)
-	}()
-
-	startTime := time.Now()
-
-	impersonatedClient, err := r.getClientForQuery(obj)
-	if err != nil {
-		log.Error(err, "Failed to create impersonated client for evaluation", "duration", time.Since(startTime))
-		if updateErr := r.updateStatus(ctx, &obj, statusError); updateErr != nil {
-			log.Error(updateErr, "Failed to update status")
-		}
-		return
-	}
-
-	evaluators, err := r.resolveEvaluators(ctx, obj, impersonatedClient)
-	if err != nil {
-		log.Error(err, "Failed to resolve evaluators", "duration", time.Since(startTime))
-		if updateErr := r.updateStatus(ctx, &obj, statusError); updateErr != nil {
-			log.Error(updateErr, "Failed to update status")
-		}
-		return
-	}
-
-	evaluationResults, err := genai.CallEvaluators(ctx, impersonatedClient, obj, evaluators, tokenCollector)
-	duration := time.Since(startTime)
-
-	if err != nil {
-		log.Error(err, "Evaluation failed", "duration", duration)
-		if updateErr := r.updateStatus(ctx, &obj, statusError); updateErr != nil {
-			log.Error(updateErr, "Failed to update status")
-		}
-	} else {
-		obj.Status.Evaluations = evaluationResults
-
-		if updateErr := r.updateStatus(ctx, &obj, statusDone); updateErr != nil {
-			log.Error(updateErr, "Failed to update status")
-		}
 	}
 }
 
