@@ -5,10 +5,13 @@
   "main": "index.js",
   "scripts": {
     "dev": "next --turbopack",
+    "prebuild": "node scripts/sync-resource-schemas.js && node scripts/validate-resource-schemas.js",
     "build": "next build",
     "postbuild": "pagefind --site .next/server/app --output-path out/_pagefind",
     "start": "next start",
     "check-links": "node scripts/check-links.js",
+    "sync-schemas": "node scripts/sync-resource-schemas.js",
+    "validate-schemas": "node scripts/validate-resource-schemas.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
