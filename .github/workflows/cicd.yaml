@@ -402,7 +402,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '22.x'
 
       - name: Configure K3s registry authentication
         run: |
@@ -426,7 +426,7 @@ jobs:
           traefik-enabled: false
           k3s-channel: latest
 
-      - name: Install ark CLI
+      - name: Install Ark CLI
         run: |
           # Build and install ark CLI using npm
           cd tools/ark-cli
@@ -436,8 +436,15 @@ jobs:
 
           # Verify installation
           ark --version
+      - name: Check Version and Status
+        run: |
+          # Check the status.
+          ark status
 
-      - name: Install ARK using CLI
+          # Check the version.
+          ark version
+
+      - name: Install Ark using CLI
         run: |
           # Use ark install command with default settings
           # The CLI will use ghcr images by default
