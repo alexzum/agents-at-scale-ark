@@ -3,6 +3,5 @@ export default {
   models: 'Models',
   mcpserver: 'MCPServers',
   memory: 'Memories',
-  tools: 'Tools',
-  query: 'Queries'
+  tools: 'Tools'
 }
