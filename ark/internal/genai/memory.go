@@ -50,11 +50,14 @@ type Config struct {
 }
 
 type MessagesRequest struct {
-	SessionID   string                                   `json:"session_id"`
-	QueryID     string                                   `json:"query_id"`
-	Messages    []openai.ChatCompletionMessageParamUnion `json:"messages"`
-	AgentPrompt string                                   `json:"agent_prompt,omitempty"`
-	AgentName   string                                   `json:"agent_name,omitempty"`
+	SessionID string                                   `json:"session_id"`
+	QueryID   string                                   `json:"query_id"`
+	Messages  []openai.ChatCompletionMessageParamUnion `json:"messages"`
+	Ark       ArkMetadata                              `json:"ark,omitempty"`
+}
+
+type ArkMetadata struct {
+	AgentName string `json:"agent_name,omitempty"`
 }
 
 type MessageRecord struct {

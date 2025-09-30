@@ -124,11 +124,12 @@ func (m *HTTPMemory) AddMessages(ctx context.Context, queryID string, messages [
 	}
 
 	reqBody, err := json.Marshal(MessagesRequest{
-		SessionID:   m.sessionId,
-		QueryID:     queryID,
-		Messages:    openaiMessages,
-		AgentPrompt: "", // Empty since we removed agent prompt storage
-		AgentName:   "", // Empty since we removed agent name storage
+		SessionID: m.sessionId,
+		QueryID:   queryID,
+		Messages:  openaiMessages,
+		Ark: ArkMetadata{
+			AgentName: "", // Empty since we removed agent name storage
+		},
 	})
 	if err != nil {
 		tracker.Fail(fmt.Errorf("failed to serialize messages: %w", err))

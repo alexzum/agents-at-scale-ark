@@ -42,7 +42,7 @@ export function createMemoryRouter(memory: MemoryStore): Router {
    */
   router.post('/messages', (req, res) => {
     try {
-      const { session_id, query_id, messages, agent_prompt, agent_name } = req.body;
+      const { session_id, query_id, messages, ark } = req.body;
       
       if (!session_id) {
         res.status(400).json({ error: 'session_id is required' });
@@ -59,8 +59,11 @@ export function createMemoryRouter(memory: MemoryStore): Router {
         return;
       }
       
-      // Store messages with full metadata including agent prompt
-      memory.addMessagesWithMetadata(session_id, query_id, messages, agent_prompt, agent_name);
+      // Extract agent metadata from ark object
+      const agentName = ark?.agent_name || '';
+      
+      // Store messages with metadata
+      memory.addMessagesWithMetadata(session_id, query_id, messages, undefined, agentName);
       res.status(200).send();
     } catch (error) {
       console.error('Failed to add messages:', error);
