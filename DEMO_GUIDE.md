@@ -7,7 +7,6 @@ This guide provides the exact commands to run the ARK banking demo as outlined i
 - ARK cluster running with `devspace dev`
 - `fark` CLI installed and available
 - `kubectl` configured and working
-- Demo should take ~15 minutes total
 
 ---
 
@@ -231,48 +230,3 @@ When your `.ark.env` file changes (e.g., daily token updates), refresh the demo 
 kubectl get agents -w
 # Wait for agents to show AVAILABLE: True
 ```
-
----
-
-## **Demo Script Notes**
-
-### **Key Talking Points During Demo**
-
-**Setup Phase**:
-- "We're creating an isolated namespace - this shows proper Kubernetes resource management"
-- "These agents deploy just like any other microservice"
-
-**Individual Agents**:
-- "Each agent is specialized - Router for classification, Account Helper for account queries, Loan Advisor for loan information"
-- "Notice the sub-second response times"
-
-**Team Workflow**:
-- "This is where ARK shines - coordinating multiple agents in a workflow"
-- "The customer gets one comprehensive response, but multiple AI agents collaborated"
-
-**API Integration**:
-- "Your existing systems can integrate via these REST APIs"
-- "This is how LegacyX or any other system would call ARK agents"
-
-**Observability**:
-- "Full request tracing and monitoring - you can see exactly what each agent did"
-- "This integrates with your existing monitoring infrastructure"
-
-### **Expected Response Times**
-- Individual agent queries: 200-500ms
-- Team queries: 800ms-2s (sequential execution)
-- API responses: Similar to CLI times
-
-### **Troubleshooting Quick Fixes**
-```bash
-# If agents show as not available
-kubectl describe agent <agent-name> -n demo-bank
-
-# If team queries fail
-kubectl describe team customer-service-team -n demo-bank
-
-# Force restart if needed
-kubectl rollout restart deployment -l app=ark -n demo-bank
-```
-
-This guide provides a complete, runnable demo that showcases ARK's enterprise capabilities in a banking context.
