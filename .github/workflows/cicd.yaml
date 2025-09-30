@@ -428,8 +428,11 @@ jobs:
 
       - name: Install ark CLI
         run: |
-          # Install ark CLI globally
-          make ark-cli-install
+          # Build and install ark CLI using npm
+          cd tools/ark-cli
+          npm install
+          npm run build
+          npm link
 
           # Verify installation
           ark --version
