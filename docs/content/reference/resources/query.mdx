@@ -1,0 +1,94 @@
+# Query Resource
+
+The Query resource is the primary way to execute conversations with ARK agents, teams, models, and tools. It provides a declarative interface for running AI-powered interactions with full memory integration and observability.
+
+## Key Behaviors
+
+### System Message Replacement
+- Each agent gets its own fresh system message from its resolved prompt
+- System messages are replaced, not duplicated, ensuring clean conversation context
+- Memory hydration can optionally include system messages for debugging
+
+### Memory Integration
+- Queries automatically integrate with configured memory resources
+- Conversation history is loaded and maintained across query executions
+- Messages are stored with structured metadata for observability
+
+### Team Coordination
+- Team queries coordinate multiple agents using specified strategies
+- Each agent in a team gets its own system message
+- Round-robin, sequential, and other team strategies are supported
+
+### No Duplicate System Messages
+- ARK ensures only one system message per agent per conversation
+- Fresh system messages are created from current agent prompts
+- Memory storage respects the `MemoryIncludeHydrateSystemMessage` annotation
+
+### Memory Hydration with Annotation
+- Agents can include their system message in memory storage using the `ark.mckinsey.com/memory-include-hydrate-system-message: "true"` annotation
+- Useful for debugging and understanding agent behavior
+- System messages are only included at conversation start (when no existing messages)
+
+## Usage Examples
+
+### Basic Agent Query
+```yaml
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Query
+metadata:
+  name: simple-chat
+spec:
+  input: "Hello, how are you?"
+  memory:
+    name: default
+  targets:
+    - type: agent
+      name: helpful-assistant
+```
+
+### Query with Memory Hydration
+```yaml
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Query
+metadata:
+  name: debug-chat
+spec:
+  input: "What's your role?"
+  memory:
+    name: default
+  targets:
+    - type: agent
+      name: debug-agent  # Agent with memory-include-hydrate-system-message annotation
+```
+
+### Query with Parameters
+```yaml
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Query
+metadata:
+  name: parameterized-query
+spec:
+  input: "Analyze {{.company}}'s performance"
+  parameters:
+    company: "Acme Corp"
+  memory:
+    name: default
+  targets:
+    - type: agent
+      name: business-analyst
+```
+
+### Team Query
+```yaml
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Query
+metadata:
+  name: team-analysis
+spec:
+  input: "Provide a comprehensive analysis"
+  memory:
+    name: default
+  targets:
+    - type: team
+      name: consulting-team
+```

@@ -1,0 +1,108 @@
+# Queries
+
+Queries are the primary execution mechanism in ARK, providing a declarative way to run conversations with AI agents, teams, models, and tools. They serve as the bridge between user input and ARK's AI capabilities.
+
+## Overview
+
+Queries in ARK are Kubernetes Custom Resources that define:
+- **Input**: The user's message or prompt
+- **Targets**: Which agents, teams, models, or tools to execute
+- **Memory**: Which memory resource to use for conversation history
+- **Parameters**: Template variables for dynamic input resolution
+
+## Key Features
+
+### Memory Integration
+Queries automatically integrate with ARK's memory system, loading conversation history and storing new messages with structured metadata. This enables context-aware conversations across multiple query executions.
+
+### System Message Management
+ARK ensures clean conversation context by:
+- Creating fresh system messages from agent prompts
+- Replacing rather than duplicating system messages
+- Supporting optional memory hydration for debugging
+
+### Team Coordination
+Team queries coordinate multiple agents using various strategies (round-robin, sequential, etc.), with each agent receiving its own system message and maintaining individual conversation context.
+
+### Observability
+All query executions are fully observable with:
+- Structured event logging
+- Token usage tracking
+- Performance metrics
+- Error reporting
+
+## Usage Patterns
+
+### Single Agent Conversations
+```yaml
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Query
+metadata:
+  name: chat-with-agent
+spec:
+  input: "Help me with my task"
+  memory:
+    name: default
+  targets:
+    - type: agent
+      name: helpful-assistant
+```
+
+### Multi-Agent Team Workflows
+```yaml
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Query
+metadata:
+  name: team-workflow
+spec:
+  input: "Coordinate a project analysis"
+  memory:
+    name: default
+  targets:
+    - type: team
+      name: project-team
+```
+
+### Parameterized Queries
+```yaml
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Query
+metadata:
+  name: dynamic-query
+spec:
+  input: "Analyze {{.company}}'s {{.metric}}"
+  parameters:
+    company: "Acme Corp"
+    metric: "revenue"
+  memory:
+    name: default
+  targets:
+    - type: agent
+      name: business-analyst
+```
+
+## Best Practices
+
+### Memory Management
+- Use appropriate memory resources for different conversation contexts
+- Consider memory hydration annotations for debugging agent behavior
+- Monitor memory usage and implement cleanup strategies
+
+### Error Handling
+- Implement proper timeout configurations
+- Use appropriate TTL settings for query cleanup
+- Monitor query execution phases and handle errors gracefully
+
+### Performance
+- Use parameterized queries for dynamic content
+- Optimize agent prompts for efficiency
+- Monitor token usage and costs
+
+## Integration
+
+Queries integrate seamlessly with:
+- **Agents**: Individual AI assistants with specific capabilities
+- **Teams**: Coordinated groups of agents working together
+- **Models**: Direct model interactions for specialized tasks
+- **Tools**: External tool integrations for enhanced functionality
+- **Memory**: Persistent conversation storage and retrieval
