@@ -1,0 +1,166 @@
+# Query
+
+The `Query` resource represents a request to execute a task using an agent, team, model, or tool. It contains the input prompt, target(s) to execute against, and optional parameters for execution.
+
+## Specification
+
+```yaml
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Query
+metadata:
+  name: my-query
+spec:
+  # The input prompt or question to send to the target
+  input: "What's the weather like in New York?"
+  
+  # One or more targets to execute against
+  targets:
+    - type: agent
+      name: weather-agent
+    - type: team
+      name: analysis-team
+  
+  # Optional parameters to pass to the query or agent
+  parameters:
+    - name: temperature
+      value: "0.7"
+  
+  # Optional memory reference for conversation context
+  memory:
+    name: conversation-memory
+  
+  # Optional session ID to group related queries
+  sessionId: "my-conversation-session"
+  
+  # Optional timeout for query execution
+  timeout: 5m
+  
+  # Optional service account for RBAC isolation
+  serviceAccount: query-executor
+```
+
+## Message Construction
+
+When executing queries, ARK constructs messages for the LLM API as follows:
+
+### Single Agent Queries
+- **System Message**: Fresh agent prompt (replaces any previous system messages)
+- **Memory History**: Conversation history from memory (user/assistant messages only)
+- **Current Input**: The query input as a user message
+
+**Example:**
+```json
+[
+  {"role": "system", "content": "You are a helpful weather assistant"},
+  {"role": "user", "content": "What's the weather?"},
+  {"role": "assistant", "content": "It's sunny today"},
+  {"role": "user", "content": "What about tomorrow?"}
+]
+```
+
+### Team Queries
+Each agent in a team receives:
+- **System Message**: The agent's own prompt (each agent gets its own system message)
+- **Shared Memory History**: Conversation history from memory
+- **Current Input**: The query input as a user message
+
+**Example with Team [agent-A, agent-B]:**
+```json
+Agent A receives:
+[
+  {"role": "system", "content": "You are Agent A - a data analyst"},
+  {"role": "user", "content": "Analyze this data"},
+  {"role": "assistant", "content": "Here's my analysis..."},
+  {"role": "user", "content": "What are the trends?"}
+]
+
+Agent B receives:
+[
+  {"role": "system", "content": "You are Agent B - a business consultant"},
+  {"role": "user", "content": "Analyze this data"},
+  {"role": "assistant", "content": "Here's my analysis..."},
+  {"role": "user", "content": "What are the trends?"}
+]
+```
+
+## Key Behaviors
+
+- **System Message Replacement**: Each query creates a fresh system message with the current agent prompt
+- **Memory Integration**: Conversation history is loaded from memory and included in the context
+- **Team Coordination**: Teams coordinate multiple agents, each with their own system message
+- **No Duplicate System Messages**: ARK ensures only one system message per LLM API call
+- **Memory Hydration**: Use `ark.mckinsey.com/memory-include-hydrate-system-message: "true"` annotation to include system messages in memory storage
+
+## Usage Examples
+
+### Basic Agent Query
+```yaml
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Query
+metadata:
+  name: weather-query
+spec:
+  input: "What's the weather in Paris?"
+  targets:
+    - type: agent
+      name: weather-agent
+```
+
+### Team Query with Memory
+```yaml
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Query
+metadata:
+  name: analysis-query
+spec:
+  input: "Continue our analysis from yesterday"
+  targets:
+    - type: team
+      name: analysis-team
+  memory:
+    name: project-memory
+  sessionId: "project-analysis-session"
+```
+
+### Query with Memory Hydration
+```yaml
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Agent
+metadata:
+  name: memory-agent
+  annotations:
+    ark.mckinsey.com/memory-include-hydrate-system-message: "true"
+spec:
+  prompt: "You are a helpful assistant that remembers context"
+---
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Query
+metadata:
+  name: memory-query
+spec:
+  input: "What did we discuss earlier?"
+  targets:
+    - type: agent
+      name: memory-agent
+  memory:
+    name: conversation-memory
+  sessionId: "my-session"
+```
+
+### Query with Parameters
+```yaml
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Query
+metadata:
+  name: creative-query
+spec:
+  input: "Write a story about a robot"
+  targets:
+    - type: agent
+      name: creative-writer
+  parameters:
+    - name: creativity_level
+      value: "high"
+    - name: story_length
+      value: "short"
+```

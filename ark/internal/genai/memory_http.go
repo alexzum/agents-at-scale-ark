@@ -101,11 +101,6 @@ func (m *HTTPMemory) resolveAndUpdateAddress(ctx context.Context) error {
 
 // AddMessages stores messages to the memory backend
 func (m *HTTPMemory) AddMessages(ctx context.Context, queryID string, messages []Message) error {
-	return m.AddMessagesWithAgent(ctx, queryID, messages, "", "")
-}
-
-// AddMessagesWithAgent stores messages to the memory backend with agent metadata
-func (m *HTTPMemory) AddMessagesWithAgent(ctx context.Context, queryID string, messages []Message, agentPrompt, agentName string) error {
 	if len(messages) == 0 {
 		return nil
 	}
@@ -120,7 +115,6 @@ func (m *HTTPMemory) AddMessagesWithAgent(ctx context.Context, queryID string, m
 		"sessionId": m.sessionId,
 		"queryId":   queryID,
 		"messages":  fmt.Sprintf("%d", len(messages)),
-		"agentName": agentName,
 	})
 
 	// Convert messages to the request format
@@ -133,8 +127,8 @@ func (m *HTTPMemory) AddMessagesWithAgent(ctx context.Context, queryID string, m
 		SessionID:   m.sessionId,
 		QueryID:     queryID,
 		Messages:    openaiMessages,
-		AgentPrompt: agentPrompt,
-		AgentName:   agentName,
+		AgentPrompt: "", // Empty since we removed agent prompt storage
+		AgentName:   "", // Empty since we removed agent name storage
 	})
 	if err != nil {
 		tracker.Fail(fmt.Errorf("failed to serialize messages: %w", err))

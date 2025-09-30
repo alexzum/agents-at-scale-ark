@@ -1,0 +1,45 @@
+# Round Robin Team with System Message Hydration and Termination
+# This example demonstrates:
+# 1. A team with round-robin strategy
+# 2. An agent that includes its system message in memory storage
+# 3. An agent that can terminate conversations
+# 4. Memory integration for conversation context
+
+# Agent with system message hydration annotation
+# The annotation ark.mckinsey.com/memory-include-hydrate-system-message: "true"
+# tells ARK to include the agent's system message in memory storage.
+# This is useful when you want the agent's prompt to be part of the
+# conversation history for context and debugging purposes.
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Agent
+metadata:
+  name: agent-rr-with-system-messages
+  annotations:
+    ark.mckinsey.com/memory-include-hydrate-system-message: "true"
+spec:
+  prompt: Append "Bazinga!" to the user input and say it. If you see Bazinga 3 times, end the conversation.
+  tools:
+    - type: built-in
+      name: terminate
+---
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Team
+metadata:
+  name: team-rr-with-system-messages
+spec:
+  members:
+    - name: agent-rr-with-system-messages
+      type: agent
+  strategy: "round-robin"
+---
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Query
+metadata:
+  name: query-rr-with-system-messages
+spec:
+  input: "Sheldon says:"
+  memory:
+    name: postgres-memory
+  targets:
+    - type: team
+      name: team-rr-with-system-messages

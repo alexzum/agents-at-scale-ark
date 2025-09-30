@@ -635,18 +635,15 @@ func (r *QueryReconciler) executeAgent(ctx context.Context, query arkv1alpha1.Qu
 	}
 
 	// Check if agent has annotation to log prompt in memory
-	var agentPrompt, agentFullName string
 	var messagesToLog []genai.Message
 
-	if agent.Annotations != nil && agent.Annotations[annotations.IncludeSystemMessageInMemory] == "true" {
+	if agent.Annotations != nil && agent.Annotations[annotations.MemoryIncludeHydrateSystemMessage] == "true" {
 		// Get the resolved prompt for logging
 		resolvedPrompt, err := agent.ResolvePrompt(ctx)
 		if err != nil {
 			// If prompt resolution fails, use the original prompt
 			resolvedPrompt = agent.Prompt
 		}
-		agentPrompt = resolvedPrompt
-		agentFullName = agent.FullName()
 
 		// Only include system message if this is the start of conversation (no existing messages)
 		if len(messages) == 0 {
@@ -663,7 +660,7 @@ func (r *QueryReconciler) executeAgent(ctx context.Context, query arkv1alpha1.Qu
 		messagesToLog = append([]genai.Message{userMessage}, responseMessages...)
 	}
 
-	if err := memory.AddMessagesWithAgent(ctx, query.Name, messagesToLog, agentPrompt, agentFullName); err != nil {
+	if err := memory.AddMessages(ctx, query.Name, messagesToLog); err != nil {
 		return nil, fmt.Errorf("failed to save new messages to memory: %w", err)
 	}
 
@@ -702,8 +699,8 @@ func (r *QueryReconciler) executeTeam(ctx context.Context, query arkv1alpha1.Que
 	}
 
 	// Prepare messages for logging with agent prompt if annotation is present
-	messagesToLog, agentPrompt, agentName := r.prepareTeamMessagesForLogging(ctx, team, messages, userMessage, responseMessages)
-	if err := memory.AddMessagesWithAgent(ctx, query.Name, messagesToLog, agentPrompt, agentName); err != nil {
+	messagesToLog := r.prepareTeamMessagesForLogging(ctx, team, messages, userMessage, responseMessages)
+	if err := memory.AddMessages(ctx, query.Name, messagesToLog); err != nil {
 		return nil, fmt.Errorf("failed to save new messages to memory: %w", err)
 	}
 
@@ -711,46 +708,46 @@ func (r *QueryReconciler) executeTeam(ctx context.Context, query arkv1alpha1.Que
 }
 
 // prepareTeamMessagesForLogging prepares messages for logging, including system message if agent has annotation
-func (r *QueryReconciler) prepareTeamMessagesForLogging(ctx context.Context, team *genai.Team, existingMessages []genai.Message, userMessage genai.Message, responseMessages []genai.Message) ([]genai.Message, string, string) {
+func (r *QueryReconciler) prepareTeamMessagesForLogging(ctx context.Context, team *genai.Team, existingMessages []genai.Message, userMessage genai.Message, responseMessages []genai.Message) []genai.Message {
 	// Check team members for prompt logging annotation
 	for _, member := range team.Members {
 		agent, ok := member.(*genai.Agent)
 		if !ok {
 			continue
 		}
-		
+
 		if agent.Annotations == nil {
 			continue
 		}
-		
-		if agent.Annotations[annotations.IncludeSystemMessageInMemory] != "true" {
+
+		if agent.Annotations[annotations.MemoryIncludeHydrateSystemMessage] != "true" {
 			continue
 		}
-		
+
 		// Get the resolved prompt for logging
 		resolvedPrompt, err := agent.ResolvePrompt(ctx)
 		if err != nil {
 			// If prompt resolution fails, use the original prompt
 			resolvedPrompt = agent.Prompt
 		}
-		
+
 		// Only include system message if this is the start of conversation (no existing messages)
 		if len(existingMessages) == 0 {
 			// Include system message with prompt in memory logs
 			systemMessage := genai.NewSystemMessage(resolvedPrompt)
 			messagesToLog := append([]genai.Message{systemMessage}, userMessage)
 			messagesToLog = append(messagesToLog, responseMessages...)
-			return messagesToLog, resolvedPrompt, agent.FullName()
+			return messagesToLog
 		}
-		
+
 		// Standard logging without system message
 		messagesToLog := append([]genai.Message{userMessage}, responseMessages...)
-		return messagesToLog, resolvedPrompt, agent.FullName()
+		return messagesToLog
 	}
 
 	// If no agent has the annotation, use standard logging
 	messagesToLog := append([]genai.Message{userMessage}, responseMessages...)
-	return messagesToLog, "", ""
+	return messagesToLog
 }
 
 func (r *QueryReconciler) executeModel(ctx context.Context, query arkv1alpha1.Query, modelName string, impersonatedClient client.Client, memory genai.MemoryInterface, eventStream genai.EventStreamInterface, tokenCollector *genai.TokenUsageCollector) ([]genai.Message, error) {
