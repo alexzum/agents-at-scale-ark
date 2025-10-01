@@ -28,6 +28,7 @@
   },
   "devDependencies": {
     "broken-link-checker": "^0.7.8",
+    "js-yaml": "^4.1.0",
     "pagefind": "^1.3.0",
     "serve": "^14.2.5"
   },
