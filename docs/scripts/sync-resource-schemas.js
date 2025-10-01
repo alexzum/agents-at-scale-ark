@@ -47,88 +47,6 @@ function loadCRDs() {
   return crds;
 }
 
-function extractFieldInfo(schema, path = '') {
-  const fields = {};
-  
-  if (!schema || !schema.properties) return fields;
-  
-  for (const [fieldName, fieldSchema] of Object.entries(schema.properties)) {
-    const fullPath = path ? `${path}.${fieldName}` : fieldName;
-    
-    fields[fieldName] = {
-      type: fieldSchema.type || 'object',
-      description: fieldSchema.description || '',
-      required: schema.required && schema.required.includes(fieldName),
-      enum: fieldSchema.enum || null,
-      minimum: fieldSchema.minimum,
-      maximum: fieldSchema.maximum,
-      minLength: fieldSchema.minLength,
-      maxLength: fieldSchema.maxLength,
-      pattern: fieldSchema.pattern,
-      default: fieldSchema.default
-    };
-    
-    // Handle nested objects
-    if (fieldSchema.type === 'object' && fieldSchema.properties) {
-      fields[fieldName].properties = extractFieldInfo(fieldSchema, fullPath);
-    }
-    
-    // Handle arrays
-    if (fieldSchema.type === 'array' && fieldSchema.items) {
-      fields[fieldName].items = {
-        type: fieldSchema.items.type || 'object',
-        description: fieldSchema.items.description || ''
-      };
-      
-      if (fieldSchema.items.properties) {
-        fields[fieldName].items.properties = extractFieldInfo(fieldSchema.items, `${fullPath}[]`);
-      }
-    }
-  }
-  
-  return fields;
-}
-
-function generateFieldDocumentation(fieldName, fieldInfo, indent = 0) {
-  const spaces = '  '.repeat(indent);
-  const required = fieldInfo.required ? ' *(required)*' : '';
-  const description = fieldInfo.description ? fieldInfo.description : '';
-  
-  let doc = `${spaces}### \`${fieldName}\`${required}\n\n`;
-  
-  if (description) {
-    doc += `${spaces}${description}\n\n`;
-  }
-  
-  doc += `${spaces}**Type:** \`${fieldInfo.type}\`\n\n`;
-  
-  // Add validation info
-  const validations = [];
-  if (fieldInfo.minimum !== undefined) validations.push(`Minimum: ${fieldInfo.minimum}`);
-  if (fieldInfo.maximum !== undefined) validations.push(`Maximum: ${fieldInfo.maximum}`);
-  if (fieldInfo.minLength !== undefined) validations.push(`Min length: ${fieldInfo.minLength}`);
-  if (fieldInfo.maxLength !== undefined) validations.push(`Max length: ${fieldInfo.maxLength}`);
-  if (fieldInfo.pattern) validations.push(`Pattern: \`${fieldInfo.pattern}\``);
-  if (fieldInfo.enum) validations.push(`Allowed values: ${fieldInfo.enum.map(v => `\`${v}\``).join(', ')}`);
-  if (fieldInfo.default !== undefined) validations.push(`Default: \`${fieldInfo.default}\``);
-  
-  if (validations.length > 0) {
-    doc += `${spaces}**Validation:**\n${validations.map(v => `${spaces}- ${v}`).join('\n')}\n\n`;
-  }
-  
-  // Add nested properties summary
-  if (fieldInfo.properties) {
-    const propCount = Object.keys(fieldInfo.properties).length;
-    doc += `${spaces}**Properties:** This object has ${propCount} nested properties.\n\n`;
-  }
-  
-  if (fieldInfo.items) {
-    doc += `${spaces}**Array items:** Each item is of type \`${fieldInfo.items.type}\`.\n\n`;
-  }
-  
-  return doc;
-}
-
 function generateDefaultValue(fieldSchema, fieldName) {
   if (fieldSchema.default !== undefined) {
     return fieldSchema.default;
@@ -250,21 +168,6 @@ function hasEducationalContent(yamlContent) {
   const hasRichContent = yamlContent.length > 200; // Substantial examples
   
   return hasComments || hasMultilineContent || (hasRealisticNames && hasRichContent);
-}
-
-function isValidBasicStructure(yamlContent, crd) {
-  try {
-    const parsed = yaml.load(yamlContent);
-    const expectedApiVersion = `${crd.spec.group}/${crd.spec.versions[0].name}`;
-    const expectedKind = crd.spec.names.kind;
-    
-    // Only check if basic structure is correct
-    return parsed.apiVersion === expectedApiVersion && 
-           parsed.kind === expectedKind &&
-           parsed.metadata?.name;
-  } catch {
-    return false;
-  }
 }
 
 function updateYamlExamples(content, crd, resourceName) {
