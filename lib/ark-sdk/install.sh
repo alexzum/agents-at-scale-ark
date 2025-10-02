@@ -21,6 +21,13 @@ if [ -e $OUT_DIR/py-sdk/dist/ark_sdk-$(cat ../../version.txt)-py3-none-any.whl ]
   exit 0
 fi
 
+## Install uv
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    brew install uv
+else
+    curl -LsSf https://astral.sh/uv/install.sh | sh && source ~/.profile
+fi
+
 mkdir -p "$PY_SDK_DIR"
 mkdir -p "$(dirname "$OPENAPI_FILE")"
 
