@@ -1,84 +1,24 @@
 ---
-title: A2A Gateway
-description: Agent-to-Agent Gateway for ARK ecosystem
+title: A2A Servers
+description: Agent-to-Agent protocol integration for ARK
 ---
 
-# A2A Gateway
+# A2A Servers
 
-ARK includes an integrated Agent-to-Agent Gateway (A2AGW) that implements the [A2A Protocol](https://github.com/a2a-integration/a2a-spec) for ARK agents, enabling standardized agent-to-agent communication.
-
-ARK also supports **Agent Hosting**, which allows users to host their existing LangChain, CrewAI, AutoGen, or other agent code and expose agents to the ARK cluster using the A2A protocol.
-
-Note: At present, ARK only supports text-based responses from the A2A server. Other response formats (e.g., images, audio, structured JSON) are not yet supported.
+ARK supports the [A2A Protocol](https://github.com/a2a-integration/a2a-spec) for agent-to-agent communication and hosting external agent frameworks.
 
 ## Overview
 
-## What the Gateway Does
+ARK provides two main A2A capabilities:
 
-The A2A Gateway serves as a dynamic API gateway that:
-- Discovers ARK agents in the Kubernetes cluster
-- Exposes them via the A2A protocol at `/agent/{agent-name}/`
-- Provides agent discovery endpoints
-- Handles protocol translation between ARK and A2A formats
+1. **[A2A Gateway](/developer-guide/a2a-gateway)** - Exposes ARK agents via the A2A protocol
+2. **[Building A2A Servers](/developer-guide/building-a2a-servers)** - Host your existing agents in ARK
 
-## A2A Use Case
+## Quick Links
 
-The gateway enables agents to:
-- Discover other agents' capabilities through standardized agent cards
-- Communicate using a common protocol regardless of implementation
-- Execute tasks on remote agents with streaming responses
-- Build multi-agent workflows with consistent interfaces
-
-## Architecture
-
-### Core Components
-
-1. **Registry** (`registry.py`)
-   - Connects to Kubernetes API via ARK SDK
-   - Converts ARK Agent resources to A2A AgentCards
-   - Extracts skills from agent annotations
-
-2. **Manager** (`manager.py`)
-   - Maintains dynamic routing table
-   - Polls registry every 30 seconds (3s in dev mode)
-   - Uses thread-safe ProxyApp pattern for atomic route updates
-   - Prevents race conditions during agent changes
-
-3. **Execution** (`execution.py`)
-   - Implements A2A AgentExecutor interface
-   - Creates ARK queries for agent task execution
-   - Handles streaming responses from agents
-
-### Request Flow
-
-1. Client requests `/agent/{name}/execute`
-2. FastAPI routes to ProxyApp at `/agent/*`
-3. ProxyApp forwards to current Starlette app
-4. Starlette routes to agent's A2AStarletteApplication
-5. A2AStarletteApplication uses ARKAgentExecutor
-6. ARKAgentExecutor creates ARK Query for execution
-
-### Key Design Decisions
-
-- **ProxyApp Pattern**: Ensures atomic route updates without affecting in-flight requests
-- **Periodic Sync**: Automatically discovers new agents without restarts
-- **ARK Integration**: Leverages native Kubernetes resources for agent management
-
-## Installation
-
-```bash
-make ark-api-a2a-install
-```
-
-## Configuration
-
-Environment variables for the A2A Gateway:
-- **`ARK_A2A_LISTEN_PORT`** (default: `7184`) - Port used in agent card URLs
-- **`ARK_A2A_LISTEN_HOST`** (default: `localhost`) - Host used in agent card URLs
-- **`ARK_A2A_LISTEN_PROTOCOL`** (default: `http`) - Protocol scheme for agent card URLs
-
-
-
+- **[A2A Gateway](/developer-guide/a2a-gateway)** - Learn about ARK's built-in A2A gateway
+- **[Building A2A Servers](/developer-guide/building-a2a-servers)** - Create and host your own A2A agents
+- **[A2A Protocol Spec](https://github.com/a2a-integration/a2a-spec)** - Official A2A protocol documentation
 
 ## Managing A2A Servers
 
