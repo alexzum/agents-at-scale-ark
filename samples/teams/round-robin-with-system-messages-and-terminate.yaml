@@ -39,7 +39,7 @@ metadata:
 spec:
   input: "Sheldon says:"
   memory:
-    name: postgres-memory
+    name: default
   targets:
     - type: team
       name: team-rr-with-system-messages
