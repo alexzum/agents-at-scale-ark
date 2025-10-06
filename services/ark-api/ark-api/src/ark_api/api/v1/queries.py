@@ -1,5 +1,6 @@
 """API routes for Query resources."""
 
+import json
 from datetime import datetime
 from fastapi import APIRouter, Query
 from typing import Optional
@@ -107,13 +108,14 @@ async def create_query(
             "type": getattr(query, 'type', 'user')
         }
         
-        # Handle input based on type - pass raw data for RawExtension
-        if spec["type"] == "user":
-            # For string input, pass as string
-            spec["input"] = query.input if isinstance(query.input, str) else str(query.input)
-        else:
-            # Messages are already dicts (ChatCompletionMessageParam), pass through as-is
+        # Handle input based on type
+        # The Kubernetes API expects input to always be a string
+        # For messages type, we serialize to JSON string
+        if isinstance(query.input, str):
             spec["input"] = query.input
+        else:
+            # Serialize list of messages to JSON string
+            spec["input"] = json.dumps(query.input)
         
         if query.memory:
             spec["memory"] = query.memory.model_dump()
@@ -178,7 +180,11 @@ async def update_query(
         
         # Update spec with non-None values
         if query.input is not None:
-            spec["input"] = query.input
+            # Handle input serialization (same as create)
+            if isinstance(query.input, str):
+                spec["input"] = query.input
+            else:
+                spec["input"] = json.dumps(query.input)
         if query.memory is not None:
             spec["memory"] = query.memory.model_dump()
         if query.parameters is not None:
