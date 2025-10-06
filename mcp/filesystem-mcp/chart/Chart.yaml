@@ -1,5 +1,5 @@
 apiVersion: v2
-name: mcp-filesys
+name: mcp-filesystem
 description: A Helm chart for MCP Filesystem Server
 type: application
 version: 0.1.0

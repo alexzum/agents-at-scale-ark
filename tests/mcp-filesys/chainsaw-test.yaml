@@ -14,7 +14,7 @@ spec:
     try:
     - script:
         content: |
-          helm install mcp-filesys ../../mcp/filesys/chart --wait --timeout=180s \
+          helm install mcp-filesys ../../mcp-servers/filesystem-mcp/chart --wait --timeout=180s \
             --namespace $NAMESPACE \
             --set image.repository=${FILESYS_IMAGE:-filesys-mcp-server} \
             --set image.tag=${FILESYS_IMAGE_TAG:-latest} \

@@ -6,7 +6,7 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
-IMAGE_NAME="filesys-mcp-server"
+IMAGE_NAME="filesystem-mcp-server"
 IMAGE_TAG="${1:-latest}"
 TARGET_CLUSTER="${2:-auto}"
 
@@ -25,7 +25,7 @@ echo "Target cluster: ${TARGET_CLUSTER}"
 echo ""
 echo "Next steps:"
 echo "  Deploy with Helm:"
-echo "    helm install filesys-mcp ./chart"
+echo "    helm install filesystem-mcp ./chart"
 echo ""
 echo "  Test the deployment:"
-echo "    kubectl get pods -l app.kubernetes.io/name=mcp-filesys"
+echo "    kubectl get pods -l app.kubernetes.io/name=mcp-filesystem"
