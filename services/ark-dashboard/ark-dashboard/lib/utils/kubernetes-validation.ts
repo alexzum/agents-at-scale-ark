@@ -1,6 +1,9 @@
 import { z } from 'zod'
 
-export const kubernetesNameSchema = z.string("Name is required")
+export const kubernetesNameSchema = z.string({
+  required_error: "Name is required",
+  invalid_type_error: "Name must be a string"
+})
   .min(1, {
     message: "Name is required"
   })
