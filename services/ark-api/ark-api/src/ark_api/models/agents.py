@@ -126,3 +126,23 @@ class AgentDetailResponse(BaseModel):
     available: Optional[AvailabilityStatus] = None
     status: Optional[Dict[str, Any]] = None
     annotations: Optional[Dict[str, str]] = None
+
+
+class AgentExecuteRequest(BaseModel):
+    """Request model for executing an agent query."""
+    input: str
+    wait: bool = True
+    timeout: Optional[str] = "300s"
+    sessionId: Optional[str] = None
+    memory: Optional[str] = None
+    parameters: Optional[List[Parameter]] = None
+
+
+class AgentExecuteResponse(BaseModel):
+    """Response model for agent execution."""
+    queryName: str
+    input: str
+    response: Optional[str] = None
+    status: str
+    duration: Optional[str] = None
+    error: Optional[str] = None

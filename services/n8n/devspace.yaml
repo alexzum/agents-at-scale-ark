@@ -1,0 +1,16 @@
+version: v2beta1
+name: n8n
+
+deployments:
+  n8n:
+    helm:
+      chart:
+        path: ./chart
+      valuesFiles:
+        - ./chart/values.yaml
+
+dev:
+  n8n:
+    imageSelector: docker.n8n.io/n8nio/n8n
+    ports:
+      - port: "5678:5678"

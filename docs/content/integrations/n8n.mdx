@@ -1,0 +1,397 @@
+---
+title: n8n Integration
+description: Build low-code agentic workflows with n8n and ARK
+---
+
+# n8n Integration
+
+Build powerful agentic workflows using n8n's visual workflow editor combined with ARK's agent execution capabilities.
+
+## Overview
+
+n8n is a workflow automation platform that provides a visual interface for building complex workflows. By integrating n8n with ARK, you can:
+
+- Create agentic workflows without writing code
+- Chain multiple agent queries together
+- Add conditional logic and data transformations
+- Trigger workflows via webhooks, schedules, or manual execution
+- Connect ARK agents with 400+ external services
+
+## Architecture
+
+```
+┌─────────────┐         ┌──────────────┐         ┌─────────────┐
+│   n8n UI    │────────▶│  ARK API     │────────▶│ ARK Agent   │
+│ (Workflow)  │  HTTP   │ (/v1/agents) │   K8s   │ (CRD)       │
+└─────────────┘         └──────────────┘         └─────────────┘
+```
+
+## Installation
+
+Install n8n to your ARK cluster:
+
+```bash
+make n8n-install
+```
+
+Access n8n UI:
+
+```bash
+# View routes
+make routes
+
+# Open n8n at http://n8n.default.127.0.0.1.nip.io:8080
+```
+
+## Quick Start
+
+### 1. Import Sample Workflow
+
+1. Access n8n UI at http://n8n.default.127.0.0.1.nip.io:8080
+2. Click **Workflows** → **Import from File**
+3. Select `samples/n8n-workflows/ark-agent-query-basic.json`
+4. Click **Save**
+
+### 2. Execute Workflow
+
+1. Click **Execute Workflow** button
+2. View results in the execution panel
+3. Inspect each node's output
+
+### 3. Customize Workflow
+
+Edit HTTP Request nodes to:
+- Change the agent name
+- Modify the query input
+- Adjust timeout values
+- Add custom parameters
+
+## ARK API Endpoints for n8n
+
+### List Agents
+
+```
+GET http://ark-api.default.svc.cluster.local:8000/v1/agents
+```
+
+Returns all available agents in the namespace.
+
+**Response:**
+```json
+{
+  "items": [
+    {
+      "name": "my-agent",
+      "namespace": "default",
+      "description": "A helpful agent",
+      "available": "available"
+    }
+  ],
+  "count": 1
+}
+```
+
+### Execute Agent Query
+
+```
+POST http://ark-api.default.svc.cluster.local:8000/v1/agents/{agent_name}/execute
+```
+
+Execute a query against an agent and optionally wait for the result.
+
+**Request:**
+```json
+{
+  "input": "What is 2+2?",
+  "wait": true,
+  "timeout": "60s",
+  "sessionId": "optional-session-id"
+}
+```
+
+**Response (wait=true):**
+```json
+{
+  "queryName": "my-agent-abc123",
+  "input": "What is 2+2?",
+  "response": "The answer is 4",
+  "status": "completed",
+  "duration": "2.5s"
+}
+```
+
+**Response (wait=false):**
+```json
+{
+  "queryName": "my-agent-abc123",
+  "input": "What is 2+2?",
+  "status": "pending"
+}
+```
+
+## Sample Workflows
+
+### Basic Agent Query
+
+Located at: `samples/n8n-workflows/ark-agent-query-basic.json`
+
+**Flow:**
+1. Manual Trigger → Start workflow
+2. List ARK Agents → Get available agents
+3. Extract Agent Names → Parse agent list
+4. Execute Agent Query → Query the first agent
+5. Format Response → Structure the output
+
+### Webhook-Triggered Query with Parameters
+
+Located at: `samples/n8n-workflows/ark-agent-query-with-params.json`
+
+**Flow:**
+1. Webhook Trigger → Receive HTTP POST
+2. Parse Input Parameters → Extract agent name and input
+3. Execute Agent → Query specified agent
+4. Check Status → Conditional routing
+5. Format Response → Return success or error
+6. Respond to Webhook → Send HTTP response
+
+**Example Webhook Call:**
+```bash
+curl -X POST http://n8n.default.127.0.0.1.nip.io:8080/webhook/ark-agent-webhook \
+  -H "Content-Type: application/json" \
+  -d '{
+    "agent": "my-agent",
+    "input": "Hello, what can you do?",
+    "timeout": "30s"
+  }'
+```
+
+## Building Custom Workflows
+
+### Available n8n Nodes for ARK
+
+Use these n8n nodes to build ARK workflows:
+
+**HTTP Request** - Call ARK API endpoints
+- List agents, teams, models
+- Execute queries
+- Get query status
+
+**Code (JavaScript)** - Transform data
+- Parse agent responses
+- Extract specific fields
+- Build dynamic queries
+
+**IF (Conditional)** - Route based on conditions
+- Check query status
+- Handle errors
+- Route to different agents
+
+**Set** - Set or transform values
+- Prepare request bodies
+- Map response fields
+- Set default values
+
+**Webhook** - Trigger workflows externally
+- API endpoints for your workflows
+- Async query execution
+- Integration with external systems
+
+### Common Patterns
+
+#### Sequential Agent Queries
+
+Chain multiple agents together:
+
+```
+Manual Trigger
+  → Execute Agent 1
+    → Extract Response
+      → Execute Agent 2 with Agent 1's output
+        → Combine Results
+```
+
+#### Parallel Agent Queries
+
+Query multiple agents simultaneously:
+
+```
+Manual Trigger
+  → Split In Batches
+    → Execute Agent (parallel)
+      → Merge Results
+```
+
+#### Error Handling
+
+Handle query failures gracefully:
+
+```
+Execute Agent
+  → IF (status === "completed")
+    → Format Success Response
+  → ELSE
+    → Log Error
+    → Retry or Notify
+```
+
+## Configuration
+
+### ARK API Base URL
+
+For **in-cluster** access (recommended):
+```
+http://ark-api.default.svc.cluster.local:8000
+```
+
+For **external** access (development):
+```
+http://ark-api.default.127.0.0.1.nip.io:8080
+```
+
+### Authentication
+
+When ARK API has `AUTH_MODE=sso` enabled, add authentication to HTTP Request nodes:
+
+1. Click on HTTP Request node
+2. Go to **Authentication** section
+3. Select **Generic Credential Type** → **Header Auth**
+4. Add header: `Authorization: Bearer YOUR_JWT_TOKEN`
+
+### Timeouts
+
+Adjust timeouts for long-running queries:
+
+**Agent Execute Request:**
+```json
+{
+  "timeout": "300s"
+}
+```
+
+**HTTP Request Node Settings:**
+- Options → Timeout: 305000 (milliseconds)
+
+## Advanced Usage
+
+### Session Management
+
+Maintain conversation context across queries:
+
+```json
+{
+  "input": "Tell me about cats",
+  "sessionId": "user-123-session",
+  "memory": "my-memory"
+}
+```
+
+Subsequent queries with the same `sessionId` will maintain context.
+
+### Custom Parameters
+
+Pass parameters to agents:
+
+```json
+{
+  "input": "Analyze this data: {{$json.data}}",
+  "parameters": [
+    {
+      "name": "format",
+      "value": "json"
+    }
+  ]
+}
+```
+
+### Streaming Responses
+
+For real-time streaming, use the polling approach:
+
+1. Execute query with `wait: false`
+2. Get `queryName` from response
+3. Poll `/v1/queries/{queryName}` until `status === "completed"`
+4. Extract response from query status
+
+## Tips and Best Practices
+
+1. **Use Execution Names** - Name your workflow executions for easier debugging
+2. **Add Error Handling** - Always handle failed queries gracefully
+3. **Set Appropriate Timeouts** - Match n8n timeout to ARK query timeout + buffer
+4. **Test Nodes Individually** - Use "Execute Node" to test each step
+5. **Use Variables** - Store API base URL in n8n environment variables
+6. **Enable Retry** - Use n8n's retry settings for transient failures
+7. **Log Important Data** - Use Sticky Notes to document your workflow
+
+## Troubleshooting
+
+### Workflow Not Executing
+
+Check that n8n can reach ARK API:
+
+```bash
+kubectl exec -n default deployment/n8n -- wget -O- http://ark-api.default.svc.cluster.local:8000/health
+```
+
+### Timeout Errors
+
+Increase timeout in both places:
+- Agent execute request: `"timeout": "300s"`
+- HTTP Request node: Options → Timeout: 305000
+
+### Authentication Errors
+
+Verify AUTH_MODE setting:
+
+```bash
+kubectl get deployment ark-api -n default -o jsonpath='{.spec.template.spec.containers[0].env[?(@.name=="AUTH_MODE")].value}'
+```
+
+For development, set `AUTH_MODE=open`.
+
+### Agent Not Found
+
+List available agents:
+
+```bash
+curl http://ark-api.default.127.0.0.1.nip.io:8080/v1/agents
+```
+
+## Next Steps
+
+- Explore [ARK APIs](/reference/ark-apis) for more endpoints
+- Learn about [Agents](/user-guide/agents) and [Queries](/user-guide/queries)
+- Build custom n8n community nodes for enhanced integration (coming soon)
+- Set up webhooks for async query completion (coming soon)
+
+## Examples
+
+### Multi-Agent Workflow
+
+Query multiple agents and compare responses:
+
+1. Manual Trigger
+2. HTTP Request → List Agents
+3. Split In Batches (3 items)
+4. HTTP Request → Execute Agent (runs in parallel)
+5. Merge → Combine all responses
+6. Code → Compare and rank responses
+7. Return best response
+
+### Scheduled Agent Query
+
+Run agent queries on a schedule:
+
+1. Schedule Trigger (e.g., daily at 9 AM)
+2. HTTP Request → Execute Agent
+3. Code → Process response
+4. HTTP Request → Post to Slack/Email
+5. Save to database/file
+
+### Interactive Chatbot
+
+Build a webhook-based chatbot:
+
+1. Webhook Trigger → Receive user message
+2. HTTP Request → Execute Agent with sessionId
+3. Code → Format response for chat platform
+4. Respond to Webhook → Send reply

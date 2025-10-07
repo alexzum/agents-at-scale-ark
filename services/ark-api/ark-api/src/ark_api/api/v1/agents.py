@@ -1,11 +1,17 @@
 """Kubernetes agents API endpoints."""
+import asyncio
 import logging
 import json
 import re
+import uuid
+import time
+from datetime import datetime
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, HTTPException
 from typing import Optional
 from ark_sdk.models.agent_v1alpha1 import AgentV1alpha1
+from ark_sdk.models.query_v1alpha1 import QueryV1alpha1
+from ark_sdk.models.query_v1alpha1_spec import QueryV1alpha1Spec
 
 from ark_sdk.client import with_ark_client
 
@@ -15,6 +21,8 @@ from ...models.agents import (
     AgentCreateRequest,
     AgentUpdateRequest,
     AgentDetailResponse,
+    AgentExecuteRequest,
+    AgentExecuteResponse,
     ModelRef
 )
 from ...models.common import extract_availability_from_conditions
@@ -247,10 +255,137 @@ async def update_agent(agent_name: str, body: AgentUpdateRequest, namespace: Opt
 async def delete_agent(agent_name: str, namespace: Optional[str] = Query(None, description="Namespace for this request (defaults to current context)")) -> None:
     """
     Delete an Agent CR by name.
-    
+
     Args:
         namespace: The namespace containing the agent
         agent_name: The name of the agent
     """
     async with with_ark_client(namespace, VERSION) as ark_client:
         await ark_client.agents.a_delete(agent_name)
+
+
+@router.post("/{agent_name}/execute", response_model=AgentExecuteResponse)
+@handle_k8s_errors(operation="execute", resource_type="agent")
+async def execute_agent(
+    agent_name: str,
+    request: AgentExecuteRequest,
+    namespace: Optional[str] = Query(None, description="Namespace for this request (defaults to current context)")
+) -> AgentExecuteResponse:
+    """
+    Execute an agent query with simplified API.
+
+    This endpoint creates a Query CR targeting the specified agent and optionally
+    waits for the result. It provides a simpler interface than the full Query API
+    for basic agent execution scenarios.
+
+    Args:
+        agent_name: The name of the agent to execute
+        request: Execution request with input and options
+        namespace: The namespace containing the agent
+
+    Returns:
+        AgentExecuteResponse: Query details and response (if wait=True)
+    """
+    start_time = time.time()
+    query_name = f"{agent_name}-{uuid.uuid4().hex[:8]}"
+
+    async with with_ark_client(namespace, VERSION) as ark_client:
+        agent = await ark_client.agents.a_get(agent_name)
+        if not agent:
+            raise HTTPException(status_code=404, detail=f"Agent '{agent_name}' not found")
+
+        spec_dict = {
+            "input": request.input,
+            "targets": [{"type": "agent", "name": agent_name}]
+        }
+
+        if request.timeout:
+            spec_dict["timeout"] = request.timeout
+
+        if request.sessionId:
+            spec_dict["sessionId"] = request.sessionId
+
+        if request.memory:
+            spec_dict["memory"] = {"name": request.memory}
+
+        if request.parameters:
+            spec_dict["parameters"] = [p.model_dump(exclude_none=True) for p in request.parameters]
+
+        query_resource = QueryV1alpha1(
+            metadata={"name": query_name, "namespace": namespace},
+            spec=QueryV1alpha1Spec(**spec_dict)
+        )
+
+        created_query = await ark_client.queries.a_create(query_resource)
+
+        if not request.wait:
+            return AgentExecuteResponse(
+                queryName=query_name,
+                input=request.input,
+                status="pending",
+                duration=None,
+                response=None
+            )
+
+        max_wait_seconds = 300
+        if request.timeout:
+            timeout_str = request.timeout.lower()
+            if timeout_str.endswith('s'):
+                max_wait_seconds = int(timeout_str[:-1])
+            elif timeout_str.endswith('m'):
+                max_wait_seconds = int(timeout_str[:-1]) * 60
+
+        poll_interval = 1
+        elapsed = 0
+
+        while elapsed < max_wait_seconds:
+            await asyncio.sleep(poll_interval)
+            elapsed += poll_interval
+
+            query = await ark_client.queries.a_get(query_name)
+            query_dict = query.to_dict()
+            status = query_dict.get("status", {})
+            phase = status.get("phase", "pending")
+
+            if phase == "done":
+                responses = status.get("responses", [])
+                response_text = None
+
+                if responses:
+                    for resp in responses:
+                        if resp.get("target", {}).get("name") == agent_name:
+                            response_text = resp.get("content")
+                            break
+
+                    if not response_text and responses:
+                        response_text = responses[0].get("content")
+
+                duration = f"{time.time() - start_time:.2f}s"
+
+                return AgentExecuteResponse(
+                    queryName=query_name,
+                    input=request.input,
+                    response=response_text,
+                    status="completed",
+                    duration=duration
+                )
+
+            elif phase == "failed":
+                error_msg = status.get("message", "Query failed")
+                duration = f"{time.time() - start_time:.2f}s"
+
+                return AgentExecuteResponse(
+                    queryName=query_name,
+                    input=request.input,
+                    status="failed",
+                    duration=duration,
+                    error=error_msg
+                )
+
+        return AgentExecuteResponse(
+            queryName=query_name,
+            input=request.input,
+            status="timeout",
+            duration=f"{max_wait_seconds}s",
+            error=f"Query did not complete within {max_wait_seconds} seconds"
+        )
