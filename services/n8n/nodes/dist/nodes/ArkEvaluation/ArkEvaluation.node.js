@@ -85,41 +85,64 @@ class ArkEvaluation {
                     description: 'The output to evaluate',
                 },
                 {
-                    displayName: 'Query Name',
+                    displayName: 'Query',
                     name: 'queryName',
-                    type: 'string',
+                    type: 'resourceLocator',
+                    default: { mode: 'list', value: '' },
+                    required: true,
                     displayOptions: {
                         show: {
                             evaluationType: ['query'],
                         },
                     },
-                    default: '',
-                    required: true,
-                    description: 'Name of the query to evaluate',
+                    description: 'The query to evaluate',
+                    modes: [
+                        {
+                            displayName: 'From List',
+                            name: 'list',
+                            type: 'list',
+                            typeOptions: {
+                                searchListMethod: 'searchQueries',
+                                searchable: true,
+                            },
+                        },
+                        {
+                            displayName: 'By Name',
+                            name: 'name',
+                            type: 'string',
+                            placeholder: 'e.g. my-query-name',
+                        },
+                    ],
                 },
                 {
                     displayName: 'Response Target',
                     name: 'responseTarget',
-                    type: 'options',
-                    options: [
-                        {
-                            name: 'Final',
-                            value: 'final',
-                            description: 'Evaluate final response',
-                        },
-                        {
-                            name: 'Intermediate',
-                            value: 'intermediate',
-                            description: 'Evaluate intermediate steps',
-                        },
-                    ],
+                    type: 'resourceLocator',
+                    default: { mode: 'list', value: '' },
+                    required: true,
                     displayOptions: {
                         show: {
                             evaluationType: ['query'],
                         },
                     },
-                    default: 'final',
-                    description: 'Which response to evaluate',
+                    description: 'Which target response to evaluate',
+                    modes: [
+                        {
+                            displayName: 'From List',
+                            name: 'list',
+                            type: 'list',
+                            typeOptions: {
+                                searchListMethod: 'searchQueryTargets',
+                                searchable: true,
+                            },
+                        },
+                        {
+                            displayName: 'By Value',
+                            name: 'value',
+                            type: 'string',
+                            placeholder: 'e.g. agent:my-agent',
+                        },
+                    ],
                 },
                 {
                     displayName: 'Wait for Completion',
@@ -139,6 +162,116 @@ class ArkEvaluation {
                         },
                     },
                     description: 'Maximum time to wait for completion (seconds)',
+                },
+                {
+                    displayName: 'Advanced Parameters',
+                    name: 'advancedParametersSection',
+                    type: 'notice',
+                    default: '',
+                    displayOptions: {
+                        show: {
+                            '@version': [1],
+                        },
+                    },
+                },
+                {
+                    displayName: 'Evaluation Scope',
+                    name: 'scope',
+                    type: 'multiOptions',
+                    options: [
+                        {
+                            name: 'Relevance',
+                            value: 'relevance',
+                        },
+                        {
+                            name: 'Accuracy',
+                            value: 'accuracy',
+                        },
+                        {
+                            name: 'Completeness',
+                            value: 'completeness',
+                        },
+                        {
+                            name: 'Conciseness',
+                            value: 'conciseness',
+                        },
+                        {
+                            name: 'Clarity',
+                            value: 'clarity',
+                        },
+                        {
+                            name: 'Usefulness',
+                            value: 'usefulness',
+                        },
+                        {
+                            name: 'Compliance',
+                            value: 'compliance',
+                        },
+                        {
+                            name: 'Faithfulness',
+                            value: 'faithfulness',
+                        },
+                    ],
+                    default: [],
+                    description: 'Evaluation criteria to assess',
+                },
+                {
+                    displayName: 'Minimum Score',
+                    name: 'minScore',
+                    type: 'number',
+                    typeOptions: {
+                        minValue: 0,
+                        maxValue: 1,
+                        numberPrecision: 2,
+                    },
+                    default: 0.7,
+                    description: 'Minimum score threshold (0.0-1.0)',
+                },
+                {
+                    displayName: 'Temperature',
+                    name: 'temperature',
+                    type: 'number',
+                    typeOptions: {
+                        minValue: 0,
+                        maxValue: 2,
+                        numberPrecision: 1,
+                    },
+                    default: 0.0,
+                    description: 'LLM temperature for evaluation (0.0-2.0)',
+                },
+                {
+                    displayName: 'Max Tokens',
+                    name: 'maxTokens',
+                    type: 'number',
+                    typeOptions: {
+                        minValue: 1,
+                    },
+                    default: '',
+                    description: 'Maximum tokens for evaluation response',
+                },
+                {
+                    displayName: 'Evaluator Role',
+                    name: 'evaluatorRole',
+                    type: 'string',
+                    default: '',
+                    description: 'Custom evaluator role description',
+                },
+                {
+                    displayName: 'Context',
+                    name: 'context',
+                    type: 'string',
+                    typeOptions: {
+                        rows: 4,
+                    },
+                    default: '',
+                    description: 'Additional context for evaluation',
+                },
+                {
+                    displayName: 'Evaluation Criteria',
+                    name: 'evaluationCriteria',
+                    type: 'string',
+                    default: '',
+                    description: 'Comma-separated list of specific criteria',
                 },
             ],
         };
@@ -163,6 +296,66 @@ class ArkEvaluation {
                     }
                 },
             },
+            listSearch: {
+                async searchQueries(filter) {
+                    const credentials = await this.getCredentials('arkApi');
+                    const baseUrl = credentials.baseUrl;
+                    try {
+                        const response = await this.helpers.request({
+                            method: 'GET',
+                            url: `${baseUrl}/v1/queries`,
+                            json: true,
+                        });
+                        let items = response.items || [];
+                        if (filter) {
+                            const filterLower = filter.toLowerCase();
+                            items = items.filter((query) => query.name.toLowerCase().includes(filterLower));
+                        }
+                        return {
+                            results: items.map((query) => ({
+                                name: query.name,
+                                value: query.name,
+                                url: `${baseUrl}/v1/queries/${query.name}`,
+                            })),
+                        };
+                    }
+                    catch (error) {
+                        return { results: [] };
+                    }
+                },
+                async searchQueryTargets(filter) {
+                    const credentials = await this.getCredentials('arkApi');
+                    const baseUrl = credentials.baseUrl;
+                    const queryNameParam = this.getCurrentNodeParameter('queryName');
+                    const queryName = typeof queryNameParam === 'string'
+                        ? queryNameParam
+                        : (queryNameParam === null || queryNameParam === void 0 ? void 0 : queryNameParam.value) || '';
+                    if (!queryName) {
+                        return { results: [] };
+                    }
+                    try {
+                        const response = await this.helpers.request({
+                            method: 'GET',
+                            url: `${baseUrl}/v1/queries/${encodeURIComponent(queryName)}`,
+                            json: true,
+                        });
+                        let targets = response.targets || [];
+                        if (filter) {
+                            const filterLower = filter.toLowerCase();
+                            targets = targets.filter((target) => `${target.type}:${target.name}`.toLowerCase().includes(filterLower));
+                        }
+                        return {
+                            results: targets.map((target) => ({
+                                name: `${target.type}: ${target.name}`,
+                                value: `${target.type}:${target.name}`,
+                            })),
+                        };
+                    }
+                    catch (error) {
+                        return { results: [] };
+                    }
+                },
+            },
         };
     }
     async execute() {
@@ -177,6 +370,36 @@ class ArkEvaluation {
             const evaluator = this.getNodeParameter('evaluator', i);
             const wait = this.getNodeParameter('wait', i);
             const timeout = this.getNodeParameter('timeout', i, 300);
+            const scope = this.getNodeParameter('scope', i, []);
+            const minScore = this.getNodeParameter('minScore', i, 0.7);
+            const temperature = this.getNodeParameter('temperature', i, 0.0);
+            const maxTokens = this.getNodeParameter('maxTokens', i, '');
+            const evaluatorRole = this.getNodeParameter('evaluatorRole', i, '');
+            const context = this.getNodeParameter('context', i, '');
+            const evaluationCriteria = this.getNodeParameter('evaluationCriteria', i, '');
+            const parameters = [];
+            if (scope.length > 0) {
+                parameters.push({ name: 'scope', value: scope.join(',') });
+            }
+            parameters.push({ name: 'min_score', value: minScore.toString() });
+            if (temperature !== 0.0) {
+                parameters.push({ name: 'temperature', value: temperature.toString() });
+            }
+            if (maxTokens && maxTokens !== '') {
+                parameters.push({ name: 'max_tokens', value: maxTokens.toString() });
+            }
+            if (evaluatorRole) {
+                parameters.push({ name: 'evaluator_role', value: evaluatorRole });
+            }
+            if (context) {
+                parameters.push({ name: 'context', value: context });
+            }
+            if (evaluationCriteria) {
+                const criteriaList = evaluationCriteria.split(',').map((c) => c.trim()).filter((c) => c);
+                if (criteriaList.length > 0) {
+                    parameters.push({ name: 'evaluation_criteria', value: criteriaList.join(',') });
+                }
+            }
             const evaluationName = `eval-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
             const requestBody = {
                 name: evaluationName,
@@ -187,6 +410,9 @@ class ArkEvaluation {
                 config: {},
                 timeout: `${timeout}s`,
             };
+            if (parameters.length > 0) {
+                requestBody.evaluator.parameters = parameters;
+            }
             if (evaluationType === 'direct') {
                 const input = this.getNodeParameter('input', i);
                 const output = this.getNodeParameter('output', i);
@@ -194,8 +420,14 @@ class ArkEvaluation {
                 requestBody.config.output = output;
             }
             else if (evaluationType === 'query') {
-                const queryName = this.getNodeParameter('queryName', i);
-                const responseTarget = this.getNodeParameter('responseTarget', i);
+                const queryNameParam = this.getNodeParameter('queryName', i);
+                const responseTargetParam = this.getNodeParameter('responseTarget', i);
+                const queryName = typeof queryNameParam === 'string'
+                    ? queryNameParam
+                    : (queryNameParam === null || queryNameParam === void 0 ? void 0 : queryNameParam.value) || '';
+                const responseTarget = typeof responseTargetParam === 'string'
+                    ? responseTargetParam
+                    : (responseTargetParam === null || responseTargetParam === void 0 ? void 0 : responseTargetParam.value) || '';
                 requestBody.config.queryRef = {
                     name: queryName,
                     responseTarget,

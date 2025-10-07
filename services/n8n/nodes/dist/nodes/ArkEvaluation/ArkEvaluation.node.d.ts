@@ -5,6 +5,14 @@ export declare class ArkEvaluation implements INodeType {
         loadOptions: {
             getEvaluators(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]>;
         };
+        listSearch: {
+            searchQueries(this: ILoadOptionsFunctions, filter?: string): Promise<{
+                results: any;
+            }>;
+            searchQueryTargets(this: ILoadOptionsFunctions, filter?: string): Promise<{
+                results: any;
+            }>;
+        };
     };
     execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]>;
 }

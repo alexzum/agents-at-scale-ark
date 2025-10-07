@@ -137,3 +137,36 @@ export declare const queryEvaluationFixture: {
         message: string;
     };
 };
+export declare const queriesListFixture: {
+    items: {
+        name: string;
+        namespace: string;
+        spec: {
+            input: string;
+            targets: {
+                type: string;
+                name: string;
+            }[];
+        };
+    }[];
+    count: number;
+};
+export declare const queryDetailFixture: {
+    name: string;
+    namespace: string;
+    input: string;
+    targets: {
+        type: string;
+        name: string;
+    }[];
+    status: {
+        phase: string;
+        responses: {
+            target: {
+                type: string;
+                name: string;
+            };
+            content: string;
+        }[];
+    };
+};

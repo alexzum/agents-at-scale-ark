@@ -166,7 +166,7 @@ export const queryEvaluationFixture = {
     config: {
       queryRef: {
         name: 'sample-query',
-        responseTarget: 'final',
+        responseTarget: 'agent:test-agent',
       },
     },
     timeout: '300s',
@@ -176,5 +176,49 @@ export const queryEvaluationFixture = {
     score: '0.88',
     passed: true,
     message: 'Query evaluation completed',
+  },
+};
+
+export const queriesListFixture = {
+  items: [
+    {
+      name: 'sample-query',
+      namespace: 'default',
+      spec: {
+        input: 'What is the capital of France?',
+        targets: [
+          { type: 'agent', name: 'test-agent' },
+          { type: 'model', name: 'gpt-4' },
+        ],
+      },
+    },
+    {
+      name: 'team-query',
+      namespace: 'default',
+      spec: {
+        input: 'Coordinate task',
+        targets: [
+          { type: 'team', name: 'test-team' },
+        ],
+      },
+    },
+  ],
+  count: 2,
+};
+
+export const queryDetailFixture = {
+  name: 'sample-query',
+  namespace: 'default',
+  input: 'What is the capital of France?',
+  targets: [
+    { type: 'agent', name: 'test-agent' },
+    { type: 'model', name: 'gpt-4' },
+  ],
+  status: {
+    phase: 'done',
+    responses: [
+      { target: { type: 'agent', name: 'test-agent' }, content: 'Paris' },
+      { target: { type: 'model', name: 'gpt-4' }, content: 'Paris' },
+    ],
   },
 };

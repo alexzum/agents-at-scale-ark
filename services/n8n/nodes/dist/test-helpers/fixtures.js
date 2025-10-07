@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.queryEvaluationFixture = exports.directEvaluationFixture = exports.evaluatorsListFixture = exports.mockTeamExecuteResponse = exports.mockTeamExecuteRequest = exports.mockModelExecuteResponse = exports.mockModelExecuteRequest = exports.mockAgentExecuteResponseAsync = exports.mockAgentExecuteResponseTimeout = exports.mockAgentExecuteResponseFailed = exports.mockAgentExecuteResponseSuccess = exports.mockAgentExecuteRequest = exports.mockTeamsList = exports.mockModelsList = exports.mockAgentsList = void 0;
+exports.queryDetailFixture = exports.queriesListFixture = exports.queryEvaluationFixture = exports.directEvaluationFixture = exports.evaluatorsListFixture = exports.mockTeamExecuteResponse = exports.mockTeamExecuteRequest = exports.mockModelExecuteResponse = exports.mockModelExecuteRequest = exports.mockAgentExecuteResponseAsync = exports.mockAgentExecuteResponseTimeout = exports.mockAgentExecuteResponseFailed = exports.mockAgentExecuteResponseSuccess = exports.mockAgentExecuteRequest = exports.mockTeamsList = exports.mockModelsList = exports.mockAgentsList = void 0;
 exports.mockAgentsList = {
     items: [
         {
@@ -155,7 +155,7 @@ exports.queryEvaluationFixture = {
         config: {
             queryRef: {
                 name: 'sample-query',
-                responseTarget: 'final',
+                responseTarget: 'agent:test-agent',
             },
         },
         timeout: '300s',
@@ -165,6 +165,48 @@ exports.queryEvaluationFixture = {
         score: '0.88',
         passed: true,
         message: 'Query evaluation completed',
+    },
+};
+exports.queriesListFixture = {
+    items: [
+        {
+            name: 'sample-query',
+            namespace: 'default',
+            spec: {
+                input: 'What is the capital of France?',
+                targets: [
+                    { type: 'agent', name: 'test-agent' },
+                    { type: 'model', name: 'gpt-4' },
+                ],
+            },
+        },
+        {
+            name: 'team-query',
+            namespace: 'default',
+            spec: {
+                input: 'Coordinate task',
+                targets: [
+                    { type: 'team', name: 'test-team' },
+                ],
+            },
+        },
+    ],
+    count: 2,
+};
+exports.queryDetailFixture = {
+    name: 'sample-query',
+    namespace: 'default',
+    input: 'What is the capital of France?',
+    targets: [
+        { type: 'agent', name: 'test-agent' },
+        { type: 'model', name: 'gpt-4' },
+    ],
+    status: {
+        phase: 'done',
+        responses: [
+            { target: { type: 'agent', name: 'test-agent' }, content: 'Paris' },
+            { target: { type: 'model', name: 'gpt-4' }, content: 'Paris' },
+        ],
     },
 };
 //# sourceMappingURL=fixtures.js.map
