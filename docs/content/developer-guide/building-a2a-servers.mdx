@@ -126,11 +126,33 @@ Your server will be available at:
 - `http://localhost:8000/` - Main A2A endpoint
 - `http://localhost:8000/health` - Health check
 
-## Testing Locally with A2A Tools
+## Testing Locally with A2A Inspector
 
-Before connecting your A2A server to ARK, you can test it locally using validation tools:
+Before connecting your A2A server to ARK, you can test it locally using the A2A Inspector:
 
-### Option 1: A2A Agent Card Validation
+### Option 1: A2A Inspector (Recommended)
+
+The A2A Inspector is a web-based tool for testing and debugging A2A servers:
+
+```bash
+# Install the A2A Inspector
+npm install -g @a2a-integration/inspector
+
+# Start the inspector
+a2a-inspector
+
+# Or use the web version
+# Visit: https://inspector.a2a-integration.org
+```
+
+**Using the Inspector:**
+1. Enter your server URL: `http://localhost:8000`
+2. Click "Discover Agent" to load your agent card
+3. Test agent execution with sample messages
+4. Debug protocol compliance issues
+5. View detailed request/response logs
+
+### Option 2: A2A Agent Card Validation
 
 ```bash
 # Install the Capiscio CLI for A2A validation
@@ -177,8 +199,9 @@ This allows you to:
 
 ### Option 1: Local Development (Recommended for Testing)
 
-For local development with minikube, use the `host.minikube.internal` trick to access your local server:
+For local development, you need to expose your local A2A server to the Kubernetes cluster. The approach depends on your cluster type:
 
+#### Minikube
 ```yaml
 apiVersion: ark.mckinsey.com/v1prealpha1
 kind: A2AServer
@@ -190,14 +213,72 @@ spec:
   description: "My local A2A agent"
 ```
 
-**Important Notes:**
-- The `host.minikube.internal` trick only works with minikube
-- For other cluster types, use the appropriate host address:
-  - **Docker Desktop**: `host.docker.internal`
-  - **Kind**: `host.docker.internal` 
-  - **Remote clusters**: Use your actual IP address
+#### Docker Desktop
+```yaml
+apiVersion: ark.mckinsey.com/v1prealpha1
+kind: A2AServer
+metadata:
+  name: my-local-agent
+spec:
+  address:
+    value: "http://host.docker.internal:8000"
+  description: "My local A2A agent"
+```
 
-**Future Enhancement:** We're working on an `ark-cluster-host-address` convenience feature that will automatically detect the correct host address for your cluster type, making this much cleaner.
+#### Kind (Kubernetes in Docker)
+```yaml
+apiVersion: ark.mckinsey.com/v1prealpha1
+kind: A2AServer
+metadata:
+  name: my-local-agent
+spec:
+  address:
+    value: "http://host.docker.internal:8000"
+  description: "My local A2A agent"
+```
+
+#### Remote Clusters
+```yaml
+apiVersion: ark.mckinsey.com/v1prealpha1
+kind: A2AServer
+metadata:
+  name: my-local-agent
+spec:
+  address:
+    value: "http://YOUR_LOCAL_IP:8000"
+  description: "My local A2A agent"
+```
+
+**Important Notes:**
+- The host trick is only needed to access an A2A server **outside** the cluster
+- Your agent card must also point to the cluster host address (not localhost)
+- For production, containerize your server and deploy it in-cluster instead
+
+**Future Enhancement:** We're working on an `ark cluster host-address` command that will automatically detect the correct host address for your cluster type, making this much cleaner.
+
+#### Updating Your Agent Card for Local Development
+
+When running locally, you must update your agent card URL to match the cluster host address:
+
+```python
+# For minikube
+agent_card = AgentCard(
+    name="my_agent",
+    description="My custom agent",
+    url="http://host.minikube.internal:8000/",  # Must match A2AServer address
+    version="1.0.0",
+    # ... rest of configuration
+)
+
+# For Docker Desktop
+agent_card = AgentCard(
+    name="my_agent", 
+    description="My custom agent",
+    url="http://host.docker.internal:8000/",  # Must match A2AServer address
+    version="1.0.0",
+    # ... rest of configuration
+)
+```
 
 ### Option 2: Remote Server
 
@@ -234,6 +315,8 @@ spec:
 
 ## Containerizing Your A2A Server
 
+Containerizing your A2A server is recommended for production deployments and makes it easier to manage dependencies and scaling.
+
 ### Dockerfile Example
 
 ```dockerfile
@@ -241,15 +324,29 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install dependencies
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python dependencies
 COPY requirements.txt .
-RUN pip install -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy your server code
 COPY my_a2a_server.py .
 
+# Create non-root user for security
+RUN addgroup --system agent && adduser --system --uid 1001 --home /home/agent --ingroup agent agent
+RUN chown -R agent:agent /app
+USER agent
+
 # Expose port
 EXPOSE 8000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
 
 # Run the server
 CMD ["python", "my_a2a_server.py"]
@@ -270,6 +367,9 @@ python-dotenv>=1.0.0
 # Build the image
 docker build -t my-a2a-server:latest .
 
+# Test locally
+docker run -p 8000:8000 my-a2a-server:latest
+
 # Push to your registry
 docker push your-registry/my-a2a-server:latest
 
@@ -278,9 +378,43 @@ kubectl create deployment my-a2a-server --image=your-registry/my-a2a-server:late
 kubectl expose deployment my-a2a-server --port=8000 --type=ClusterIP
 ```
 
+### Environment Variables
+
+For production deployments, use Kubernetes secrets for sensitive data:
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: my-a2a-secrets
+type: Opaque
+stringData:
+  AZURE_OPENAI_API_KEY: "your-api-key-here"
+  DATABASE_URL: "postgresql://user:pass@host:port/db"
+```
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-a2a-server
+spec:
+  template:
+    spec:
+      containers:
+      - name: a2a-server
+        image: your-registry/my-a2a-server:latest
+        env:
+        - name: AZURE_OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: my-a2a-secrets
+              key: AZURE_OPENAI_API_KEY
+```
+
 ### Helm Chart Example
 
-For production deployments, consider using a Helm chart:
+For production deployments, consider using a Helm chart for better management and configuration:
 
 **Chart.yaml:**
 ```yaml
@@ -297,6 +431,8 @@ image:
   repository: your-registry/my-a2a-server
   tag: latest
   pullPolicy: IfNotPresent
+
+replicaCount: 1
 
 service:
   type: ClusterIP
@@ -316,6 +452,16 @@ env:
       secretKeyRef:
         name: azure-openai-secret
         key: token
+  - name: AZURE_API_BASE
+    valueFrom:
+      secretKeyRef:
+        name: azure-openai-secret
+        key: base-url
+
+# Enable A2AServer resource creation
+a2aserver:
+  enabled: true
+  description: "My A2A Server deployed via Helm"
 ```
 
 **templates/deployment.yaml:**
@@ -324,25 +470,40 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ include "my-a2a-server.fullname" . }}
+  labels:
+    {{- include "my-a2a-server.labels" . | nindent 4 }}
 spec:
-  replicas: 1
+  replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      app: {{ include "my-a2a-server.name" . }}
+      {{- include "my-a2a-server.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
-        app: {{ include "my-a2a-server.name" . }}
+        {{- include "my-a2a-server.selectorLabels" . | nindent 8 }}
     spec:
       containers:
       - name: a2a-server
         image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
         ports:
         - containerPort: 8000
         env:
         {{- toYaml .Values.env | nindent 8 }}
         resources:
         {{- toYaml .Values.resources | nindent 10 }}
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /.well-known/agent.json
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 5
 ```
 
 **templates/service.yaml:**
@@ -351,28 +512,48 @@ apiVersion: v1
 kind: Service
 metadata:
   name: {{ include "my-a2a-server.fullname" . }}
+  labels:
+    {{- include "my-a2a-server.labels" . | nindent 4 }}
 spec:
   type: {{ .Values.service.type }}
   ports:
   - port: {{ .Values.service.port }}
     targetPort: 8000
+    protocol: TCP
+    name: http
   selector:
-    app: {{ include "my-a2a-server.name" . }}
+    {{- include "my-a2a-server.selectorLabels" . | nindent 4 }}
 ```
 
 **templates/a2aserver.yaml:**
 ```yaml
+{{- if .Values.a2aserver.enabled }}
 apiVersion: ark.mckinsey.com/v1prealpha1
 kind: A2AServer
 metadata:
   name: {{ include "my-a2a-server.fullname" . }}
+  labels:
+    {{- include "my-a2a-server.labels" . | nindent 4 }}
 spec:
   address:
     valueFrom:
       serviceRef:
         name: {{ include "my-a2a-server.fullname" . }}
         port: "{{ .Values.service.port }}"
-  description: "My A2A Server deployed via Helm"
+  description: {{ .Values.a2aserver.description }}
+{{- end }}
+```
+
+**Deploy with Helm:**
+```bash
+# Install the chart
+helm install my-a2a-server ./my-a2a-server-chart
+
+# Upgrade
+helm upgrade my-a2a-server ./my-a2a-server-chart
+
+# Uninstall
+helm uninstall my-a2a-server
 ```
 
 ## Agent Card Configuration
@@ -513,6 +694,47 @@ class CrewAIExecutor:
 - Check A2A server logs for execution errors
 - Verify message format compatibility
 - Test with A2A Inspector first
+
+## Upcoming Convenience Features
+
+We're working on several features to make A2A server development and deployment easier:
+
+### `ark a2aserver upload`
+A convenience command for uploading and deploying A2A servers:
+
+```bash
+# Upload and deploy your A2A server
+ark a2aserver upload ./my-a2a-server --name my-agent
+
+# This will:
+# 1. Build your Docker image
+# 2. Push to registry
+# 3. Create Kubernetes deployment
+# 4. Create A2AServer resource
+# 5. Wait for agent discovery
+```
+
+### `ark cluster host-address`
+Automatically detect the correct host address for your cluster:
+
+```bash
+# Get the host address for your cluster
+ark cluster host-address
+# Output: host.minikube.internal (for minikube)
+# Output: host.docker.internal (for Docker Desktop)
+# Output: 192.168.1.100 (for remote clusters)
+```
+
+### `ark a2aserver template`
+Generate A2A server templates with best practices:
+
+```bash
+# Generate a Python A2A server template
+ark a2aserver template python --name my-agent --output ./my-agent
+
+# Generate a Node.js template
+ark a2aserver template nodejs --name my-agent --output ./my-agent
+```
 
 ## Next Steps
 
