@@ -151,3 +151,6 @@ node_modules/
 .devspace/
 services/*/ark_sdk-*.whl
 services/ark-dashboard/ark-dashboard/lib/api/generated/openapi.json
+
+# Helm chart dependencies
+**/charts/*.tgz
