@@ -49,12 +49,41 @@ export interface ModelStatus {
   details?: string;
 }
 
+export interface TeamStatus {
+  name: string;
+  namespace: string;
+  status: 'available' | 'unavailable' | 'unknown';
+  strategy?: string;
+  memberCount?: number;
+  details?: string;
+}
+
+export interface ToolStatus {
+  name: string;
+  namespace: string;
+  status: 'ready' | 'not ready' | 'unknown';
+  state?: string;
+  details?: string;
+}
+
+export interface AgentStatus {
+  name: string;
+  namespace: string;
+  status: 'available' | 'unavailable' | 'unknown';
+  modelRef?: string;
+  toolsCount?: number;
+  details?: string;
+}
+
 export interface StatusData {
   services: ServiceStatus[];
   dependencies: DependencyStatus[];
   arkReady?: boolean;
   defaultModelExists?: boolean;
   defaultModel?: ModelStatus;
+  teams?: TeamStatus[];
+  tools?: ToolStatus[];
+  agents?: AgentStatus[];
 }
 
 export interface CommandVersionConfig {

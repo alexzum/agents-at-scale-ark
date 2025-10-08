@@ -4,6 +4,9 @@ import {
   ServiceStatus,
   StatusData,
   ModelStatus,
+  TeamStatus,
+  ToolStatus,
+  AgentStatus,
   CommandVersionConfig,
   K8sCondition,
   ClusterInfo,
@@ -434,6 +437,106 @@ export class StatusChecker {
   }
 
   /**
+   * Check team status
+   */
+  private async checkTeams(): Promise<TeamStatus[]> {
+    try {
+      const {stdout} = await execa('kubectl', ['get', 'teams', '-o', 'json'], {
+        stdio: 'pipe',
+      });
+      const data = JSON.parse(stdout);
+      const teams = data.items || [];
+
+      return teams.map((team: any) => {
+        // Teams don't have status conditions in ARK API, so we consider them available
+        // if they exist and have valid members
+        const hasMembers = team.spec?.members && team.spec.members.length > 0;
+        const available = hasMembers;
+
+        return {
+          name: team.metadata.name,
+          namespace: team.metadata.namespace || 'default',
+          status: available ? 'available' : 'unavailable',
+          strategy: team.spec?.strategy,
+          memberCount: team.spec?.members?.length || 0,
+          details: available ? 'Team is available' : 'Team has no members',
+        };
+      });
+    } catch {
+      return [];
+    }
+  }
+
+  /**
+   * Check tool status
+   */
+  private async checkTools(): Promise<ToolStatus[]> {
+    try {
+      const {stdout} = await execa('kubectl', ['get', 'tools', '-o', 'json'], {
+        stdio: 'pipe',
+      });
+      const data = JSON.parse(stdout);
+      const tools = data.items || [];
+
+      return tools.map((tool: any) => {
+        const state = tool.status?.state || 'unknown';
+        const ready = state === 'Ready';
+
+        return {
+          name: tool.metadata.name,
+          namespace: tool.metadata.namespace || 'default',
+          status: ready ? 'ready' : 'not ready',
+          state: state,
+          details: tool.status?.message || (ready ? 'Tool is ready' : 'Tool not ready'),
+        };
+      });
+    } catch {
+      return [];
+    }
+  }
+
+  /**
+   * Check agent status
+   */
+  private async checkAgents(): Promise<AgentStatus[]> {
+    try {
+      const {stdout} = await execa('kubectl', ['get', 'agents', '-o', 'json'], {
+        stdio: 'pipe',
+      });
+      const data = JSON.parse(stdout);
+      const agents = data.items || [];
+
+      return agents.map((agent: any) => {
+        const available = agent.status?.conditions?.find(
+          (c: K8sCondition) => c.type === 'Available'
+        )?.status === 'True';
+
+        const details = [];
+        if (agent.spec?.modelRef?.name) {
+          details.push(`model: ${agent.spec.modelRef.name}`);
+        }
+        if (agent.spec?.tools?.length) {
+          details.push(`${agent.spec.tools.length} tools`);
+        }
+        if (agent.spec?.description) {
+          details.push(agent.spec.description);
+        }
+
+        return {
+          name: agent.metadata.name,
+          namespace: agent.metadata.namespace || 'default',
+          status: available ? 'available' : 'unavailable',
+          modelRef: agent.spec?.modelRef?.name,
+          toolsCount: agent.spec?.tools?.length || 0,
+          details: details.join(', ') || (available ? 'Agent is available' : 'Agent not available'),
+        };
+      });
+    } catch {
+      return [];
+    }
+  }
+
+  /**
    * Run all checks and return results
    */
   public async checkAll(): Promise<
@@ -503,6 +606,9 @@ export class StatusChecker {
     let arkReady = false;
     let defaultModelExists = false;
     let defaultModel: ModelStatus | undefined;
+    let teams: TeamStatus[] = [];
+    let tools: ToolStatus[] = [];
+    let agents: AgentStatus[] = [];
 
     if (clusterAccess) {
       arkReady = await isArkReady();
@@ -523,7 +629,7 @@ export class StatusChecker {
           // Extract model details
           const available =
             model.status?.conditions?.find(
-              (c: K8sCondition) => c.type === 'Available'
+              (c: K8sCondition) => c.type === 'ModelAvailable'
             )?.status === 'True';
 
           defaultModel = {
@@ -538,6 +644,11 @@ export class StatusChecker {
             exists: false,
           };
         }
+
+        // Check teams, tools, and agents if ARK is ready
+        teams = await this.checkTeams();
+        tools = await this.checkTools();
+        agents = await this.checkAgents();
       }
     }
 
@@ -549,6 +660,9 @@ export class StatusChecker {
       arkReady,
       defaultModelExists,
       defaultModel,
+      teams,
+      tools,
+      agents,
     };
   }
 }

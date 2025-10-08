@@ -277,6 +277,89 @@ function buildStatusSections(
   }
   sections.push({title: 'ark status:', lines: arkStatusLines});
 
+  // Teams section
+  if (data.teams && data.teams.length > 0) {
+    const teamLines = data.teams.map((team) => {
+      const statusMap: Record<string, {icon: string; color: StatusColor}> = {
+        available: {icon: '✓', color: 'green'},
+        unavailable: {icon: '✗', color: 'red'},
+        unknown: {icon: '?', color: 'yellow'},
+      };
+      const statusInfo = statusMap[team.status] || {icon: '?', color: 'yellow' as StatusColor};
+
+      const details = [];
+      if (team.strategy) details.push(team.strategy);
+      if (team.memberCount !== undefined) details.push(`${team.memberCount} members`);
+      if (team.details) details.push(team.details);
+
+      return {
+        icon: statusInfo.icon,
+        iconColor: statusInfo.color,
+        status: team.status,
+        statusColor: statusInfo.color,
+        name: chalk.bold(team.name),
+        details: details.join(', '),
+      };
+    });
+
+    sections.push({title: 'teams:', lines: teamLines});
+  }
+
+  // Tools section
+  if (data.tools && data.tools.length > 0) {
+    const toolLines = data.tools.map((tool) => {
+      const statusMap: Record<string, {icon: string; color: StatusColor}> = {
+        ready: {icon: '✓', color: 'green'},
+        'not ready': {icon: '✗', color: 'red'},
+        unknown: {icon: '?', color: 'yellow'},
+      };
+      const statusInfo = statusMap[tool.status] || {icon: '?', color: 'yellow' as StatusColor};
+
+      const details = [];
+      if (tool.state) details.push(tool.state);
+      if (tool.details) details.push(tool.details);
+
+      return {
+        icon: statusInfo.icon,
+        iconColor: statusInfo.color,
+        status: tool.status,
+        statusColor: statusInfo.color,
+        name: chalk.bold(tool.name),
+        details: details.join(', '),
+      };
+    });
+
+    sections.push({title: 'tools:', lines: toolLines});
+  }
+
+  // Agents section
+  if (data.agents && data.agents.length > 0) {
+    const agentLines = data.agents.map((agent) => {
+      const statusMap: Record<string, {icon: string; color: StatusColor}> = {
+        available: {icon: '✓', color: 'green'},
+        unavailable: {icon: '✗', color: 'red'},
+        unknown: {icon: '?', color: 'yellow'},
+      };
+      const statusInfo = statusMap[agent.status] || {icon: '?', color: 'yellow' as StatusColor};
+
+      const details = [];
+      if (agent.modelRef) details.push(`model: ${agent.modelRef}`);
+      if (agent.toolsCount !== undefined && agent.toolsCount > 0) details.push(`${agent.toolsCount} tools`);
+      if (agent.details) details.push(agent.details);
+
+      return {
+        icon: statusInfo.icon,
+        iconColor: statusInfo.color,
+        status: agent.status,
+        statusColor: statusInfo.color,
+        name: chalk.bold(agent.name),
+        details: details.join(', '),
+      };
+    });
+
+    sections.push({title: 'agents:', lines: agentLines});
+  }
+
   return sections;
 }
 
