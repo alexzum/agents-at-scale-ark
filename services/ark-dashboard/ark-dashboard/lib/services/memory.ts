@@ -18,7 +18,6 @@ export interface StoredMessage {
   role: "user" | "assistant" | "system";
   content: string;
   name?: string;
-  agent_prompt?: string;
   agent_name?: string;
 }
 
@@ -117,7 +116,6 @@ export const memoryService = {
     queryId: string;
     message: { role: string; content: string; name?: string };
     sequence?: number;
-    agent_prompt?: string;
     agent_name?: string;
   }[]> {
     try {
@@ -139,7 +137,6 @@ export const memoryService = {
           sessionId: string;
           queryId: string;
           message: { role: string; content: string; name?: string };
-          agent_prompt?: string;
           agent_name?: string;
         }[];
       }>(url);

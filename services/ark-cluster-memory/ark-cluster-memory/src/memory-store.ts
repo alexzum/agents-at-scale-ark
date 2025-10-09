@@ -89,7 +89,7 @@ export class MemoryStore {
     }
   }
 
-  addMessagesWithMetadata(sessionID: string, queryID: string, messages: Message[], agentPrompt?: string, agentName?: string): void {
+  addMessagesWithMetadata(sessionID: string, queryID: string, messages: Message[], agentName?: string): void {
     this.validateSessionID(sessionID);
     
     if (!queryID) {
@@ -110,7 +110,6 @@ export class MemoryStore {
       query_id: queryID,
       message: msg,
       sequence: this.messages.length + index + 1,
-      agent_prompt: agentPrompt,
       agent_name: agentName
     }));
     

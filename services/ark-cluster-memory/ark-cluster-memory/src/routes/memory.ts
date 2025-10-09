@@ -63,7 +63,7 @@ export function createMemoryRouter(memory: MemoryStore): Router {
       const agentName = ark?.agent_name || '';
       
       // Store messages with metadata
-      memory.addMessagesWithMetadata(session_id, query_id, messages, undefined, agentName);
+      memory.addMessagesWithMetadata(session_id, query_id, messages, agentName);
       res.status(200).send();
     } catch (error) {
       console.error('Failed to add messages:', error);

@@ -1,0 +1,62 @@
+# Memory
+
+Memory enables persistent conversation context across queries. When a query references a memory resource, ARK stores conversation history and provides it as context for subsequent queries in the same session.
+
+## Agent Query with Memory
+
+```yaml
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Query
+metadata:
+  name: agent-memory-query
+spec:
+  input: "Hello! My name is John. Please remember this for our conversation."
+  memory:
+    name: default
+  targets:
+    - type: agent
+      name: my-agent
+  sessionId: user-session-123
+```
+
+## Team Query with Memory
+
+```yaml
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Query
+metadata:
+  name: team-memory-query
+spec:
+  input: "Let's work on the project together"
+  memory:
+    name: default
+  targets:
+    - type: team
+      name: my-team
+  sessionId: team-session-456
+```
+
+## System Message Behavior
+
+By default, ARK records user input and assistant responses in memory, but **not** the agent's system message (prompt). This means:
+
+1. **Initial Query**: If you create a 'coder' agent with prompt "You translate code to JavaScript" and run a query, only the user input and assistant response are recorded in memory
+2. **Agent Update**: Someone changes the agent prompt to "You translate code to Python"  
+3. **Follow-up Query**: When you run a follow-up query like "create a unit test for this", ARK uses the **current** agent prompt (Python) for execution, not the original one
+
+### Controlling System Message Storage
+
+Use the `ark.mckinsey.com/memory-include-hydrate-system-message: "true"` annotation on agents to include the system message in memory storage:
+
+```yaml
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Agent
+metadata:
+  name: coder-agent
+  annotations:
+    ark.mckinsey.com/memory-include-hydrate-system-message: "true"
+spec:
+  prompt: You translate code to JavaScript
+```
+
+With this annotation, the agent's system message is stored in memory at the start of each conversation session. This ensures that follow-up queries use the original system message from memory rather than the current agent prompt.
