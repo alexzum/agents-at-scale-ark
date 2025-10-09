@@ -64,7 +64,8 @@ func PrepareAgentMessagesForMemory(agent *Agent, existingMessages, inputMessages
 // PrepareTeamMessagesForMemory prepares messages for memory storage when executing a team,
 // checking team members for the system message annotation.
 func PrepareTeamMessagesForMemory(team *Team, existingMessages, inputMessages, responseMessages []Message) []Message {
-	// Check team members for system message annotation
+	// Check if system messages from this team's agents are already in existing messages
+	hasTeamSystemMessages := false
 	for _, member := range team.Members {
 		agent, ok := member.(*Agent)
 		if !ok {
@@ -75,25 +76,73 @@ func PrepareTeamMessagesForMemory(team *Team, existingMessages, inputMessages, r
 			continue
 		}
 
-		if agent.Annotations[annotations.MemoryIncludeHydrateSystemMessage] != "true" {
-			continue
+		if agent.Annotations[annotations.MemoryIncludeHydrateSystemMessage] == "true" {
+			agentSystemMessage := NewSystemMessage(agent.Prompt)
+			if containsSystemMessage(existingMessages, agentSystemMessage) {
+				hasTeamSystemMessages = true
+				break
+			}
 		}
+	}
 
-		// Only include system message if this is the start of conversation (no existing messages)
-		if len(existingMessages) == 0 {
-			// Include system message with prompt in memory logs
-			systemMessage := NewSystemMessage(agent.Prompt)
-			messagesToLog := make([]Message, 0, 1+len(inputMessages)+len(responseMessages))
-			messagesToLog = append(messagesToLog, systemMessage)
-			messagesToLog = append(messagesToLog, inputMessages...)
-			messagesToLog = append(messagesToLog, responseMessages...)
-			return messagesToLog
-		}
-
-		// Standard memory storage: input + response
+	// If team system messages are already present, just store input + response
+	if hasTeamSystemMessages {
 		return PrepareNewMessagesForMemory(inputMessages, responseMessages)
 	}
 
-	// If no agent has the annotation, use standard memory storage
+	// First time storing for this team - include system messages
+	var systemMessages []Message
+	for _, member := range team.Members {
+		agent, ok := member.(*Agent)
+		if !ok {
+			continue
+		}
+
+		if agent.Annotations == nil {
+			continue
+		}
+
+		if agent.Annotations[annotations.MemoryIncludeHydrateSystemMessage] == "true" {
+			systemMessage := NewSystemMessage(agent.Prompt)
+			systemMessages = append(systemMessages, systemMessage)
+		}
+	}
+
+	// Include system messages + input + response
+	if len(systemMessages) > 0 {
+		messagesToLog := make([]Message, 0, len(systemMessages)+len(inputMessages)+len(responseMessages))
+		messagesToLog = append(messagesToLog, systemMessages...)
+		messagesToLog = append(messagesToLog, inputMessages...)
+		messagesToLog = append(messagesToLog, responseMessages...)
+		return messagesToLog
+	}
+
+	// No system messages to add
 	return PrepareNewMessagesForMemory(inputMessages, responseMessages)
+}
+
+// containsSystemMessage checks if a system message is already present in the existing messages
+func containsSystemMessage(existingMessages []Message, systemMessage Message) bool {
+	for _, msg := range existingMessages {
+		// Check if this is a system message
+		if msg.OfSystem != nil {
+			// Get the content from the system message
+			var existingContent string
+			if msg.OfSystem.Content.OfString.Value != "" {
+				existingContent = msg.OfSystem.Content.OfString.Value
+			}
+
+			// Get the content from the system message we're checking
+			var targetContent string
+			if systemMessage.OfSystem != nil && systemMessage.OfSystem.Content.OfString.Value != "" {
+				targetContent = systemMessage.OfSystem.Content.OfString.Value
+			}
+
+			// Compare the content
+			if existingContent == targetContent {
+				return true
+			}
+		}
+	}
+	return false
 }

@@ -137,7 +137,19 @@ func (q *QuerySpec) GetInputMessages() ([]openai.ChatCompletionMessageParamUnion
 	}
 
 	var messages []openai.ChatCompletionMessageParamUnion
-	if err := json.Unmarshal(q.Input.Raw, &messages); err != nil {
+
+	// First try to unmarshal directly as array (for backward compatibility)
+	if err := json.Unmarshal(q.Input.Raw, &messages); err == nil {
+		return messages, nil
+	}
+
+	// If that fails, try to unmarshal as a JSON string first, then as array
+	var inputString string
+	if err := json.Unmarshal(q.Input.Raw, &inputString); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal input as string: %w", err)
+	}
+
+	if err := json.Unmarshal([]byte(inputString), &messages); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal input as messages: %w", err)
 	}
 

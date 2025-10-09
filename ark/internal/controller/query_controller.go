@@ -582,15 +582,18 @@ func (r *QueryReconciler) executeAgent(ctx context.Context, query arkv1alpha1.Qu
 	currentMessage, contextMessages := genai.PrepareExecutionMessages(inputMessages, memoryMessages)
 
 	responseMessages, err := agent.Execute(ctx, currentMessage, contextMessages, memory, eventStream)
-	if err != nil {
-		return nil, err
-	}
 
 	// Save all new messages (input + response) to memory
 	// Include system message if agent has annotation and this is the start of conversation
+	// This should happen even if the agent terminated, as termination is a successful completion
 	newMessages := genai.PrepareAgentMessagesForMemory(agent, memoryMessages, inputMessages, responseMessages)
-	if err := memory.AddMessages(ctx, query.Name, newMessages); err != nil {
-		return nil, fmt.Errorf("failed to save new messages to memory: %w", err)
+	if memoryErr := memory.AddMessages(ctx, query.Name, newMessages); memoryErr != nil {
+		return nil, fmt.Errorf("failed to save new messages to memory: %w", memoryErr)
+	}
+
+	// Return the original error (including termination) after memory storage
+	if err != nil {
+		return responseMessages, err
 	}
 
 	return responseMessages, nil
@@ -618,15 +621,18 @@ func (r *QueryReconciler) executeTeam(ctx context.Context, query arkv1alpha1.Que
 	currentMessage, contextMessages := genai.PrepareExecutionMessages(inputMessages, historyMessages)
 
 	responseMessages, err := team.Execute(ctx, currentMessage, contextMessages, memory, eventStream)
-	if err != nil {
-		return nil, err
-	}
 
 	// Save all new messages (input + response) to memory
 	// Include system message if any team member has annotation and this is the start of conversation
+	// This should happen even if the team terminated, as termination is a successful completion
 	newMessages := genai.PrepareTeamMessagesForMemory(team, historyMessages, inputMessages, responseMessages)
-	if err := memory.AddMessages(ctx, query.Name, newMessages); err != nil {
-		return nil, fmt.Errorf("failed to save new messages to memory: %w", err)
+	if memoryErr := memory.AddMessages(ctx, query.Name, newMessages); memoryErr != nil {
+		return nil, fmt.Errorf("failed to save new messages to memory: %w", memoryErr)
+	}
+
+	// Return the original error (including termination) after memory storage
+	if err != nil {
+		return responseMessages, err
 	}
 
 	return responseMessages, nil
