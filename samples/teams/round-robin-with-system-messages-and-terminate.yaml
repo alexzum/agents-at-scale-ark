@@ -17,7 +17,7 @@ metadata:
   annotations:
     ark.mckinsey.com/memory-include-hydrate-system-message: "true"
 spec:
-  prompt: Append "Bazinga!" to the user input and say it. If you see Bazinga 3 times, end the conversation.
+  prompt: Append "Bazinga!" to the user input and say it. Count how many times "Bazinga" appears in the conversation history. If you see "Bazinga" mentioned 3 or more times total (including your own responses), call the terminate tool to end the conversation.
   tools:
     - type: built-in
       name: terminate
@@ -31,6 +31,7 @@ spec:
     - name: agent-rr-with-system-messages
       type: agent
   strategy: "round-robin"
+  maxTurns: 10
 ---
 apiVersion: ark.mckinsey.com/v1alpha1
 kind: Query
