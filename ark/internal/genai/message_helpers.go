@@ -44,7 +44,7 @@ func PrepareNewMessagesForMemory(inputMessages, responseMessages []Message) []Me
 // at the start of a new conversation (when existingMessages is empty).
 func PrepareAgentMessagesForMemory(agent *Agent, existingMessages, inputMessages, responseMessages []Message) []Message {
 	// Check if agent has annotation to include system message in memory
-	if agent.Annotations != nil && agent.Annotations[annotations.MemoryIncludeHydrateSystemMessage] == "true" {
+	if agent.Annotations != nil && agent.Annotations[annotations.MemoryIncludeHydrateSystemMessage] == TrueString {
 		// Only include system message if this is the start of conversation (no existing messages)
 		if len(existingMessages) == 0 {
 			// Get the resolved prompt for the system message
@@ -76,7 +76,7 @@ func PrepareTeamMessagesForMemory(team *Team, existingMessages, inputMessages, r
 			continue
 		}
 
-		if agent.Annotations[annotations.MemoryIncludeHydrateSystemMessage] == "true" {
+		if agent.Annotations[annotations.MemoryIncludeHydrateSystemMessage] == TrueString {
 			agentSystemMessage := NewSystemMessage(agent.Prompt)
 			if containsSystemMessage(existingMessages, agentSystemMessage) {
 				hasTeamSystemMessages = true
@@ -102,7 +102,7 @@ func PrepareTeamMessagesForMemory(team *Team, existingMessages, inputMessages, r
 			continue
 		}
 
-		if agent.Annotations[annotations.MemoryIncludeHydrateSystemMessage] == "true" {
+		if agent.Annotations[annotations.MemoryIncludeHydrateSystemMessage] == TrueString {
 			systemMessage := NewSystemMessage(agent.Prompt)
 			systemMessages = append(systemMessages, systemMessage)
 		}
