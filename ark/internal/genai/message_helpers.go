@@ -49,16 +49,22 @@ func PrepareAgentMessagesForMemory(agent *Agent, existingMessages, inputMessages
 		if len(existingMessages) == 0 {
 			// Get the resolved prompt for the system message
 			systemMessage := NewSystemMessage(agent.Prompt)
-			messagesToLog := make([]Message, 0, 1+len(inputMessages)+len(responseMessages))
+			// Only store the current input (last message) and response, not all inputMessages
+			currentInput := inputMessages[len(inputMessages)-1]
+			messagesToLog := make([]Message, 0, 2+len(responseMessages))
 			messagesToLog = append(messagesToLog, systemMessage)
-			messagesToLog = append(messagesToLog, inputMessages...)
+			messagesToLog = append(messagesToLog, currentInput)
 			messagesToLog = append(messagesToLog, responseMessages...)
 			return messagesToLog
 		}
 	}
 
-	// Standard memory storage: input + response messages
-	return PrepareNewMessagesForMemory(inputMessages, responseMessages)
+	// Standard memory storage: only current input + response messages (not all inputMessages)
+	currentInput := inputMessages[len(inputMessages)-1]
+	newMessages := make([]Message, 0, 1+len(responseMessages))
+	newMessages = append(newMessages, currentInput)
+	newMessages = append(newMessages, responseMessages...)
+	return newMessages
 }
 
 // PrepareTeamMessagesForMemory prepares messages for memory storage when executing a team,
@@ -85,9 +91,13 @@ func PrepareTeamMessagesForMemory(team *Team, existingMessages, inputMessages, r
 		}
 	}
 
-	// If team system messages are already present, just store input + response
+	// If team system messages are already present, just store current input + response
 	if hasTeamSystemMessages {
-		return PrepareNewMessagesForMemory(inputMessages, responseMessages)
+		currentInput := inputMessages[len(inputMessages)-1]
+		newMessages := make([]Message, 0, 1+len(responseMessages))
+		newMessages = append(newMessages, currentInput)
+		newMessages = append(newMessages, responseMessages...)
+		return newMessages
 	}
 
 	// First time storing for this team - include system messages
@@ -108,17 +118,22 @@ func PrepareTeamMessagesForMemory(team *Team, existingMessages, inputMessages, r
 		}
 	}
 
-	// Include system messages + input + response
+	// Include system messages + current input + response
 	if len(systemMessages) > 0 {
-		messagesToLog := make([]Message, 0, len(systemMessages)+len(inputMessages)+len(responseMessages))
+		currentInput := inputMessages[len(inputMessages)-1]
+		messagesToLog := make([]Message, 0, len(systemMessages)+1+len(responseMessages))
 		messagesToLog = append(messagesToLog, systemMessages...)
-		messagesToLog = append(messagesToLog, inputMessages...)
+		messagesToLog = append(messagesToLog, currentInput)
 		messagesToLog = append(messagesToLog, responseMessages...)
 		return messagesToLog
 	}
 
-	// No system messages to add
-	return PrepareNewMessagesForMemory(inputMessages, responseMessages)
+	// No system messages to add - just store current input + response
+	currentInput := inputMessages[len(inputMessages)-1]
+	newMessages := make([]Message, 0, 1+len(responseMessages))
+	newMessages = append(newMessages, currentInput)
+	newMessages = append(newMessages, responseMessages...)
+	return newMessages
 }
 
 // containsSystemMessage checks if a system message is already present in the existing messages
