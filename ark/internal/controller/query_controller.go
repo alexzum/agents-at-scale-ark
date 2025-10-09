@@ -588,7 +588,7 @@ func (r *QueryReconciler) executeAgent(ctx context.Context, query arkv1alpha1.Qu
 
 	// Save all new messages (input + response) to memory
 	// Include system message if agent has annotation and this is the start of conversation
-	newMessages := genai.PrepareAgentMessagesForLogging(agent, memoryMessages, inputMessages, responseMessages)
+	newMessages := genai.PrepareAgentMessagesForMemory(agent, memoryMessages, inputMessages, responseMessages)
 	if err := memory.AddMessages(ctx, query.Name, newMessages); err != nil {
 		return nil, fmt.Errorf("failed to save new messages to memory: %w", err)
 	}
@@ -624,7 +624,7 @@ func (r *QueryReconciler) executeTeam(ctx context.Context, query arkv1alpha1.Que
 
 	// Save all new messages (input + response) to memory
 	// Include system message if any team member has annotation and this is the start of conversation
-	newMessages := genai.PrepareTeamMessagesForLogging(team, historyMessages, inputMessages, responseMessages)
+	newMessages := genai.PrepareTeamMessagesForMemory(team, historyMessages, inputMessages, responseMessages)
 	if err := memory.AddMessages(ctx, query.Name, newMessages); err != nil {
 		return nil, fmt.Errorf("failed to save new messages to memory: %w", err)
 	}

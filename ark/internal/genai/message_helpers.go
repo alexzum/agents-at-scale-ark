@@ -2,6 +2,10 @@
 
 package genai
 
+import (
+	"mckinsey.com/ark/internal/annotations"
+)
+
 // PrepareExecutionMessages separates the current message from context messages
 // and combines with memory history for agent/team execution.
 // This pattern is used when the last message in inputMessages should be treated
@@ -35,15 +39,12 @@ func PrepareNewMessagesForMemory(inputMessages, responseMessages []Message) []Me
 	return newMessages
 }
 
-// PrepareAgentMessagesForLogging prepares messages for logging, including system message if agent has annotation.
+// PrepareAgentMessagesForMemory prepares messages for memory storage, including system message if agent has annotation.
 // This checks if the agent has the MemoryIncludeHydrateSystemMessage annotation and includes the system message
 // at the start of a new conversation (when existingMessages is empty).
-func PrepareAgentMessagesForLogging(agent *Agent, existingMessages, inputMessages, responseMessages []Message) []Message {
-	// Import is needed at package level
-	const MemoryIncludeHydrateSystemMessage = "ark.mckinsey.com/memory-include-hydrate-system-message"
-
-	// Check if agent has annotation to log system message in memory
-	if agent.Annotations != nil && agent.Annotations[MemoryIncludeHydrateSystemMessage] == "true" {
+func PrepareAgentMessagesForMemory(agent *Agent, existingMessages, inputMessages, responseMessages []Message) []Message {
+	// Check if agent has annotation to include system message in memory
+	if agent.Annotations != nil && agent.Annotations[annotations.MemoryIncludeHydrateSystemMessage] == "true" {
 		// Only include system message if this is the start of conversation (no existing messages)
 		if len(existingMessages) == 0 {
 			// Get the resolved prompt for the system message
@@ -56,16 +57,14 @@ func PrepareAgentMessagesForLogging(agent *Agent, existingMessages, inputMessage
 		}
 	}
 
-	// Standard logging: input + response messages
+	// Standard memory storage: input + response messages
 	return PrepareNewMessagesForMemory(inputMessages, responseMessages)
 }
 
-// PrepareTeamMessagesForLogging prepares messages for logging when executing a team,
+// PrepareTeamMessagesForMemory prepares messages for memory storage when executing a team,
 // checking team members for the system message annotation.
-func PrepareTeamMessagesForLogging(team *Team, existingMessages, inputMessages, responseMessages []Message) []Message {
-	const MemoryIncludeHydrateSystemMessage = "ark.mckinsey.com/memory-include-hydrate-system-message"
-
-	// Check team members for prompt logging annotation
+func PrepareTeamMessagesForMemory(team *Team, existingMessages, inputMessages, responseMessages []Message) []Message {
+	// Check team members for system message annotation
 	for _, member := range team.Members {
 		agent, ok := member.(*Agent)
 		if !ok {
@@ -76,7 +75,7 @@ func PrepareTeamMessagesForLogging(team *Team, existingMessages, inputMessages, 
 			continue
 		}
 
-		if agent.Annotations[MemoryIncludeHydrateSystemMessage] != "true" {
+		if agent.Annotations[annotations.MemoryIncludeHydrateSystemMessage] != "true" {
 			continue
 		}
 
@@ -91,10 +90,10 @@ func PrepareTeamMessagesForLogging(team *Team, existingMessages, inputMessages, 
 			return messagesToLog
 		}
 
-		// Standard logging: input + response
+		// Standard memory storage: input + response
 		return PrepareNewMessagesForMemory(inputMessages, responseMessages)
 	}
 
-	// If no agent has the annotation, use standard logging
+	// If no agent has the annotation, use standard memory storage
 	return PrepareNewMessagesForMemory(inputMessages, responseMessages)
 }

@@ -127,9 +127,6 @@ func (m *HTTPMemory) AddMessages(ctx context.Context, queryID string, messages [
 		SessionID: m.sessionId,
 		QueryID:   queryID,
 		Messages:  openaiMessages,
-		Ark: ArkMetadata{
-			AgentName: "", // Empty since we removed agent name storage
-		},
 	})
 	if err != nil {
 		tracker.Fail(fmt.Errorf("failed to serialize messages: %w", err))
