@@ -1,5 +1,5 @@
 export default {
-  'query-execution': 'Query Execution Flow',
+  'query-execution-flow': 'Query Execution Flow',
   'mcp': 'MCP Settings',
   'streaming': 'Streaming'
 }
