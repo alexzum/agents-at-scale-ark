@@ -9,7 +9,6 @@ export default {
   queries: 'Queries',
   services: 'Services',
   'ark-dashboard': 'ARK Dashboard',
-  'a2a-server': 'A2A Gateway',
   'ark-evaluator': 'Evaluation Engine Service',
   testing: 'End-to-End Testing',
   observability: 'Observability',

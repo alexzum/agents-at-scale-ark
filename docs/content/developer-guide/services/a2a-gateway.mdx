@@ -49,7 +49,7 @@ The gateway enables agents to:
    - Creates ARK queries for agent task execution
    - Handles streaming responses from agents
 
-### Request Flow
+## Request Flow
 
 1. Client requests `/agent/{name}/execute`
 2. FastAPI routes to ProxyApp at `/agent/*`
@@ -58,7 +58,7 @@ The gateway enables agents to:
 5. A2AStarletteApplication uses ARKAgentExecutor
 6. ARKAgentExecutor creates ARK Query for execution
 
-### Key Design Decisions
+## Key Design Decisions
 
 - **ProxyApp Pattern**: Ensures atomic route updates without affecting in-flight requests
 - **Periodic Sync**: Automatically discovers new agents without restarts
@@ -76,7 +76,6 @@ Environment variables for the A2A Gateway:
 - **`ARK_A2A_LISTEN_PORT`** (default: `7184`) - Port used in agent card URLs
 - **`ARK_A2A_LISTEN_HOST`** (default: `localhost`) - Host used in agent card URLs
 - **`ARK_A2A_LISTEN_PROTOCOL`** (default: `http`) - Protocol scheme for agent card URLs
-
 
 
 

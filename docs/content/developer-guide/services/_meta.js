@@ -1,4 +1,5 @@
 export default {
-  'ark-gateway': 'ARK Gateway',
-  'ark-cluster-memory': 'ARK Cluster Memory'
+  'a2a-gateway': 'A2A Gateway',
+  'ark-cluster-memory': 'ARK Cluster Memory',
+  'ark-gateway': 'ARK Gateway'
 }
