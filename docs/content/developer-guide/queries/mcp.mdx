@@ -1,18 +1,39 @@
-# MCP settings
+# MCP Settings
 
-## Include MCP settings on query level
+Model Context Protocol (MCP) servers provide tools and resources to agents during query execution. This document describes how to configure MCP settings at the query level for fine-grained control over tool initialization.
+
+## Query-Level MCP Configuration
+
+Use the `ark.mckinsey.com/mcp-server-settings` annotation to configure MCP server behavior for specific queries:
 
 ```yaml
 apiVersion: ark.mckinsey.com/v1alpha1
 kind: Query
 metadata:
-  name: my-query
+  name: query-with-mcp-settings-in-annotations
   annotations:
-    # Immediately call set_base_directory tool with path "shared" after initiating connection to filesystem
     "ark.mckinsey.com/mcp-server-settings": |
-      {"ark-system/filesystem": {"toolCalls": [{"name": "set_base_directory", "arguments": {"path": "./shared"}}]}}
+      {
+        "ark-system/filesystem": {
+          "toolCalls": [
+            {
+              "name": "set_base_directory", 
+              "arguments": {"path": "./shared"}
+            }
+          ]
+        }
+      }
 spec:
-  input: "Hello"
+  input: "Which folders can you see use the filesystem tool? Call directory-tree with path \".\"."
   targets:
-    - name: my-agent
+    - type: agent
+      name: my-agent
 ```
+
+## Configuration Format
+
+> **TODO**: Document MCP settings format and options
+
+## Related Topics
+
+- [MCP Servers](/user-guide/tools) - User guide for MCP server usage
