@@ -5,5 +5,6 @@ export default {
   'query-execution': 'Query Execution Flow',
   relationships: 'Resource Relationships',
   resources: 'Resources',
+  troubleshooting: 'Troubleshooting',
   contributors: 'Contributors'
 }
