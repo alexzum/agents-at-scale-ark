@@ -41,55 +41,16 @@ Browse the complete API documentation at `http://localhost:8000/docs` when the s
 
 Standard REST APIs for managing ARK resources, for example:
 
-- Agents: `/v1/agents`
-- Teams: `/v1/teams`
-- Queries: `/v1/queries`
-- Models: `/v1/models`
-- Evaluators: `/v1/evaluators`
-- Evaluations: `/v1/evaluations`
-- Secrets: `/v1/secrets`
+- Agents: `/v1/namespaces/{namespace}/agents`
+- Teams: `/v1/namespaces/{namespace}/teams`
+- Queries: `/v1/namespaces/{namespace}/queries`
+- Models: `/v1/namespaces/{namespace}/models`
+- Evaluators: `/v1/namespaces/{namespace}/evaluators`
+- Evaluations: `/v1/namespaces/{namespace}/evaluations`
+- Secrets: `/v1/namespaces/{namespace}/secrets`
 - Namespaces: `/v1/namespaces`
 
 Standard Kubernetes REST patterns are followed, such as `POST` to create, `DELETE` to delete.
-
-### Simplified Agent Execution
-
-For quick agent queries without managing Query CRs directly, use the execute endpoint:
-
-```bash
-curl -X POST http://localhost:8000/v1/agents/my-agent/execute \
-  -H "Content-Type: application/json" \
-  -d '{
-    "input": "What is 2+2?",
-    "wait": true,
-    "timeout": "60s"
-  }'
-```
-
-**Response:**
-```json
-{
-  "queryName": "my-agent-abc123",
-  "input": "What is 2+2?",
-  "response": "The answer is 4",
-  "status": "completed",
-  "duration": "2.5s"
-}
-```
-
-**Parameters:**
-- `input` (required): The query text
-- `wait` (optional, default: true): Wait for query completion
-- `timeout` (optional, default: "300s"): Maximum wait time
-- `sessionId` (optional): Session ID for context retention
-- `memory` (optional): Memory resource name
-- `parameters` (optional): Additional parameters
-
-This endpoint is ideal for:
-- Simple agent queries
-- Integration with external tools (like [n8n](/integrations/n8n))
-- Quick testing and prototyping
-- Webhook handlers
 
 ## OpenAI-Compatible APIs
 
