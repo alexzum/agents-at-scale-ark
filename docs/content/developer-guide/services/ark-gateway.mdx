@@ -63,7 +63,13 @@ The Localhost Gateway architecture looks like this:
 ┌─────────────────────────────┐
 │ Pod                         │ ◄── labels: app=(e.g. ark-dashboard)
 │ (e.g. ark-dashboard)        │     ports: 3000
-└─────────────────────────────┘
+└──────────────┬──────────────┘
+               │ routes to
+               ▼
+┌─────────────────────────────┐
+│ Pod                         │ ◄── labels: app=(e.g. ark-dashboard)
+│ (e.g. ark-dashboard)        │     ports: 3000
+└──────────────┴──────────────┘
 ```
 
 ## Configuration
