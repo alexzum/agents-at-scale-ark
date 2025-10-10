@@ -122,7 +122,9 @@ jobs:
         with:
           go-version: "1.24"
           cache: true
-          cache-dependency-path: ark/go.sum
+          cache-dependency-path: |
+            ark/go.sum
+            tools/fark/go.sum
 
       - name: Install gcov2lcov
         run: go install github.com/jandelgado/gcov2lcov@latest
@@ -156,7 +158,9 @@ jobs:
         with:
           go-version: "1.24"
           cache: true
-          cache-dependency-path: ark/go.sum
+          cache-dependency-path: |
+            ark/go.sum
+            tools/fark/go.sum
 
       - name: Install uv
         uses: astral-sh/setup-uv@v6
@@ -168,6 +172,8 @@ jobs:
           args: "--version"
 
       - run: make -j24 build-all
+
+      - run: make -j24 services-test-all
       
       - uses: ./.github/actions/collect-coverage
         with:
@@ -369,6 +375,22 @@ jobs:
           ./scripts/query.sh agent/sample-agent "confirm you have read this message"
           # Test fark.
           fark agent sample-agent "confirm you have read this message"
+
+  e2e-ark-cli:
+    needs: [build-ark-cli]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/test-ark-cli
+        with:
+          azure-openai-key: ${{ secrets.CICD_AZURE_OPENAI_KEY }}
+          azure-openai-base-url: ${{ secrets.CICD_AZURE_OPENAI_BASE_URL }}
+          model-type: azure
+          model-name: gpt-4.1-mini
+          model-api-version: 2024-12-01-preview
+          ci-cache-registry-username: ${{ secrets.DOCKER_CICD_CACHE_REGISTRY_USERNAME || github.actor }}
+          ci-cache-registry-password: ${{ secrets.DOCKER_CICD_CACHE_REGISTRY_PASSWORD || secrets.GITHUB_TOKEN }}
 
   e2e-smoke-test:
     needs: [setup-container-cache-registry, build-containers]

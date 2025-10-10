@@ -3,33 +3,75 @@ version: v2beta1
 
 # Dependencies - include other DevSpace configurations
 dependencies:
+  localhost-gateway:
+    path: ./services/localhost-gateway
+  ark:
+    path: ./ark
   ark-cluster-memory:
     path: ./services/ark-cluster-memory
   ark-api:
     path: ./services/ark-api
   ark-dashboard:
     path: ./services/ark-dashboard
-  ark:
-    path: ./ark
-#   ark-mcp:
-#     path: ./services/ark-mcp
-#     pipeline: dev
+
+#  ark-mcp:
+#    path: ./services/ark-mcp
 #   postgres-memory:
 #     path: ./services/postgres-memory
 
+# Vars - To disable, set environment variables before the devspace commands
+#        For example: ENABLE_CERT_MANAGER=false devspace dev
+vars:
+  ENABLE_CERT_MANAGER:
+    source: env
+    default: true
+  ENABLE_GATEWAY_API_CRDS:
+    source: env
+    default: true
+
+commands:
+  routes:
+    ./services/localhost-gateway/scripts/show-routes.sh
+
+profiles:
+  - name: enable-cert-manager
+    activation:
+    - vars:
+        ENABLE_CERT_MANAGER: true
+    patches:
+    - op: add
+      path: deployments
+      value:
+        cert-manager:
+          namespace: cert-manager
+          helm:
+            chart:
+              name: cert-manager
+              repo: https://charts.jetstack.io
+            releaseName: cert-manager
+            upgradeArgs: [ "--install" ]
+            values:
+              installCRDs: true
+  - name: enable-gateway-api
+    activation:
+      - vars:
+          ENABLE_GATEWAY_API_CRDS: true
+    patches:
+      - op: add
+        path: deployments
+        value:
+          gateway-api:
+            namespace: default
+            kubectl:
+              manifests:
+                - "https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.3.0/standard-install.yaml"
+
 pipelines:
   deploy: |-
-    run_dependency_pipelines --all --pipeline=deploy
-    build_images --all
     create_deployments --all
+    run_dependency_pipelines ark --pipeline=deploy
+    run_dependency_pipelines --all --exclude ark --pipeline=deploy
   dev: |-
-    run_dependency_pipelines --all --pipeline=dev
     create_deployments --all
-    start_dev --all
-
-# Hooks for pre-build setup
-hooks:
-  - command: ./services/ark-api/ark-api/scripts/ensure-ark-sdk-wheel.sh
-    events: ["before:dev", "before:deploy"]
-
-
+    run_dependency_pipelines ark --pipeline=dev
+    run_dependency_pipelines --all --exclude ark --pipeline=dev
