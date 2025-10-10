@@ -1,14 +1,14 @@
 export default {
+  'design-principles': 'Design Principles',
   'build': 'Build System and Makefile Overview',
   'local-development': 'Local Development',
   'authentication': 'Authentication',
   'ark-sdk': 'ARK SDK',
-  'design-principles': 'Design Principles',
   'crd-design-guide': 'CRD Design Guidelines',
-  'cli-tools': 'CLI Tools',
-  queries: 'Queries',
   services: 'Services',
-  testing: 'End-to-End Testing',
+  queries: 'Queries',
   'logging-and-events': 'Logging and Events',
+  'cli-tools': 'CLI Tools',
   observability: 'Observability',
+  testing: 'End-to-End Testing',
 }
