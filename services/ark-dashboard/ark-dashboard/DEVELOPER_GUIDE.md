@@ -567,6 +567,153 @@ const handleUserSubmission = async (formData: UserFormData): Promise<void> => {
 3. **Extract reusable logic** into custom hooks
 4. **Use proper prop types** with TypeScript types
 
+## Code Quality & Formatting
+
+We use ESLint and Prettier to maintain consistent code quality and formatting across the project.
+
+### ESLint Configuration
+
+Our ESLint setup enforces strict TypeScript and React best practices:
+
+#### Key Rules Explained
+
+**TypeScript Rules:**
+- `@typescript-eslint/no-explicit-any: error` - Prevents use of `any` type
+- `@typescript-eslint/consistent-type-imports: warn` - Enforces `import type` for type-only imports
+- `@typescript-eslint/no-unused-vars: error` - Catches unused variables (allows `_` prefix for intentionally unused)
+- `@typescript-eslint/no-shadow: error` - Prevents variable shadowing
+
+**Naming Conventions:**
+- **Variables**: `camelCase`, `UPPER_CASE` (constants), or `PascalCase` (components)
+- **Functions**: `camelCase` or `PascalCase`
+- **Types/Interfaces**: `PascalCase` (no `I` or `T` prefixes)
+- **Enum Members**: `UPPER_CASE`
+- **Type Parameters**: `PascalCase` with `T` prefix (e.g., `TData`, `TProps`)
+
+**Import Rules:**
+- `import/no-self-import: error` - Prevents importing from same file
+- `import/no-cycle: warn` - Detects circular dependencies
+- `import/newline-after-import: warn` - Requires newline after imports
+- `import/first: warn` - Imports must be at top of file
+
+**General Rules:**
+- `eqeqeq: error` - Must use `===` instead of `==`
+- `curly: error` - Requires braces for all control statements
+
+#### Examples
+
+```typescript
+// ✅ Good: Proper naming conventions
+const userName = 'john'; // camelCase variable
+const API_BASE_URL = 'https://api.example.com'; // UPPER_CASE constant
+function getUserData() {} // camelCase function
+type UserData = { name: string }; // PascalCase type
+enum UserRole { ADMIN, USER } // PascalCase enum, UPPER_CASE members
+
+// ✅ Good: Type imports
+import type { User } from '@/types/user';
+import { getUser } from '@/services/user';
+
+// ❌ Bad: Mixed import styles
+import { User, getUser } from '@/services/user'; // Should separate type import
+
+// ✅ Good: Explicit comparisons
+if (user.id === currentUserId) {}
+
+// ❌ Bad: Loose equality
+if (user.id == currentUserId) {} // ESLint error
+
+// ✅ Good: Unused variable with underscore
+const handleClick = (_event: MouseEvent) => {};
+
+// ❌ Bad: Unused variable without underscore
+const handleClick = (event: MouseEvent) => {}; // ESLint error if unused
+```
+
+### Prettier Configuration
+
+Our Prettier setup ensures consistent code formatting:
+
+```json
+{
+  "plugins": [
+    "@trivago/prettier-plugin-sort-imports",
+    "prettier-plugin-tailwindcss"
+  ],
+  "singleQuote": true,
+  "tabWidth": 2,
+  "trailingComma": "all",
+  "useTabs": false,
+  "arrowParens": "avoid",
+  "bracketSameLine": true,
+  "bracketSpacing": true,
+  "importOrder": ["^@/(.*)$", "^[./]"],
+  "importOrderSeparation": true,
+  "importOrderSortSpecifiers": true
+}
+```
+
+#### Key Formatting Rules
+
+- **Single quotes** for strings
+- **2 spaces** for indentation (no tabs)
+- **Trailing commas** in arrays, objects, function parameters
+- **Arrow function parens** only when necessary (`avoid`)
+- **Bracket spacing** in objects: `{ key: value }`
+- **Bracket same line** for JSX: `<div className="...">`
+
+#### Import Organization
+
+Imports are automatically sorted in this order:
+1. **Absolute imports** starting with `@/` (our path alias)
+2. **Relative imports** starting with `./` or `../`
+3. **Blank line separation** between groups
+4. **Alphabetical sorting** within each group
+
+Example of auto-formatted imports:
+```typescript
+// After Prettier formatting:
+import type { User } from '@/types/user';
+import { Button } from '@/components/ui/button';
+import { validateUser } from '@/utils/validation';
+
+import { useState } from 'react';
+```
+
+#### Tailwind CSS Integration
+
+The `prettier-plugin-tailwindcss` automatically sorts Tailwind classes:
+
+```tsx
+// ✅ Auto-formatted by Prettier
+<div className="flex items-center justify-between rounded-lg bg-white p-4 shadow-md">
+
+// Before formatting (mixed order)
+<div className="p-4 bg-white flex shadow-md rounded-lg justify-between items-center">
+```
+
+### Running Linting and Formatting
+
+```bash
+# Check for linting errors
+npm run lint
+
+# Fix auto-fixable linting errors
+npm run lint:fix
+
+# Format code with Prettier (usually done automatically on save)
+npx prettier --write .
+```
+
+### IDE Integration
+
+Configure your IDE to:
+- **Format on save** with Prettier
+- **Show ESLint errors** inline
+- **Auto-fix** ESLint issues where possible
+
+This ensures consistent code style across the team and catches potential issues early.
+
 ## Validations
 
 We use **[Zod](https://zod.dev/)** for all validation needs, including form validation.
