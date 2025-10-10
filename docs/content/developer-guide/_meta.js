@@ -12,6 +12,5 @@ export default {
   'ark-evaluator': 'Evaluation Engine Service',
   testing: 'End-to-End Testing',
   observability: 'Observability',
-  'langchain-execution-engine': 'LangChain Execution Engine',
   'authentication': 'Authentication'
 }
