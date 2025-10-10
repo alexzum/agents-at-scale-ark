@@ -1,0 +1,311 @@
+{
+  "name": "Smart Customer Support with AI Quality Gates",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "customer-support",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook: New Support Ticket",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [240, 300],
+      "webhookId": "customer-support-webhook"
+    },
+    {
+      "parameters": {
+        "agent": "support-agent",
+        "input": "=Customer Issue:\n{{ $json.body.issue }}\n\nCustomer Context:\n- Name: {{ $json.body.customer_name }}\n- Email: {{ $json.body.customer_email }}\n- Account Type: {{ $json.body.account_type }}\n- Priority: {{ $json.body.priority }}",
+        "wait": true,
+        "timeout": 60
+      },
+      "id": "ark-agent-node",
+      "name": "ARK Agent: Generate Response",
+      "type": "arkAgent",
+      "typeVersion": 1,
+      "position": [460, 300],
+      "credentials": {
+        "arkApi": {
+          "id": "1",
+          "name": "ARK account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "evaluationType": "direct",
+        "evaluator": "support-quality-evaluator",
+        "input": "={{ $('Webhook: New Support Ticket').item.json.body.issue }}",
+        "output": "={{ $json.response }}",
+        "wait": true,
+        "timeout": 30,
+        "scope": ["relevance", "accuracy", "clarity", "usefulness", "compliance"],
+        "minScore": 0.8,
+        "temperature": 0.1,
+        "context": "This is a customer support response that will be sent directly to the customer. Ensure it meets professional standards and provides helpful, accurate information."
+      },
+      "id": "ark-evaluation-node",
+      "name": "ARK Evaluation: Check Quality",
+      "type": "arkEvaluation",
+      "typeVersion": 1,
+      "position": [680, 300],
+      "credentials": {
+        "arkApi": {
+          "id": "1",
+          "name": "ARK account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{ parseFloat($json.status.score) }}",
+              "operation": "largerEqual",
+              "value2": 0.8
+            }
+          ]
+        }
+      },
+      "id": "if-quality-check",
+      "name": "IF: Quality Score >= 0.8",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.example.com/send-email",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "to",
+              "value": "={{ $('Webhook: New Support Ticket').item.json.body.customer_email }}"
+            },
+            {
+              "name": "subject",
+              "value": "Re: Your Support Request"
+            },
+            {
+              "name": "body",
+              "value": "=Hi {{ $('Webhook: New Support Ticket').item.json.body.customer_name }},\n\n{{ $('ARK Agent: Generate Response').item.json.response }}\n\nBest regards,\nCustomer Support Team"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "send-to-customer",
+      "name": "HTTP: Send to Customer",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1120, 200]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.example.com/review-queue",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "customer_email",
+              "value": "={{ $('Webhook: New Support Ticket').item.json.body.customer_email }}"
+            },
+            {
+              "name": "issue",
+              "value": "={{ $('Webhook: New Support Ticket').item.json.body.issue }}"
+            },
+            {
+              "name": "draft_response",
+              "value": "={{ $('ARK Agent: Generate Response').item.json.response }}"
+            },
+            {
+              "name": "quality_score",
+              "value": "={{ $('ARK Evaluation: Check Quality').item.json.status.score }}"
+            },
+            {
+              "name": "evaluation_message",
+              "value": "={{ $('ARK Evaluation: Check Quality').item.json.status.message }}"
+            },
+            {
+              "name": "priority",
+              "value": "high"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "add-to-review-queue",
+      "name": "HTTP: Add to Review Queue",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1120, 400]
+    },
+    {
+      "parameters": {
+        "channel": "customer-support",
+        "text": "=✅ Auto-response sent to {{ $('Webhook: New Support Ticket').item.json.body.customer_name }}\n\nQuality Score: {{ $('ARK Evaluation: Check Quality').item.json.status.score }}\nIssue: {{ $('Webhook: New Support Ticket').item.json.body.issue }}",
+        "otherOptions": {}
+      },
+      "id": "slack-notify-success",
+      "name": "Slack: Notify Team (Success)",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.1,
+      "position": [1340, 200],
+      "credentials": {
+        "slackApi": {
+          "id": "2",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "channel": "customer-support-alerts",
+        "text": "=⚠️ Response needs review\n\nCustomer: {{ $('Webhook: New Support Ticket').item.json.body.customer_name }}\nQuality Score: {{ $('ARK Evaluation: Check Quality').item.json.status.score }}\nIssue: {{ $('Webhook: New Support Ticket').item.json.body.issue }}\n\nReason: Quality score below threshold (0.8)",
+        "otherOptions": {}
+      },
+      "id": "slack-alert-review",
+      "name": "Slack: Alert Supervisor (Review)",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.1,
+      "position": [1340, 400],
+      "credentials": {
+        "slackApi": {
+          "id": "2",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"status\": \"success\", \"message\": \"Response sent to customer\", \"quality_score\": $('ARK Evaluation: Check Quality').item.json.status.score } }}"
+      },
+      "id": "respond-success",
+      "name": "Respond: Success",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1560, 200]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"status\": \"queued_for_review\", \"message\": \"Response requires human review\", \"quality_score\": $('ARK Evaluation: Check Quality').item.json.status.score } }}"
+      },
+      "id": "respond-queued",
+      "name": "Respond: Queued for Review",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1560, 400]
+    }
+  ],
+  "connections": {
+    "Webhook: New Support Ticket": {
+      "main": [
+        [
+          {
+            "node": "ARK Agent: Generate Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ARK Agent: Generate Response": {
+      "main": [
+        [
+          {
+            "node": "ARK Evaluation: Check Quality",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ARK Evaluation: Check Quality": {
+      "main": [
+        [
+          {
+            "node": "IF: Quality Score >= 0.8",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF: Quality Score >= 0.8": {
+      "main": [
+        [
+          {
+            "node": "HTTP: Send to Customer",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "HTTP: Add to Review Queue",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP: Send to Customer": {
+      "main": [
+        [
+          {
+            "node": "Slack: Notify Team (Success)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP: Add to Review Queue": {
+      "main": [
+        [
+          {
+            "node": "Slack: Alert Supervisor (Review)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Slack: Notify Team (Success)": {
+      "main": [
+        [
+          {
+            "node": "Respond: Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Slack: Alert Supervisor (Review)": {
+      "main": [
+        [
+          {
+            "node": "Respond: Queued for Review",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {}
+}
