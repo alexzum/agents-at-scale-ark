@@ -886,7 +886,25 @@ func (r *QueryReconciler) getClientForQuery(query arkv1alpha1.Query) (client.Cli
 	// and supports local development where impersonation isn't available.
 	serviceAccount := query.Spec.ServiceAccount
 	if serviceAccount == "" {
-		return r.Client, nil
+		// Create a non-cached client to ensure we get fresh agent data
+		cfg, err := rest.InClusterConfig()
+		if err != nil {
+			return nil, fmt.Errorf("failed to get in-cluster config: %w", err)
+		}
+		
+		nonCachedClient, err := client.New(cfg, client.Options{
+			Scheme: r.Scheme,
+			Mapper: r.RESTMapper(),
+			Cache: &client.CacheOptions{
+				DisableFor: []client.Object{
+					&arkv1alpha1.Agent{},
+				},
+			},
+		})
+		if err != nil {
+			return nil, fmt.Errorf("failed to create non-cached client: %w", err)
+		}
+		return nonCachedClient, nil
 	}
 
 	// Impersonate the specified service account.
@@ -904,6 +922,11 @@ func (r *QueryReconciler) getClientForQuery(query arkv1alpha1.Query) (client.Cli
 	impersonatedClient, err := client.New(cfg, client.Options{
 		Scheme: r.Scheme,
 		Mapper: r.RESTMapper(),
+		Cache: &client.CacheOptions{
+			DisableFor: []client.Object{
+				&arkv1alpha1.Agent{},
+			},
+		},
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create impersonated client for service account %s/%s: %w", query.Namespace, serviceAccount, err)
