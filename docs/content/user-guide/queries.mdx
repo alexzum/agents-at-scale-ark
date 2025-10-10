@@ -97,23 +97,14 @@ Notes:
 
 ## Using fark CLI
 
-Query an agent directly:
+The `fark` CLI tool provides a convenient way to query agents and teams directly from the command line. It supports basic querying, file input, and session management.
 
 ```bash
-fark agent weather-agent "What's the weather like in New York?"
+# Trigger query named weather-query with new input
+fark query weather-query "What's the weather in London?"
 ```
 
-Query a team:
-
-```bash
-fark team team-seq "Analyze this data and provide recommendations"
-```
-
-Create a named query:
-
-```bash
-fark query my-query
-```
+For complete CLI documentation and advanced usage examples, see the [CLI Tools Developer Guide](/developer-guide/cli-tools).
 
 ## Using OpenAI-Compatible Endpoints
 
