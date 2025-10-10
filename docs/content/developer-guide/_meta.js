@@ -8,7 +8,6 @@ export default {
   'cli-tools': 'CLI Tools',
   queries: 'Queries',
   services: 'Services',
-  'ark-dashboard': 'ARK Dashboard',
   'ark-evaluator': 'Evaluation Engine Service',
   testing: 'End-to-End Testing',
   observability: 'Observability',
