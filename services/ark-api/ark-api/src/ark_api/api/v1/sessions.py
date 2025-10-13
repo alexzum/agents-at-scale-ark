@@ -106,12 +106,6 @@ async def delete_session(
                 logger.error(f"Failed to delete session {session_id} from memory {memory_name}: {e}")
                 continue
         
-        if deleted_count == 0:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Session {session_id} not found in any memory service"
-            )
-        
         return {"message": f"Session {session_id} deleted successfully"}
 
 
@@ -183,11 +177,5 @@ async def delete_query_messages(
             except Exception as e:
                 logger.error(f"Failed to delete query {query_id} messages from session {session_id} in memory {memory_name}: {e}")
                 continue
-        
-        if deleted_count == 0:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Query {query_id} messages not found in session {session_id} in any memory service"
-            )
         
         return {"message": f"Query {query_id} messages deleted successfully from session {session_id}"}
