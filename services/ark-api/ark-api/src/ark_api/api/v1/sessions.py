@@ -99,12 +99,20 @@ async def delete_session(
                     
                     if response.status_code == 200:
                         deleted_count += 1
-                    elif response.status_code != 404:  # 404 is OK if session doesn't exist
-                        logger.warning(f"Failed to delete session {session_id} from memory {memory_name}: {response.status_code}")
+                    elif response.status_code == 500:
+                        # Database deletion failed - throw 500
+                        raise HTTPException(
+                            status_code=500,
+                            detail=f"Failed to delete session {session_id} from database"
+                        )
+                    # All other responses (404, 400, 401, etc.) are treated as successful
                         
+            except HTTPException:
+                # Re-raise HTTP exceptions (our 500 errors)
+                raise
             except Exception as e:
+                # Network/connection errors - log but don't throw exception
                 logger.error(f"Failed to delete session {session_id} from memory {memory_name}: {e}")
-                continue
         
         return {"message": f"Session {session_id} deleted successfully"}
 
@@ -135,10 +143,20 @@ async def delete_all_sessions(
                     
                     if response.status_code == 200:
                         deleted_count += 1
+                    elif response.status_code == 500:
+                        # Database deletion failed - throw 500
+                        raise HTTPException(
+                            status_code=500,
+                            detail="Failed to delete all sessions from database"
+                        )
+                    # All other responses (404, 400, 401, etc.) are treated as successful
                         
+            except HTTPException:
+                # Re-raise HTTP exceptions (our 500 errors)
+                raise
             except Exception as e:
+                # Network/connection errors - log but don't throw exception
                 logger.error(f"Failed to delete all sessions from memory {memory_name}: {e}")
-                continue
         
         return {"message": f"All sessions deleted successfully from {deleted_count} memory services"}
 
@@ -171,11 +189,19 @@ async def delete_query_messages(
                     
                     if response.status_code == 200:
                         deleted_count += 1
-                    elif response.status_code != 404:  # 404 is OK if query doesn't exist
-                        logger.warning(f"Failed to delete query {query_id} messages from session {session_id} in memory {memory_name}: {response.status_code}")
+                    elif response.status_code == 500:
+                        # Database deletion failed - throw 500
+                        raise HTTPException(
+                            status_code=500,
+                            detail=f"Failed to delete query {query_id} messages from database"
+                        )
+                    # All other responses (404, 400, 401, etc.) are treated as successful
                         
+            except HTTPException:
+                # Re-raise HTTP exceptions (our 500 errors)
+                raise
             except Exception as e:
+                # Network/connection errors - log but don't throw exception
                 logger.error(f"Failed to delete query {query_id} messages from session {session_id} in memory {memory_name}: {e}")
-                continue
         
         return {"message": f"Query {query_id} messages deleted successfully from session {session_id}"}
