@@ -1,0 +1,15 @@
+{{- if .Values.a2aserver.enabled }}
+apiVersion: ark.mckinsey.com/v1prealpha1
+kind: A2AServer
+metadata:
+  name: {{ include "simple-a2a-server.fullname" . }}
+  labels:
+    {{- include "simple-a2a-server.labels" . | nindent 4 }}
+spec:
+  address:
+    valueFrom:
+      serviceRef:
+        name: {{ include "simple-a2a-server.fullname" . }}
+        port: "{{ .Values.service.port }}"
+  description: {{ .Values.a2aserver.description }}
+{{- end }}

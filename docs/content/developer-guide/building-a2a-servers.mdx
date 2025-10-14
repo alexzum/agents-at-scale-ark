@@ -9,122 +9,46 @@ This guide shows you how to create A2A servers that host your existing LangChain
 
 ## Quick Start
 
-### 1. Create a Simple A2A Server
+### Option 1: Minimal A2A Server (Recommended for Learning)
 
-Here's a minimal A2A server in Python:
-
-```python
-import asyncio
-import uvicorn
-from a2a.server.apps import A2AStarletteApplication
-from a2a.server.request_handlers import DefaultRequestHandler
-from a2a.server.tasks import InMemoryTaskStore
-from a2a.types import AgentCapabilities, AgentCard, AgentSkill
-from starlette.applications import Starlette
-from starlette.routing import Route
-from starlette.responses import JSONResponse
-
-# Define your agent's capabilities
-capabilities = AgentCapabilities(streaming=False)
-
-# Define what your agent can do
-skill = AgentSkill(
-    id="my_skill",
-    name="My Skill",
-    description="What my agent does",
-    tags=["example", "demo"],
-    examples=["example input 1", "example input 2"],
-    inputModes=["text/plain"],
-    outputModes=["text/plain"],
-)
-
-# Create agent card (this is how ARK discovers your agent)
-agent_card = AgentCard(
-    name="my_agent",
-    description="My custom agent",
-    url="http://localhost:8000/",
-    version="1.0.0",
-    defaultInputModes=["text/plain"],
-    defaultOutputModes=["text/plain"],
-    capabilities=capabilities,
-    skills=[skill],
-)
-
-# Simple executor that processes requests
-class MyAgentExecutor:
-    async def execute(self, context, event_queue):
-        # Extract the user's message
-        message_text = ""
-        if context.message and context.message.parts:
-            first_part = context.message.parts[0]
-            if hasattr(first_part, "root") and hasattr(first_part.root, "text"):
-                message_text = first_part.root.text
-        
-        # Process the message (replace with your agent logic)
-        result = f"Processed: {message_text}"
-        
-        # Send response back
-        from a2a.types import Message, Part, Role, TextPart
-        import uuid
-        response_message = Message(
-            messageId=str(uuid.uuid4()),
-            contextId=context.message.contextId if context.message else str(uuid.uuid4()),
-            taskId=context.task_id,
-            role=Role.agent,
-            parts=[Part(root=TextPart(kind="text", text=result))],
-        )
-        await event_queue.enqueue_event(response_message)
-
-    async def cancel(self, context, event_queue):
-        pass
-
-# Create the A2A application
-handler = DefaultRequestHandler(
-    agent_executor=MyAgentExecutor(),
-    task_store=InMemoryTaskStore(),
-)
-
-a2a_app = A2AStarletteApplication(
-    agent_card=agent_card,
-    http_handler=handler,
-)
-
-# Health check endpoint
-async def health(request):
-    return JSONResponse({"status": "healthy"})
-
-# Build the complete application
-built_a2a_app = a2a_app.build()
-routes = [Route("/health", health, methods=["GET"])]
-
-# Extract A2A routes
-for route in built_a2a_app.routes:
-    if hasattr(route, 'path'):
-        if route.path == "/":
-            routes.append(Route("/", route.endpoint, methods=route.methods))
-        elif route.path == "/.well-known/agent.json":
-            routes.append(route)
-
-app = Starlette(routes=routes)
-
-if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
-```
-
-### 2. Run Your Server
+For the absolute minimum A2A server, see the [Basic A2A Server sample](../../samples/a2a/basic-a2a-server/):
 
 ```bash
-# Install dependencies
-pip install a2a-sdk[sqlite] starlette uvicorn
-
-# Run the server
-python my_a2a_server.py
+cd samples/a2a/basic-a2a-server
+pip install -r requirements.txt
+python minimal_server.py
 ```
 
-Your server will be available at:
-- `http://localhost:8000/.well-known/agent.json` - Agent discovery
-- `http://localhost:8000/` - Main A2A endpoint
-- `http://localhost:8000/health` - Health check
+This 80-line server demonstrates:
+- Basic A2A protocol implementation
+- Agent discovery and health endpoints
+- Simple echo functionality
+
+### Option 2: Full-Featured A2A Server
+
+For a complete example with multiple skills, see the [Simple A2A Server sample](../../samples/a2a/simple-a2a-server/):
+
+```bash
+cd samples/a2a/simple-a2a-server
+make init
+make dev
+```
+
+This server includes:
+- Basic conversation capabilities
+- Simple math operations
+- Echo functionality
+- Production-ready deployment (Docker, Helm charts)
+- Comprehensive error handling
+
+### Option 3: Custom Implementation
+
+If you want to build your own from scratch, start with the [Basic A2A Server sample](../../samples/a2a/basic-a2a-server/) and modify it to suit your needs. The sample provides a clean, minimal foundation that you can extend with your own logic.
+
+For more complex implementations, see the [Simple A2A Server sample](../../samples/a2a/simple-a2a-server/) which demonstrates:
+- Multiple skills and capabilities
+- Error handling patterns
+- Production deployment setup
 
 ## Testing Locally with A2A Inspector
 
