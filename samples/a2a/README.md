@@ -6,24 +6,8 @@ This directory contains complete, runnable examples of A2A (Agent-to-Agent) serv
 
 ### 🚀 **Getting Started**
 
-#### [Basic A2A Server](basic-a2a-server/)
-**The absolute minimum A2A server - just 80 lines of code!**
-
-- ✅ Minimal implementation
-- ✅ Echo functionality
-- ✅ Health check and agent discovery
-- ✅ Perfect for learning the A2A protocol
-
-```bash
-cd basic-a2a-server
-pip install -r requirements.txt
-python minimal_server.py
-```
-
-### 🏗️ **Production Ready**
-
-#### [Simple A2A Server](simple-a2a-server/)
-**Full-featured A2A server with multiple capabilities**
+#### [Simple Agent](simple-agent/)
+**Complete A2A server example with production-ready features**
 
 - ✅ Basic conversation
 - ✅ Simple math operations
@@ -32,25 +16,25 @@ python minimal_server.py
 - ✅ Helm chart for Kubernetes
 - ✅ Comprehensive error handling
 - ✅ Production deployment ready
+- ✅ Perfect for learning the A2A protocol
 
 ```bash
-cd simple-a2a-server
+cd simple-agent
 make init
 make dev
 ```
 
 ### 🔧 **Framework Integration**
 
-#### [Hosted LangChain Agents](../agent-hosting/hosted-langchain-agents/)
-**LangChain weather agent with real API integrations**
+#### [Weather Agent](weather-agent/)
+**Weather agent with real API integrations**
 
-- ✅ LangChain framework integration
-- ✅ Weather forecasting with NWS API
-- ✅ Real-world tool usage
-- ✅ Production deployment
+- ✅ Weather forecasting capabilities
+- ✅ Real-world API usage
+- ✅ Production deployment ready
 
 ```bash
-cd ../agent-hosting/hosted-langchain-agents
+cd weather-agent
 make install
 ```
 
@@ -58,15 +42,14 @@ make install
 
 | Sample | Lines of Code | Features | Use Case |
 |--------|---------------|----------|----------|
-| **Basic A2A Server** | ~80 | Echo only | Learning, minimal setup |
-| **Simple A2A Server** | ~400 | Conversation, Math, Echo | Production, full features |
-| **LangChain Agents** | ~500+ | Weather API, LangChain | Framework integration |
+| **Simple Agent** | ~400 | Conversation, Math, Echo | Learning, production |
+| **Weather Agent** | ~500+ | Weather API, LangChain | Framework integration |
 
 ## How to Choose
 
-- **Learning A2A Protocol**: Start with [Basic A2A Server](basic-a2a-server/)
-- **Building Production Apps**: Use [Simple A2A Server](simple-a2a-server/)
-- **Integrating Existing Frameworks**: See [Hosted LangChain Agents](../agent-hosting/hosted-langchain-agents/)
+- **Learning A2A Protocol**: Start with [Simple Agent](simple-agent/)
+- **Building Production Apps**: Use [Simple Agent](simple-agent/)
+- **Integrating Existing Frameworks**: See [Weather Agent](weather-agent/)
 
 ## Testing Your A2A Server
 

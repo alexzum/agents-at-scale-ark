@@ -27,7 +27,7 @@ lint-fix: # fix linting issues
 
 .PHONY: build
 build: # build container
-	../../../scripts/build-and-push.sh -i simple-a2a-server
+	../../../scripts/build-and-push.sh -i simple-agent
 
 .PHONY: install
 install: build # build and deploy
@@ -35,32 +35,32 @@ install: build # build and deploy
 			set -a; \
 			if [ -f .env ]; then . ./.env; fi; \
 			set +a; \
-			kubectl create secret generic simple-a2a-secret \
-				--from-literal=server-url="$${A2A_SERVER_URL:-http://simple-a2a-server:8000}" \
+			kubectl create secret generic simple-agent-secret \
+				--from-literal=server-url="$${A2A_SERVER_URL:-http://simple-agent:8000}" \
 				--namespace="$${NAMESPACE:-default}" \
 				--dry-run=client -o yaml | kubectl apply -f -; \
-			helm upgrade --install simple-a2a-server chart/ \
+			helm upgrade --install simple-agent chart/ \
 				--namespace="$${NAMESPACE:-default}" \
 				--wait --timeout=60s; \
 		'
 
 .PHONY: uninstall
 uninstall: # remove resources
-	helm uninstall simple-a2a-server --ignore-not-found
-	kubectl delete secret simple-a2a-secret --ignore-not-found
+	helm uninstall simple-agent --ignore-not-found
+	kubectl delete secret simple-agent-secret --ignore-not-found
 
 .PHONY: status
 status: # show status
-	@kubectl get a2aserver simple-a2a-server -o yaml 2>/dev/null || echo "A2AServer not found"
-	@kubectl get agents -l a2a/server=simple-a2a-server 2>/dev/null || echo "No agents found"
+	@kubectl get a2aserver simple-agent -o yaml 2>/dev/null || echo "A2AServer not found"
+	@kubectl get agents -l a2a/server=simple-agent 2>/dev/null || echo "No agents found"
 
 .PHONY: logs
 logs: # show logs
-	kubectl logs -l app=simple-a2a-server --tail=50
+	kubectl logs -l app=simple-agent --tail=50
 
 .PHONY: port-forward
 port-forward: # port forward to local development
-	kubectl port-forward service/simple-a2a-server 8000:80
+	kubectl port-forward service/simple-agent 8000:80
 
 .PHONY: test-local
 test-local: # test the agent locally

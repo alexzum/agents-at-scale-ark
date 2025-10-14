@@ -24,7 +24,7 @@ class SimpleAgentExecutor:
     """Simple agent executor that processes text messages and responds with basic functionality."""
     
     def __init__(self):
-        self.name = "Simple A2A Agent"
+        self.name = "Simple Agent"
         self.version = "1.0.0"
     
     async def execute(self, context, event_queue):
@@ -187,8 +187,8 @@ def create_agent_card() -> AgentCard:
     server_url = os.getenv("A2A_SERVER_URL", "http://localhost:8000")
     
     return AgentCard(
-        name="simple-a2a-agent",
-        description="A simple A2A agent demonstrating basic functionality",
+        name="simple-agent",
+        description="A simple agent demonstrating basic functionality",
         url=f"{server_url}/",
         version="1.0.0",
         defaultInputModes=["text/plain"],
@@ -253,7 +253,7 @@ def main():
     host = os.getenv("A2A_HOST", "0.0.0.0")
     port = int(os.getenv("A2A_PORT", "8000"))
     
-    logger.info(f"Starting Simple A2A Server on {host}:{port}")
+    logger.info(f"Starting Simple Agent on {host}:{port}")
     logger.info(f"Agent card available at: http://{host}:{port}/.well-known/agent.json")
     logger.info(f"Health check available at: http://{host}:{port}/health")
     

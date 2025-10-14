@@ -1,8 +1,8 @@
-# Default values for simple-a2a-server
+# Default values for simple-agent
 replicaCount: 1
 
 image:
-  repository: simple-a2a-server
+  repository: simple-agent
   pullPolicy: IfNotPresent
   tag: "latest"
 
@@ -38,7 +38,7 @@ ingress:
   className: ""
   annotations: {}
   hosts:
-    - host: simple-a2a-server.local
+    - host: simple-agent.local
       paths:
         - path: /
           pathType: Prefix
@@ -74,10 +74,10 @@ env:
   - name: A2A_SERVER_URL
     valueFrom:
       secretKeyRef:
-        name: simple-a2a-secret
+        name: simple-agent-secret
         key: server-url
 
 # A2AServer resource configuration
 a2aserver:
   enabled: true
-  description: "Simple A2A Server demonstrating basic functionality"
+  description: "Simple agent demonstrating basic functionality"

@@ -1,2 +1,0 @@
-a2a-sdk[http-server]>=0.2.6
-uvicorn>=0.23.0

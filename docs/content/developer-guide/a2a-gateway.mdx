@@ -5,81 +5,30 @@ description: Agent-to-Agent Gateway for ARK ecosystem
 
 # A2A Gateway
 
-ARK includes an integrated Agent-to-Agent Gateway (A2AGW) that implements the [A2A Protocol](https://github.com/a2a-integration/a2a-spec) for ARK agents, enabling standardized agent-to-agent communication.
-
-## Overview
-
-### What the Gateway Does
-
-The A2A Gateway serves as a dynamic API gateway that:
-- Discovers ARK agents in the Kubernetes cluster
-- Exposes them via the A2A protocol at `/agent/{agent-name}/`
-- Provides agent discovery endpoints
-- Handles protocol translation between ARK and A2A formats
-
-### A2A Use Case
-
-The gateway enables agents to:
-- Discover other agents' capabilities through standardized agent cards
-- Communicate using a common protocol regardless of implementation
-- Execute tasks on remote agents with streaming responses
-- Build multi-agent workflows with consistent interfaces
-
-## Architecture
-
-### Core Components
-
-1. **Registry** (`registry.py`)
-   - Connects to Kubernetes API via ARK SDK
-   - Converts ARK Agent resources to A2A AgentCards
-   - Extracts skills from agent annotations
-
-2. **Manager** (`manager.py`)
-   - Maintains dynamic routing table
-   - Polls registry every 30 seconds (3s in dev mode)
-   - Uses thread-safe ProxyApp pattern for atomic route updates
-   - Prevents race conditions during agent changes
-
-3. **Execution** (`execution.py`)
-   - Implements A2A AgentExecutor interface
-   - Creates ARK queries for agent task execution
-   - Handles streaming responses from agents
-
-### Request Flow
-
-1. Client requests `/agent/{name}/execute`
-2. FastAPI routes to ProxyApp at `/agent/*`
-3. ProxyApp forwards to current Starlette app
-4. Starlette routes to agent's A2AStarletteApplication
-5. A2AStarletteApplication uses ARKAgentExecutor
-6. ARKAgentExecutor creates ARK Query for execution
-
-### Key Design Decisions
-
-- **ProxyApp Pattern**: Ensures atomic route updates without affecting in-flight requests
-- **Periodic Sync**: Automatically discovers new agents without restarts
-- **ARK Integration**: Leverages native Kubernetes resources for agent management
+ARK's integrated Agent-to-Agent Gateway exposes ARK agents via the [A2A Protocol](https://github.com/a2a-integration/a2a-spec) for standardized agent-to-agent communication.
 
 ## Installation
 
 ```bash
-make ark-api-a2a-install
+devspace dev
+# or
+devspace deploy
 ```
+
+## API Endpoints
+
+- **`GET /agents`** - List all available ARK agents
+- **`GET /agent/{agent-name}/.well-known/agent.json`** - Get agent card
+- **`GET /health`** - Health check
 
 ## Configuration
 
-Environment variables for the A2A Gateway:
-- **`ARK_A2A_LISTEN_PORT`** (default: `7184`) - Port used in agent card URLs
-- **`ARK_A2A_LISTEN_HOST`** (default: `localhost`) - Host used in agent card URLs
-- **`ARK_A2A_LISTEN_PROTOCOL`** (default: `http`) - Protocol scheme for agent card URLs
-
-## Usage
-
-Once the A2A Gateway is running, ARK agents are automatically exposed via the A2A protocol and can be discovered by external A2A-compatible systems.
+Environment variables:
+- **`ARK_A2A_LISTEN_PORT`** (default: `7184`) - Port for agent card URLs
+- **`ARK_A2A_LISTEN_HOST`** (default: `localhost`) - Host for agent card URLs
+- **`ARK_A2A_LISTEN_PROTOCOL`** (default: `http`) - Protocol scheme
 
 ## Next Steps
 
 - [Building A2A Servers](/developer-guide/building-a2a-servers) - Create your own A2A-compatible agents
 - [A2A Servers](/developer-guide/a2a-server) - Learn about hosting external agents in ARK
-- [Services](/developer-guide/services) - Additional ARK services
-- [Observability](/developer-guide/observability) - Monitoring your agents

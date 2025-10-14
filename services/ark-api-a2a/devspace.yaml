@@ -1,0 +1,82 @@
+version: v2beta1
+
+# DevSpace configuration for ark-api-a2a service
+deployments:
+  ark-api-a2a:
+    helm:
+      chart:
+        name: ark-api-a2a
+        path: ./chart
+      releaseName: ark-api-a2a
+
+dev:
+  ark-api-a2a:
+    labelSelector:
+      app.kubernetes.io/name: ark-api-a2a
+    sync:
+      - path: ./src:/app/src
+      - path: ./pyproject.toml:/app/pyproject.toml
+      - path: ./uv.lock:/app/uv.lock
+      - path: ./out:/app/out
+    patches:
+      - op: replace
+        path: spec.containers[0].command
+        value:
+          - python
+          - -c
+          - |
+            import http.server
+            import socketserver
+            import json
+            from urllib.parse import urlparse, parse_qs
+            
+            class A2AHandler(http.server.BaseHTTPRequestHandler):
+                def do_GET(self):
+                    parsed_path = urlparse(self.path)
+                    if parsed_path.path == "/.well-known/agent.json":
+                        self.send_response(200)
+                        self.send_header('Content-type', 'application/json')
+                        self.end_headers()
+                        response = {"name": "ark-api-a2a", "version": "dev"}
+                        self.wfile.write(json.dumps(response).encode())
+                    elif parsed_path.path == "/agents":
+                        self.send_response(200)
+                        self.send_header('Content-type', 'application/json')
+                        self.end_headers()
+                        response = [
+                            {
+                                "name": "ark-api-a2a",
+                                "description": "ARK A2A Gateway",
+                                "capabilities": ["agent-discovery", "protocol-translation"],
+                                "host": "localhost",
+                                "agent-card": "/.well-known/agent.json",
+                                "created_at": "2025-10-14T11:00:00Z",
+                                "metadata": {"type": "gateway", "version": "dev"}
+                            }
+                        ]
+                        self.wfile.write(json.dumps(response).encode())
+                    elif parsed_path.path == "/a2a":
+                        self.send_response(200)
+                        self.send_header('Content-type', 'application/json')
+                        self.end_headers()
+                        response = {"message": "A2A Server Running"}
+                        self.wfile.write(json.dumps(response).encode())
+                    else:
+                        self.send_response(404)
+                        self.end_headers()
+                        self.wfile.write(b"Not Found")
+                
+                def log_message(self, format, *args):
+                    pass
+            
+            with socketserver.TCPServer(("0.0.0.0", 7184), A2AHandler) as httpd:
+                print("A2A Server running on port 7184")
+                httpd.serve_forever()
+      - op: replace
+        path: spec.containers[0].workingDir
+        value: /app
+      - op: add
+        path: spec.containers[0].securityContext
+        value:
+          runAsUser: 0
+          runAsGroup: 0

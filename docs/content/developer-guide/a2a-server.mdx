@@ -30,10 +30,10 @@ ARK provides two main A2A capabilities:
 kubectl get a2aservers
 
 # View details
-kubectl describe a2aserver langchain-agents
+kubectl describe a2aserver simple-agent
 
 # Delete an A2A server
-kubectl delete a2aserver langchain-agents
+kubectl delete a2aserver simple-agent
 ```
 
 ## Usage
@@ -42,7 +42,7 @@ Once an A2A Server is created and ready, you can query the generated agents like
 
 ```bash
 # Query an agent from the A2A server
-fark agent langchain-agents-weather-reporter "What's the weather like today?"
+fark agent simple-agent-simple-agent "What's the weather like today?"
 
 # List all agents (including A2A-generated ones)
 kubectl get agents
@@ -65,14 +65,14 @@ Agent hosting allows you to integrate existing agent frameworks with ARK using t
 apiVersion: ark.mckinsey.com/v1prealpha1
 kind: A2AServer
 metadata:
-  name: my-langchain-agents
+  name: my-simple-agent
 spec:
   address:
     valueFrom:
       serviceRef:
         name: my-a2a-service
         port: "8080"
-  description: "My hosted LangChain agents"
+  description: "My hosted simple agent"
 ```
 
 ### Generated Agent Resources
@@ -83,13 +83,13 @@ The A2AServer controller automatically creates Agent resources with the reserved
 apiVersion: ark.mckinsey.com/v1alpha1
 kind: Agent
 metadata:
-  name: my-langchain-agents-research-agent
+  name: my-simple-agent-research-agent
   labels:
-    a2a/server: "my-langchain-agents"
+    a2a/server: "my-simple-agent"
   ownerReferences:
   - apiVersion: ark.mckinsey.com/v1prealpha1
     kind: A2AServer
-    name: my-langchain-agents
+    name: my-simple-agent
 spec:
   description: "Performs research tasks"
   prompt: "You are Research Agent. Performs research tasks"
@@ -109,9 +109,8 @@ Agent hosting works with any framework that can implement the A2A protocol:
 
 See the [samples/a2a](https://github.com/mckinsey/agents-at-scale-ark/tree/main/samples/a2a) directory for complete examples:
 
-- **[Basic A2A Server](samples/a2a/basic-a2a-server/)**: Minimal 80-line A2A server with echo functionality
-- **[Simple A2A Server](samples/a2a/simple-a2a-server/)**: Full-featured server with conversation, math, and echo capabilities
-- **[Hosted LangChain Agents](samples/agent-hosting/hosted-langchain-agents/)**: LangChain weather agent with NWS API tools
+- **[Simple Agent](samples/a2a/simple-agent/)**: Complete A2A server with conversation, math, and echo capabilities
+- **[Weather Agent](samples/a2a/weather-agent/)**: Weather agent with real API integrations
 
 ## A2A Annotations
 
