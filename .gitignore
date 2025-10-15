@@ -30,7 +30,6 @@ __pycache__/
 *.pyo
 *.pyd
 .Python
-.ini
 .pytest_cache/
 
 # Local development
