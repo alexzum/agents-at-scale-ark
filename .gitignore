@@ -16,7 +16,7 @@ local.mk
 help.mk
 
 .venv/
-
+test_env/
 # Coverage reports
 coverage/
 .coverage
