@@ -13,4 +13,5 @@ Clean up everything and start fresh:
 rm -rf .pytest_cache __pycache__ venv
 
 # Run tests
-python3 -m pytest test_complete_ark_workflow.py -sv
+cd tests/pytest
+pytest -sv test_complete_ark_workflow.py 
