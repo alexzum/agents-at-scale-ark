@@ -14,4 +14,4 @@ rm -rf .pytest_cache __pycache__ venv
 
 # Run tests
 cd tests/pytest
-pytest -sv test_complete_ark_workflow.py 
+pytest -sv  test_complete_ark_workflow.py 
