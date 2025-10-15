@@ -22,6 +22,7 @@ import (
 
 type MCPSettings struct {
 	ToolCalls []mcp.CallToolParams `json:"toolCalls,omitempty"`
+	Headers   map[string]string    `json:"headers,omitempty"`
 }
 
 type MCPClient struct {
@@ -31,7 +32,15 @@ type MCPClient struct {
 }
 
 func NewMCPClient(ctx context.Context, baseURL string, headers map[string]string, transportType string, mcpSetting MCPSettings) (*MCPClient, error) {
-	mcpClient, err := createMCPClientWithRetry(ctx, baseURL, headers, transportType, 5, 120*time.Second)
+	mergedHeaders := make(map[string]string)
+	for k, v := range headers {
+		mergedHeaders[k] = v
+	}
+	for k, v := range mcpSetting.Headers {
+		mergedHeaders[k] = v
+	}
+
+	mcpClient, err := createMCPClientWithRetry(ctx, baseURL, mergedHeaders, transportType, 5, 120*time.Second)
 	if err != nil {
 		return nil, err
 	}

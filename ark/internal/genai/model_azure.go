@@ -8,7 +8,7 @@ import (
 	"mckinsey.com/ark/internal/common"
 )
 
-func loadAzureConfig(ctx context.Context, resolver *common.ValueSourceResolver, config *arkv1alpha1.AzureModelConfig, namespace string, model *Model) error {
+func loadAzureConfig(ctx context.Context, resolver *common.ValueSourceResolver, config *arkv1alpha1.AzureModelConfig, namespace string, model *Model, additionalHeaders map[string]string) error {
 	if config == nil {
 		return fmt.Errorf("azure configuration is required for azure model type")
 	}
@@ -34,6 +34,13 @@ func loadAzureConfig(ctx context.Context, resolver *common.ValueSourceResolver, 
 	headers, err := resolveModelHeaders(ctx, resolver.Client, config.Headers, model.Model, namespace, "Azure")
 	if err != nil {
 		return err
+	}
+
+	for k, v := range additionalHeaders {
+		if headers == nil {
+			headers = make(map[string]string)
+		}
+		headers[k] = v
 	}
 
 	var properties map[string]string

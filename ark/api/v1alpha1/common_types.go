@@ -82,6 +82,18 @@ type Header struct {
 	Value HeaderValue `json:"value"`
 }
 
+type PropagatableHeader struct {
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:MinLength=1
+	Name string `json:"name"`
+	// +kubebuilder:validation:Optional
+	Value string `json:"value,omitempty"`
+	// +kubebuilder:validation:Optional
+	ValueFrom *HeaderValueSource `json:"valueFrom,omitempty"`
+	// +kubebuilder:validation:Optional
+	PropagateTo []string `json:"propagateTo,omitempty"`
+}
+
 type ExpressionRule struct {
 	// Name identifies the rule
 	// +kubebuilder:validation:Required

@@ -95,6 +95,10 @@ func (v *AgentCustomValidator) validateAgent(ctx context.Context, agent *arkv1al
 		return warnings, err
 	}
 
+	if err := v.validateHeaders(agent.Spec.Headers); err != nil {
+		return warnings, err
+	}
+
 	for i, tool := range agent.Spec.Tools {
 		toolWarnings, err := v.validateTool(i, tool)
 		if err != nil {
@@ -163,4 +167,95 @@ func isValidBuiltInTool(name string) bool {
 		"terminate": true,
 	}
 	return validBuiltInTools[name]
+}
+
+func (v *AgentCustomValidator) validateHeaders(headers []arkv1alpha1.PropagatableHeader) error {
+	for i, header := range headers {
+		if err := v.validateHeader(header, i); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *AgentCustomValidator) validateHeader(header arkv1alpha1.PropagatableHeader, index int) error {
+	if header.Name == "" {
+		return fmt.Errorf("headers[%d]: name is required", index)
+	}
+
+	if err := v.validateHeaderValue(header, index); err != nil {
+		return err
+	}
+
+	if err := v.validateHeaderValueFrom(header, index); err != nil {
+		return err
+	}
+
+	return v.validateHeaderTargets(header.PropagateTo, index)
+}
+
+func (v *AgentCustomValidator) validateHeaderValue(header arkv1alpha1.PropagatableHeader, index int) error {
+	if header.Value == "" && header.ValueFrom == nil {
+		return fmt.Errorf("headers[%d]: must specify either value or valueFrom", index)
+	}
+
+	if header.Value != "" && header.ValueFrom != nil {
+		return fmt.Errorf("headers[%d]: cannot specify both value and valueFrom", index)
+	}
+
+	return nil
+}
+
+func (v *AgentCustomValidator) validateHeaderValueFrom(header arkv1alpha1.PropagatableHeader, index int) error {
+	if header.ValueFrom == nil {
+		return nil
+	}
+
+	hasSecret := header.ValueFrom.SecretKeyRef != nil
+	hasConfigMap := header.ValueFrom.ConfigMapKeyRef != nil
+
+	if !hasSecret && !hasConfigMap {
+		return fmt.Errorf("headers[%d]: valueFrom must specify either secretKeyRef or configMapKeyRef", index)
+	}
+
+	if hasSecret && hasConfigMap {
+		return fmt.Errorf("headers[%d]: valueFrom cannot specify both secretKeyRef and configMapKeyRef", index)
+	}
+
+	return nil
+}
+
+func (v *AgentCustomValidator) validateHeaderTargets(targets []string, headerIndex int) error {
+	for j, target := range targets {
+		if err := v.validatePropagateToTarget(target, headerIndex, j); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (v *AgentCustomValidator) validatePropagateToTarget(target string, headerIndex, targetIndex int) error {
+	if target == "" {
+		return fmt.Errorf("headers[%d].propagateTo[%d]: target cannot be empty", headerIndex, targetIndex)
+	}
+
+	if len(target) < 3 {
+		return fmt.Errorf("headers[%d].propagateTo[%d]: invalid target format '%s', expected 'model/*' or 'mcpserver/*'", headerIndex, targetIndex, target)
+	}
+
+	if target[:6] == "model/" {
+		if len(target) == 6 {
+			return fmt.Errorf("headers[%d].propagateTo[%d]: model target must specify a model name, e.g. 'model/default'", headerIndex, targetIndex)
+		}
+		return nil
+	}
+
+	if len(target) >= 10 && target[:10] == "mcpserver/" {
+		if len(target) == 10 {
+			return fmt.Errorf("headers[%d].propagateTo[%d]: mcpserver target must specify a server name, e.g. 'mcpserver/github'", headerIndex, targetIndex)
+		}
+		return nil
+	}
+
+	return fmt.Errorf("headers[%d].propagateTo[%d]: invalid target format '%s', must start with 'model/' or 'mcpserver/'", headerIndex, targetIndex, target)
 }

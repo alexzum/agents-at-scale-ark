@@ -48,7 +48,7 @@ func ResolveModelSpec(modelSpec any, defaultNamespace string) (string, string, e
 }
 
 // LoadModel loads a model by resolving modelSpec and defaultNamespace
-func LoadModel(ctx context.Context, k8sClient client.Client, modelSpec interface{}, defaultNamespace string) (*Model, error) {
+func LoadModel(ctx context.Context, k8sClient client.Client, modelSpec interface{}, defaultNamespace string, additionalHeaders ...map[string]string) (*Model, error) {
 	modelName, namespace, err := ResolveModelSpec(modelSpec, defaultNamespace)
 	if err != nil {
 		return nil, fmt.Errorf("failed to resolve model spec: %w", err)
@@ -69,13 +69,18 @@ func LoadModel(ctx context.Context, k8sClient client.Client, modelSpec interface
 		Type:  modelCRD.Spec.Type,
 	}
 
+	var extraHeaders map[string]string
+	if len(additionalHeaders) > 0 {
+		extraHeaders = additionalHeaders[0]
+	}
+
 	switch modelCRD.Spec.Type {
 	case ModelTypeAzure:
-		if err := loadAzureConfig(ctx, resolver, modelCRD.Spec.Config.Azure, namespace, modelInstance); err != nil {
+		if err := loadAzureConfig(ctx, resolver, modelCRD.Spec.Config.Azure, namespace, modelInstance, extraHeaders); err != nil {
 			return nil, err
 		}
 	case ModelTypeOpenAI:
-		if err := loadOpenAIConfig(ctx, resolver, modelCRD.Spec.Config.OpenAI, namespace, modelInstance); err != nil {
+		if err := loadOpenAIConfig(ctx, resolver, modelCRD.Spec.Config.OpenAI, namespace, modelInstance, extraHeaders); err != nil {
 			return nil, err
 		}
 	case ModelTypeBedrock:
@@ -136,4 +141,24 @@ func applyHeadersToOptions(ctx context.Context, headers map[string]string, optio
 	}
 
 	return options
+}
+
+func resolvePropagatableHeader(ctx context.Context, k8sClient client.Client, header arkv1alpha1.PropagatableHeader, namespace string) (string, error) {
+	if header.Value != "" {
+		return header.Value, nil
+	}
+
+	if header.ValueFrom == nil {
+		return "", fmt.Errorf("header value must specify either value or valueFrom")
+	}
+
+	if header.ValueFrom.SecretKeyRef != nil {
+		return resolveHeaderFromSecret(ctx, k8sClient, header.ValueFrom.SecretKeyRef, namespace)
+	}
+
+	if header.ValueFrom.ConfigMapKeyRef != nil {
+		return resolveHeaderFromConfigMap(ctx, k8sClient, header.ValueFrom.ConfigMapKeyRef, namespace)
+	}
+
+	return "", fmt.Errorf("header value must specify either value or valueFrom.secretKeyRef or valueFrom.configMapKeyRef")
 }

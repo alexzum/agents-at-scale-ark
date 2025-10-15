@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/packages/param"
@@ -278,13 +279,18 @@ func ValidateExecutionEngine(ctx context.Context, k8sClient client.Client, execu
 }
 
 func MakeAgent(ctx context.Context, k8sClient client.Client, crd *arkv1alpha1.Agent, eventRecorder EventEmitter) (*Agent, error) {
-	// Load model with automatic resolution
-	resolvedModel, err := LoadModel(ctx, k8sClient, crd.Spec.ModelRef, crd.Namespace)
+	log := logf.FromContext(ctx)
+
+	modelHeaders, mcpHeadersMap, err := resolveAgentHeaders(ctx, k8sClient, crd)
+	if err != nil {
+		return nil, fmt.Errorf("failed to resolve headers for agent %s/%s: %w", crd.Namespace, crd.Name, err)
+	}
+
+	resolvedModel, err := LoadModel(ctx, k8sClient, crd.Spec.ModelRef, crd.Namespace, modelHeaders)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load model for agent %s/%s: %w", crd.Namespace, crd.Name, err)
 	}
 
-	// Validate ExecutionEngine if specified
 	if crd.Spec.ExecutionEngine != nil {
 		err := ValidateExecutionEngine(ctx, k8sClient, crd.Spec.ExecutionEngine, crd.Namespace)
 		if err != nil {
@@ -301,7 +307,21 @@ func MakeAgent(ctx context.Context, k8sClient client.Client, crd *arkv1alpha1.Ag
 	if err != nil {
 		return nil, fmt.Errorf("failed to make query from context for agent %s/%s: %w", crd.Namespace, crd.Name, err)
 	}
-	tools := NewToolRegistry(query.McpSettings)
+
+	mcpSettings := query.McpSettings
+	if mcpSettings == nil {
+		mcpSettings = make(map[string]MCPSettings)
+	}
+	for mcpKey, headers := range mcpHeadersMap {
+		setting := mcpSettings[mcpKey]
+		setting.Headers = headers
+		mcpSettings[mcpKey] = setting
+		log.Info("configured MCP headers from agent", "agent", crd.Name, "mcpServer", mcpKey, "header_count", len(headers))
+	}
+
+	log.Info("test")
+
+	tools := NewToolRegistry(mcpSettings)
 
 	if err := tools.registerTools(ctx, k8sClient, crd); err != nil {
 		return nil, err
@@ -321,4 +341,38 @@ func MakeAgent(ctx context.Context, k8sClient client.Client, crd *arkv1alpha1.Ag
 		OutputSchema:    crd.Spec.OutputSchema,
 		client:          k8sClient,
 	}, nil
+}
+
+func resolveAgentHeaders(ctx context.Context, k8sClient client.Client, crd *arkv1alpha1.Agent) (map[string]string, map[string]map[string]string, error) {
+	log := logf.FromContext(ctx)
+	modelHeaders := make(map[string]string)
+	mcpHeadersMap := make(map[string]map[string]string)
+
+	for _, header := range crd.Spec.Headers {
+		value, err := resolvePropagatableHeader(ctx, k8sClient, header, crd.Namespace)
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to resolve header %s: %w", header.Name, err)
+		}
+
+		if len(header.PropagateTo) == 0 {
+			continue
+		}
+
+		for _, target := range header.PropagateTo {
+			if strings.HasPrefix(target, "model/") {
+				modelHeaders[header.Name] = value
+				log.Info("resolved agent header for model", "agent", crd.Name, "header", header.Name, "target", target)
+			} else if strings.HasPrefix(target, "mcpserver/") {
+				mcpServerName := strings.TrimPrefix(target, "mcpserver/")
+				mcpKey := fmt.Sprintf("%s/%s", crd.Namespace, mcpServerName)
+				if mcpHeadersMap[mcpKey] == nil {
+					mcpHeadersMap[mcpKey] = make(map[string]string)
+				}
+				mcpHeadersMap[mcpKey][header.Name] = value
+				log.Info("resolved agent header for MCP server", "agent", crd.Name, "header", header.Name, "target", target, "mcpKey", mcpKey)
+			}
+		}
+	}
+
+	return modelHeaders, mcpHeadersMap, nil
 }
