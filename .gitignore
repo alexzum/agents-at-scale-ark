@@ -30,7 +30,7 @@ __pycache__/
 *.pyo
 *.pyd
 .Python
-pytest_cache/
+*pytest_cache/
 
 # Local development
 .ark-sdk-local/
