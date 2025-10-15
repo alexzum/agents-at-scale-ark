@@ -1034,6 +1034,65 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/api-keys": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Api Keys
+         * @description List all active API keys in the current namespace (without secret keys).
+         *     API keys are namespace-scoped for tenant isolation.
+         *
+         *     Returns:
+         *         APIKeyListResponse: List of API keys in the current namespace
+         */
+        get: operations["list_api_keys_v1_api_keys_get"];
+        put?: never;
+        /**
+         * Create Api Key
+         * @description Create a new API key for service-to-service authentication.
+         *     API keys are namespace-scoped for tenant isolation and stored in the current namespace.
+         *
+         *     Args:
+         *         body: API key creation request
+         *
+         *     Returns:
+         *         APIKeyCreateResponse: The created API key with secret (only shown once)
+         */
+        post: operations["create_api_key_v1_api_keys_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/api-keys/{public_key}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete Api Key
+         * @description Soft delete an API key in the current namespace by marking it as inactive.
+         *     API keys are namespace-scoped for tenant isolation.
+         *
+         *     Args:
+         *         public_key: The public key of the API key to delete
+         */
+        delete: operations["delete_api_key_v1_api_keys__public_key__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/openai/v1/chat/completions": {
         parameters: {
             query?: never;
@@ -1131,6 +1190,133 @@ export interface components {
             discovering?: boolean | null;
             /** Status Message */
             status_message?: string | null;
+        };
+        /**
+         * APIKeyCreateRequest
+         * @description Request model for creating an API key.
+         */
+        APIKeyCreateRequest: {
+            /**
+             * Name
+             * @description Human-readable name for the API key
+             * @example Production Service Key
+             */
+            name: string;
+            /**
+             * Expires At
+             * @description Optional expiration date for the API key
+             * @example 2024-12-31T23:59:59Z
+             */
+            expires_at?: string | null;
+        };
+        /**
+         * APIKeyCreateResponse
+         * @description Response model for API key creation (includes secret key).
+         */
+        APIKeyCreateResponse: {
+            /**
+             * Id
+             * @description Unique identifier for the API key
+             * @example abc123-def456
+             */
+            id: string;
+            /**
+             * Name
+             * @description Human-readable name for the API key
+             * @example Production Service Key
+             */
+            name: string;
+            /**
+             * Public Key
+             * @description Public key for authentication
+             * @example pk-ark-abcd1234...
+             */
+            public_key: string;
+            /**
+             * Secret Key
+             * @description Secret key for authentication (only returned on creation)
+             * @example sk-ark-efgh5678...
+             */
+            secret_key: string;
+            /**
+             * Created At
+             * Format: date-time
+             * @description When the API key was created
+             * @example 2024-01-01T00:00:00Z
+             */
+            created_at: string;
+            /**
+             * Expires At
+             * @description When the API key expires
+             * @example 2024-12-31T23:59:59Z
+             */
+            expires_at?: string | null;
+        };
+        /**
+         * APIKeyListResponse
+         * @description List of API keys response model.
+         */
+        APIKeyListResponse: {
+            /**
+             * Items
+             * @description List of API keys
+             */
+            items: components["schemas"]["APIKeyResponse"][];
+            /**
+             * Count
+             * @description Total number of API keys
+             * @example 5
+             */
+            count: number;
+        };
+        /**
+         * APIKeyResponse
+         * @description API key response model (without secret key).
+         */
+        APIKeyResponse: {
+            /**
+             * Id
+             * @description Unique identifier for the API key
+             * @example abc123-def456
+             */
+            id: string;
+            /**
+             * Name
+             * @description Human-readable name for the API key
+             * @example Production Service Key
+             */
+            name: string;
+            /**
+             * Public Key
+             * @description Public key for authentication
+             * @example pk-ark-abcd1234...
+             */
+            public_key: string;
+            /**
+             * Created At
+             * Format: date-time
+             * @description When the API key was created
+             * @example 2024-01-01T00:00:00Z
+             */
+            created_at: string;
+            /**
+             * Last Used At
+             * @description When the API key was last used
+             * @example 2024-06-01T12:00:00Z
+             */
+            last_used_at?: string | null;
+            /**
+             * Expires At
+             * @description When the API key expires
+             * @example 2024-12-31T23:59:59Z
+             */
+            expires_at?: string | null;
+            /**
+             * Is Active
+             * @description Whether the API key is active (not soft-deleted)
+             * @example true
+             */
+            is_active: boolean;
         };
         /**
          * AgentCreateRequest
@@ -1306,6 +1492,11 @@ export interface components {
             /** Count */
             count: number;
         };
+        /** Audio */
+        Audio: {
+            /** Id */
+            id: string;
+        };
         /**
          * AvailabilityStatus
          * @description Resource availability status matching Kubernetes condition conventions.
@@ -1431,7 +1622,7 @@ export interface components {
             /** Id */
             id: string;
             /** Choices */
-            choices: components["schemas"]["Choice"][];
+            choices: components["schemas"]["Choice-Output"][];
             /** Created */
             created: number;
             /** Model */
@@ -1449,6 +1640,42 @@ export interface components {
         } & {
             [key: string]: unknown;
         };
+        /** ChatCompletionAssistantMessageParam */
+        "ChatCompletionAssistantMessageParam-Input": {
+            /**
+             * Role
+             * @constant
+             */
+            role: "assistant";
+            audio?: components["schemas"]["Audio"] | null;
+            /** Content */
+            content?: string | (components["schemas"]["ChatCompletionContentPartTextParam"] | components["schemas"]["ChatCompletionContentPartRefusalParam"])[] | null;
+            function_call?: components["schemas"]["openai__types__chat__chat_completion_assistant_message_param__FunctionCall"] | null;
+            /** Name */
+            name?: string;
+            /** Refusal */
+            refusal?: string | null;
+            /** Tool Calls */
+            tool_calls?: (components["schemas"]["ChatCompletionMessageFunctionToolCallParam"] | components["schemas"]["ChatCompletionMessageCustomToolCallParam"])[];
+        };
+        /** ChatCompletionAssistantMessageParam */
+        "ChatCompletionAssistantMessageParam-Output": {
+            /**
+             * Role
+             * @constant
+             */
+            role: "assistant";
+            audio?: components["schemas"]["Audio"] | null;
+            /** Content */
+            content?: string | (components["schemas"]["ChatCompletionContentPartTextParam"] | components["schemas"]["ChatCompletionContentPartRefusalParam"])[] | null;
+            function_call?: components["schemas"]["openai__types__chat__chat_completion_assistant_message_param__FunctionCall"] | null;
+            /** Name */
+            name?: string;
+            /** Refusal */
+            refusal?: string | null;
+            /** Tool Calls */
+            tool_calls?: (components["schemas"]["ChatCompletionMessageFunctionToolCallParam"] | components["schemas"]["ChatCompletionMessageCustomToolCallParam"])[];
+        };
         /** ChatCompletionAudio */
         ChatCompletionAudio: {
             /** Id */
@@ -1462,8 +1689,90 @@ export interface components {
         } & {
             [key: string]: unknown;
         };
+        /** ChatCompletionContentPartImageParam */
+        ChatCompletionContentPartImageParam: {
+            image_url: components["schemas"]["ImageURL"];
+            /**
+             * Type
+             * @constant
+             */
+            type: "image_url";
+        };
+        /** ChatCompletionContentPartInputAudioParam */
+        ChatCompletionContentPartInputAudioParam: {
+            input_audio: components["schemas"]["InputAudio"];
+            /**
+             * Type
+             * @constant
+             */
+            type: "input_audio";
+        };
+        /** ChatCompletionContentPartRefusalParam */
+        ChatCompletionContentPartRefusalParam: {
+            /** Refusal */
+            refusal: string;
+            /**
+             * Type
+             * @constant
+             */
+            type: "refusal";
+        };
+        /** ChatCompletionContentPartTextParam */
+        ChatCompletionContentPartTextParam: {
+            /** Text */
+            text: string;
+            /**
+             * Type
+             * @constant
+             */
+            type: "text";
+        };
+        /** ChatCompletionDeveloperMessageParam */
+        ChatCompletionDeveloperMessageParam: {
+            /** Content */
+            content: string | components["schemas"]["ChatCompletionContentPartTextParam"][];
+            /**
+             * Role
+             * @constant
+             */
+            role: "developer";
+            /** Name */
+            name?: string;
+        };
+        /** ChatCompletionFunctionMessageParam */
+        ChatCompletionFunctionMessageParam: {
+            /** Content */
+            content: string | null;
+            /** Name */
+            name: string;
+            /**
+             * Role
+             * @constant
+             */
+            role: "function";
+        };
         /** ChatCompletionMessage */
-        ChatCompletionMessage: {
+        "ChatCompletionMessage-Input": {
+            /** Content */
+            content?: string | null;
+            /** Refusal */
+            refusal?: string | null;
+            /**
+             * Role
+             * @constant
+             */
+            role: "assistant";
+            /** Annotations */
+            annotations?: components["schemas"]["Annotation"][] | null;
+            audio?: components["schemas"]["ChatCompletionAudio"] | null;
+            function_call?: components["schemas"]["FunctionCall"] | null;
+            /** Tool Calls */
+            tool_calls?: (components["schemas"]["ChatCompletionMessageFunctionToolCall"] | components["schemas"]["ChatCompletionMessageCustomToolCall"])[] | null;
+        } & {
+            [key: string]: unknown;
+        };
+        /** ChatCompletionMessage */
+        "ChatCompletionMessage-Output": {
             /** Content */
             content?: string | null;
             /** Refusal */
@@ -1495,6 +1804,17 @@ export interface components {
         } & {
             [key: string]: unknown;
         };
+        /** ChatCompletionMessageCustomToolCallParam */
+        ChatCompletionMessageCustomToolCallParam: {
+            /** Id */
+            id: string;
+            custom: components["schemas"]["openai__types__chat__chat_completion_message_custom_tool_call_param__Custom"];
+            /**
+             * Type
+             * @constant
+             */
+            type: "custom";
+        };
         /** ChatCompletionMessageFunctionToolCall */
         ChatCompletionMessageFunctionToolCall: {
             /** Id */
@@ -1508,12 +1828,23 @@ export interface components {
         } & {
             [key: string]: unknown;
         };
+        /** ChatCompletionMessageFunctionToolCallParam */
+        ChatCompletionMessageFunctionToolCallParam: {
+            /** Id */
+            id: string;
+            function: components["schemas"]["openai__types__chat__chat_completion_message_function_tool_call_param__Function"];
+            /**
+             * Type
+             * @constant
+             */
+            type: "function";
+        };
         /** ChatCompletionRequest */
         ChatCompletionRequest: {
             /** Model */
             model: string;
             /** Messages */
-            messages: components["schemas"]["ChatMessage"][];
+            messages: (components["schemas"]["ChatCompletionDeveloperMessageParam"] | components["schemas"]["ChatCompletionSystemMessageParam"] | components["schemas"]["ChatCompletionUserMessageParam-Input"] | components["schemas"]["ChatCompletionAssistantMessageParam-Input"] | components["schemas"]["ChatCompletionToolMessageParam"] | components["schemas"]["ChatCompletionFunctionMessageParam"])[];
             /**
              * Temperature
              * @default 1
@@ -1526,6 +1857,18 @@ export interface components {
              * @default false
              */
             stream: boolean;
+        };
+        /** ChatCompletionSystemMessageParam */
+        ChatCompletionSystemMessageParam: {
+            /** Content */
+            content: string | components["schemas"]["ChatCompletionContentPartTextParam"][];
+            /**
+             * Role
+             * @constant
+             */
+            role: "system";
+            /** Name */
+            name?: string;
         };
         /** ChatCompletionTokenLogprob */
         ChatCompletionTokenLogprob: {
@@ -1540,12 +1883,41 @@ export interface components {
         } & {
             [key: string]: unknown;
         };
-        /** ChatMessage */
-        ChatMessage: {
-            /** Role */
-            role: string;
+        /** ChatCompletionToolMessageParam */
+        ChatCompletionToolMessageParam: {
             /** Content */
-            content: string;
+            content: string | components["schemas"]["ChatCompletionContentPartTextParam"][];
+            /**
+             * Role
+             * @constant
+             */
+            role: "tool";
+            /** Tool Call Id */
+            tool_call_id: string;
+        };
+        /** ChatCompletionUserMessageParam */
+        "ChatCompletionUserMessageParam-Input": {
+            /** Content */
+            content: string | (components["schemas"]["ChatCompletionContentPartTextParam"] | components["schemas"]["ChatCompletionContentPartImageParam"] | components["schemas"]["ChatCompletionContentPartInputAudioParam"] | components["schemas"]["File"])[];
+            /**
+             * Role
+             * @constant
+             */
+            role: "user";
+            /** Name */
+            name?: string;
+        };
+        /** ChatCompletionUserMessageParam */
+        "ChatCompletionUserMessageParam-Output": {
+            /** Content */
+            content: string | (components["schemas"]["ChatCompletionContentPartTextParam"] | components["schemas"]["ChatCompletionContentPartImageParam"] | components["schemas"]["ChatCompletionContentPartInputAudioParam"] | components["schemas"]["File"])[];
+            /**
+             * Role
+             * @constant
+             */
+            role: "user";
+            /** Name */
+            name?: string;
         };
         /**
          * ChildEvaluationStatus
@@ -1562,7 +1934,7 @@ export interface components {
             pending: number;
         };
         /** Choice */
-        Choice: {
+        "Choice-Input": {
             /**
              * Finish Reason
              * @enum {string}
@@ -1570,13 +1942,36 @@ export interface components {
             finish_reason: "stop" | "length" | "tool_calls" | "content_filter" | "function_call";
             /** Index */
             index: number;
-            logprobs?: components["schemas"]["ChoiceLogprobs"] | null;
-            message: components["schemas"]["ChatCompletionMessage"];
+            logprobs?: components["schemas"]["ChoiceLogprobs-Input"] | null;
+            message: components["schemas"]["ChatCompletionMessage-Input"];
+        } & {
+            [key: string]: unknown;
+        };
+        /** Choice */
+        "Choice-Output": {
+            /**
+             * Finish Reason
+             * @enum {string}
+             */
+            finish_reason: "stop" | "length" | "tool_calls" | "content_filter" | "function_call";
+            /** Index */
+            index: number;
+            logprobs?: components["schemas"]["ChoiceLogprobs-Output"] | null;
+            message: components["schemas"]["ChatCompletionMessage-Output"];
         } & {
             [key: string]: unknown;
         };
         /** ChoiceLogprobs */
-        ChoiceLogprobs: {
+        "ChoiceLogprobs-Input": {
+            /** Content */
+            content?: components["schemas"]["ChatCompletionTokenLogprob"][] | null;
+            /** Refusal */
+            refusal?: components["schemas"]["ChatCompletionTokenLogprob"][] | null;
+        } & {
+            [key: string]: unknown;
+        };
+        /** ChoiceLogprobs */
+        "ChoiceLogprobs-Output": {
             /** Content */
             content?: components["schemas"]["ChatCompletionTokenLogprob"][] | null;
             /** Refusal */
@@ -1651,7 +2046,34 @@ export interface components {
          * EnhancedEvaluationDetailResponse
          * @description Enhanced detailed evaluation response with metadata.
          */
-        EnhancedEvaluationDetailResponse: {
+        "EnhancedEvaluationDetailResponse-Input": {
+            /** Name */
+            name: string;
+            /** Namespace */
+            namespace: string;
+            /** Spec */
+            spec: {
+                [key: string]: unknown;
+            };
+            /** Status */
+            status?: {
+                [key: string]: unknown;
+            } | null;
+            /** Metadata */
+            metadata: {
+                [key: string]: unknown;
+            };
+            tokenUsage?: components["schemas"]["TokenUsage"] | null;
+            /** Batchresults */
+            batchResults?: components["schemas"]["BatchResult"][] | null;
+            childEvaluationStatus?: components["schemas"]["ChildEvaluationStatus"] | null;
+            enhanced_metadata?: components["schemas"]["UnifiedEvaluationMetadata"] | null;
+        };
+        /**
+         * EnhancedEvaluationDetailResponse
+         * @description Enhanced detailed evaluation response with metadata.
+         */
+        "EnhancedEvaluationDetailResponse-Output": {
             /** Name */
             name: string;
             /** Namespace */
@@ -1678,9 +2100,19 @@ export interface components {
          * EnhancedEvaluationListResponse
          * @description Enhanced response for listing evaluations with metadata.
          */
-        EnhancedEvaluationListResponse: {
+        "EnhancedEvaluationListResponse-Input": {
             /** Items */
-            items: components["schemas"]["EnhancedEvaluationResponse"][];
+            items: components["schemas"]["EnhancedEvaluationResponse-Input"][];
+            /** Count */
+            count: number;
+        };
+        /**
+         * EnhancedEvaluationListResponse
+         * @description Enhanced response for listing evaluations with metadata.
+         */
+        "EnhancedEvaluationListResponse-Output": {
+            /** Items */
+            items: components["schemas"]["EnhancedEvaluationResponse-Output"][];
             /** Count */
             count: number;
         };
@@ -1688,7 +2120,28 @@ export interface components {
          * EnhancedEvaluationResponse
          * @description Enhanced evaluation response with metadata for list operations.
          */
-        EnhancedEvaluationResponse: {
+        "EnhancedEvaluationResponse-Input": {
+            /** Name */
+            name: string;
+            /** Namespace */
+            namespace: string;
+            /** Type */
+            type: string;
+            /** Phase */
+            phase?: string | null;
+            /** Score */
+            score?: string | null;
+            /** Passed */
+            passed?: boolean | null;
+            /** Message */
+            message?: string | null;
+            enhanced_metadata?: components["schemas"]["UnifiedEvaluationMetadata"] | null;
+        };
+        /**
+         * EnhancedEvaluationResponse
+         * @description Enhanced evaluation response with metadata for list operations.
+         */
+        "EnhancedEvaluationResponse-Output": {
             /** Name */
             name: string;
             /** Namespace */
@@ -2011,6 +2464,24 @@ export interface components {
             /** Namespace */
             namespace?: string | null;
         };
+        /** File */
+        File: {
+            file: components["schemas"]["FileFile"];
+            /**
+             * Type
+             * @constant
+             */
+            type: "file";
+        };
+        /** FileFile */
+        FileFile: {
+            /** File Data */
+            file_data?: string;
+            /** File Id */
+            file_id?: string;
+            /** Filename */
+            filename?: string;
+        };
         /** Function */
         Function: {
             /** Arguments */
@@ -2084,6 +2555,32 @@ export interface components {
              */
             service: string;
         };
+        /** ImageURL */
+        ImageURL: {
+            /** Url */
+            url: string;
+            /**
+             * Detail
+             * @enum {string}
+             */
+            detail?: "auto" | "low" | "high";
+        };
+        /** InputAudio */
+        InputAudio: {
+            /** Data */
+            data: string;
+            /**
+             * Format
+             * @enum {string}
+             */
+            format: "wav" | "mp3";
+        };
+        /**
+         * InputType
+         * @description Input type enumeration.
+         * @enum {string}
+         */
+        InputType: "user" | "messages";
         /** MCPServerDetailResponse */
         MCPServerDetailResponse: {
             /** Name */
@@ -2413,8 +2910,10 @@ export interface components {
         QueryCreateRequest: {
             /** Name */
             name: string;
+            /** @default user */
+            type: components["schemas"]["InputType"] | null;
             /** Input */
-            input: string;
+            input: string | (components["schemas"]["ChatCompletionDeveloperMessageParam"] | components["schemas"]["ChatCompletionSystemMessageParam"] | components["schemas"]["ChatCompletionUserMessageParam-Input"] | components["schemas"]["ChatCompletionAssistantMessageParam-Input"] | components["schemas"]["ChatCompletionToolMessageParam"] | components["schemas"]["ChatCompletionFunctionMessageParam"])[];
             memory?: components["schemas"]["Memory"] | null;
             /** Parameters */
             parameters?: components["schemas"]["ark_api__models__queries__Parameter-Input"][] | null;
@@ -2448,8 +2947,10 @@ export interface components {
             name: string;
             /** Namespace */
             namespace: string;
+            /** @default user */
+            type: components["schemas"]["InputType"] | null;
             /** Input */
-            input: string;
+            input: string | (components["schemas"]["ChatCompletionDeveloperMessageParam"] | components["schemas"]["ChatCompletionSystemMessageParam"] | components["schemas"]["ChatCompletionUserMessageParam-Output"] | components["schemas"]["ChatCompletionAssistantMessageParam-Output"] | components["schemas"]["ChatCompletionToolMessageParam"] | components["schemas"]["ChatCompletionFunctionMessageParam"])[];
             memory?: components["schemas"]["Memory"] | null;
             /** Parameters */
             parameters?: components["schemas"]["ark_api__models__queries__Parameter-Output"][] | null;
@@ -2501,7 +3002,7 @@ export interface components {
          */
         QueryListResponse: {
             /** Items */
-            items: components["schemas"]["QueryResponse"][];
+            items: components["schemas"]["QueryResponse-Output"][];
             /** Count */
             count: number;
         };
@@ -2521,13 +3022,38 @@ export interface components {
          * QueryResponse
          * @description Basic query response for list operations.
          */
-        QueryResponse: {
+        "QueryResponse-Input": {
             /** Name */
             name: string;
             /** Namespace */
             namespace: string;
+            /** @default user */
+            type: components["schemas"]["InputType"] | null;
             /** Input */
-            input: string;
+            input: string | (components["schemas"]["ChatCompletionDeveloperMessageParam"] | components["schemas"]["ChatCompletionSystemMessageParam"] | components["schemas"]["ChatCompletionUserMessageParam-Input"] | components["schemas"]["ChatCompletionAssistantMessageParam-Input"] | components["schemas"]["ChatCompletionToolMessageParam"] | components["schemas"]["ChatCompletionFunctionMessageParam"])[];
+            memory?: components["schemas"]["Memory"] | null;
+            /** Sessionid */
+            sessionId?: string | null;
+            /** Status */
+            status?: {
+                [key: string]: unknown;
+            } | null;
+            /** Creationtimestamp */
+            creationTimestamp?: string | null;
+        };
+        /**
+         * QueryResponse
+         * @description Basic query response for list operations.
+         */
+        "QueryResponse-Output": {
+            /** Name */
+            name: string;
+            /** Namespace */
+            namespace: string;
+            /** @default user */
+            type: components["schemas"]["InputType"] | null;
+            /** Input */
+            input: string | (components["schemas"]["ChatCompletionDeveloperMessageParam"] | components["schemas"]["ChatCompletionSystemMessageParam"] | components["schemas"]["ChatCompletionUserMessageParam-Output"] | components["schemas"]["ChatCompletionAssistantMessageParam-Output"] | components["schemas"]["ChatCompletionToolMessageParam"] | components["schemas"]["ChatCompletionFunctionMessageParam"])[];
             memory?: components["schemas"]["Memory"] | null;
             /** Sessionid */
             sessionId?: string | null;
@@ -2543,8 +3069,9 @@ export interface components {
          * @description Request body for updating a query.
          */
         QueryUpdateRequest: {
+            type?: components["schemas"]["InputType"] | null;
             /** Input */
-            input?: string | null;
+            input?: string | (components["schemas"]["ChatCompletionDeveloperMessageParam"] | components["schemas"]["ChatCompletionSystemMessageParam"] | components["schemas"]["ChatCompletionUserMessageParam-Input"] | components["schemas"]["ChatCompletionAssistantMessageParam-Input"] | components["schemas"]["ChatCompletionToolMessageParam"] | components["schemas"]["ChatCompletionFunctionMessageParam"])[] | null;
             memory?: components["schemas"]["Memory"] | null;
             /** Parameters */
             parameters?: components["schemas"]["ark_api__models__queries__Parameter-Input"][] | null;
@@ -3208,6 +3735,27 @@ export interface components {
         ark_api__models__queries__ValueFrom: {
             configMapKeyRef?: components["schemas"]["ark_api__models__queries__ConfigMapKeyRef"] | null;
             secretKeyRef?: components["schemas"]["ark_api__models__queries__SecretKeyRef"] | null;
+        };
+        /** FunctionCall */
+        openai__types__chat__chat_completion_assistant_message_param__FunctionCall: {
+            /** Arguments */
+            arguments: string;
+            /** Name */
+            name: string;
+        };
+        /** Custom */
+        openai__types__chat__chat_completion_message_custom_tool_call_param__Custom: {
+            /** Input */
+            input: string;
+            /** Name */
+            name: string;
+        };
+        /** Function */
+        openai__types__chat__chat_completion_message_function_tool_call_param__Function: {
+            /** Arguments */
+            arguments: string;
+            /** Name */
+            name: string;
         };
     };
     responses: never;
@@ -4992,7 +5540,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["EvaluationListResponse"] | components["schemas"]["EnhancedEvaluationListResponse"];
+                    "application/json": components["schemas"]["EvaluationListResponse"] | components["schemas"]["EnhancedEvaluationListResponse-Output"];
                 };
             };
             /** @description Validation Error */
@@ -5064,7 +5612,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["EvaluationDetailResponse"] | components["schemas"]["EnhancedEvaluationDetailResponse"];
+                    "application/json": components["schemas"]["EvaluationDetailResponse"] | components["schemas"]["EnhancedEvaluationDetailResponse-Output"];
                 };
             };
             /** @description Validation Error */
@@ -5350,6 +5898,88 @@ export interface operations {
                         [key: string]: unknown;
                     };
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_api_keys_v1_api_keys_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIKeyListResponse"];
+                };
+            };
+        };
+    };
+    create_api_key_v1_api_keys_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["APIKeyCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIKeyCreateResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_api_key_v1_api_keys__public_key__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                public_key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {

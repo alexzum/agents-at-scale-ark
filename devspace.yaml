@@ -3,6 +3,10 @@ version: v2beta1
 
 # Dependencies - include other DevSpace configurations
 dependencies:
+  localhost-gateway:
+    path: ./services/localhost-gateway
+  ark:
+    path: ./ark
   ark-cluster-memory:
     path: ./services/ark-cluster-memory
   ark-api:
@@ -15,9 +19,14 @@ dependencies:
     path: ./ark
   simple-agent:
     path: ./samples/a2a/simple-agent
-#   ark-mcp:
-#     path: ./services/ark-mcp
-#     pipeline: dev
+#  ark-api-a2a:
+#    path: ./services/ark-api-a2a
+#  ark-mcp:
+#    path: ./services/ark-mcp
+#  ark-evaluator:
+#    path: ./services/ark-evaluator
+#  executor-langchain:
+#    path: ./services/executor-langchain
 #   postgres-memory:
 #     path: ./services/postgres-memory
 
@@ -30,6 +39,10 @@ vars:
   ENABLE_GATEWAY_API_CRDS:
     source: env
     default: true
+
+commands:
+  routes:
+    ./services/localhost-gateway/scripts/show-routes.sh
 
 profiles:
   - name: enable-cert-manager
@@ -67,7 +80,8 @@ profiles:
 pipelines:
   deploy: |-
     create_deployments --all
-    run_dependency_pipelines --all --pipeline=deploy
+    run_dependency_pipelines --all --exclude ark --pipeline=deploy
   dev: |-
     create_deployments --all
-    run_dependency_pipelines --all --pipeline=dev
+    run_dependency_pipelines ark --pipeline=dev
+    run_dependency_pipelines --all --exclude ark --pipeline=dev

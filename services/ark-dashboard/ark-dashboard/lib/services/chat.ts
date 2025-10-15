@@ -1,6 +1,7 @@
 import { apiClient } from "@/lib/api/client";
 import type { components } from "@/lib/api/generated/types";
 import { generateUUID } from "@/lib/utils/uuid";
+import type { ChatCompletionMessageParam } from "openai/resources/chat/completions";
 
 interface AxiosError extends Error {
   response?: {
@@ -8,7 +9,7 @@ interface AxiosError extends Error {
   };
 }
 
-export type QueryResponse = components["schemas"]["QueryResponse"];
+export type QueryResponse = components["schemas"]["QueryResponse-Output"];
 export type QueryDetailResponse = components["schemas"]["QueryDetailResponse"];
 export type QueryListResponse = components["schemas"]["QueryListResponse"];
 export type QueryCreateRequest = components["schemas"]["QueryCreateRequest"];
@@ -151,14 +152,16 @@ export const chatService = {
   },
 
   async submitChatQuery(
-    input: string,
+    messages: ChatCompletionMessageParam[],
     targetType: string,
     targetName: string,
     sessionId?: string
   ): Promise<QueryDetailResponse> {
-    const queryRequest: QueryCreateRequest = {
+    const queryRequest = {
       name: `chat-query-${generateUUID()}`,
-      input,
+      type: "messages",
+      // Use OpenAI ChatCompletionMessageParam which supports multimodal content
+      input: messages,
       targets: [
         {
           type: targetType.toLowerCase(),
@@ -166,7 +169,7 @@ export const chatService = {
         }
       ],
       sessionId
-    };
+    } as unknown as QueryCreateRequest;
 
     return await this.createQuery(queryRequest);
   },
@@ -180,17 +183,17 @@ export const chatService = {
       .filter((item) => item.name.startsWith("chat-query-"))
       .map(
         (item) =>
-          ({
-            ...item,
-            input: item.input,
-            status: item.status,
-            memory: undefined,
-            parameters: undefined,
-            selector: undefined,
-            serviceAccount: undefined,
-            sessionId: sessionId,
-            targets: undefined
-          } as QueryDetailResponse)
+        ({
+          ...item,
+          input: item.input,
+          status: item.status,
+          memory: undefined,
+          parameters: undefined,
+          selector: undefined,
+          serviceAccount: undefined,
+          sessionId: sessionId,
+          targets: undefined
+        } as QueryDetailResponse)
       )
       .sort((a, b) => {
         const aTime = parseInt(a.name.split("-").pop() || "0");
