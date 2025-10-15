@@ -13,6 +13,8 @@ dependencies:
     path: ./services/ark-dashboard
   ark:
     path: ./ark
+  simple-agent:
+    path: ./samples/a2a/simple-agent
 #   ark-mcp:
 #     path: ./services/ark-mcp
 #     pipeline: dev

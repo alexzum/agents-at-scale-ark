@@ -4,12 +4,19 @@ A complete A2A server example with conversation, math, and echo capabilities.
 
 ## Quick Start
 
+### Option 1: Integrated with ARK (Recommended)
 ```bash
-# Local development
+# Start ARK with simple-agent automatically connected
+devspace dev
+```
+
+### Option 2: Manual Setup
+```bash
+# Install dependencies and start the server
 make init
 make dev
 
-# Kubernetes deployment
+# Then register with ARK manually
 make install
 ```
 
@@ -27,10 +34,13 @@ curl -X POST http://localhost:8000/ \
   -H "Content-Type: application/json" \
   -d '{
     "jsonrpc": "2.0",
-    "method": "execute",
+    "method": "message/send",
     "params": {
       "message": {
-        "parts": [{"text": "Hello! How are you?"}]
+        "messageId": "test-1",
+        "contextId": "ctx-1",
+        "role": "user",
+        "parts": [{"kind": "text", "text": "Hello! How are you?"}]
       }
     },
     "id": 1
@@ -39,7 +49,21 @@ curl -X POST http://localhost:8000/ \
 
 ## ARK Integration
 
+Once your A2A server is running, integrate it with ARK:
+
 ```bash
+# Create A2AServer resource
+kubectl apply -f - <<EOF
+apiVersion: ark.mckinsey.com/v1prealpha1
+kind: A2AServer
+metadata:
+  name: simple-agent
+spec:
+  address:
+    value: "http://host.docker.internal:8000"
+  description: "Simple agent with conversation, math, and echo capabilities"
+EOF
+
 # Query through ARK
 fark agent simple-agent-simple-agent "Hello, what can you do?"
 ```
@@ -47,7 +71,7 @@ fark agent simple-agent-simple-agent "Hello, what can you do?"
 ## Available Commands
 
 - `make dev` - Run locally
-- `make install` - Deploy to Kubernetes
-- `make status` - Check deployment
+- `make install` - Show integration instructions
+- `make status` - Check ARK integration
 - `make logs` - View logs
 - `make test-local` - Test endpoints

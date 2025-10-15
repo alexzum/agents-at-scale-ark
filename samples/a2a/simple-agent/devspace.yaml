@@ -1,0 +1,7 @@
+version: v2beta1
+
+# DevSpace configuration for simple-agent A2A sample
+pipelines:
+  dev: |-
+    # Start simple-agent and register with ARK
+    run_command --command "/Users/Isha_Deep/AgentAtScaleArkNew/agents-at-scale-ark/samples/a2a/simple-agent/start-with-ark.sh" --interactive=false --background=true

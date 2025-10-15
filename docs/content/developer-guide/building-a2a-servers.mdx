@@ -9,54 +9,26 @@ This guide shows you how to create A2A servers that host your existing LangChain
 
 ## Quick Start
 
-### Option 1: Minimal A2A Server (Recommended for Learning)
+### Use the Simple Agent Sample (Recommended)
 
-For the absolute minimum A2A server, see the [Basic A2A Server sample](../../samples/a2a/basic-a2a-server/):
-
-```bash
-cd samples/a2a/basic-a2a-server
-pip install -r requirements.txt
-python minimal_server.py
-```
-
-This 80-line server demonstrates:
-- Basic A2A protocol implementation
-- Agent discovery and health endpoints
-- Simple echo functionality
-
-### Option 2: Full-Featured A2A Server
-
-For a complete example with multiple skills, see the [Simple A2A Server sample](../../samples/a2a/simple-a2a-server/):
+The easiest way to get started is with the [Simple Agent sample](../../samples/a2a/simple-agent/):
 
 ```bash
-cd samples/a2a/simple-a2a-server
+cd samples/a2a/simple-agent
 make init
 make dev
 ```
 
-This server includes:
-- Basic conversation capabilities
-- Simple math operations
-- Echo functionality
-- Production-ready deployment (Docker, Helm charts)
-- Comprehensive error handling
+This gives you a complete A2A server with:
+- ✅ Basic conversation capabilities
+- ✅ Simple math operations  
+- ✅ Echo functionality
+- ✅ Production-ready deployment (Docker, Helm charts)
+- ✅ Comprehensive error handling
 
-### Option 3: Custom Implementation
-
-If you want to build your own from scratch, start with the [Basic A2A Server sample](../../samples/a2a/basic-a2a-server/) and modify it to suit your needs. The sample provides a clean, minimal foundation that you can extend with your own logic.
-
-For more complex implementations, see the [Simple A2A Server sample](../../samples/a2a/simple-a2a-server/) which demonstrates:
-- Multiple skills and capabilities
-- Error handling patterns
-- Production deployment setup
-
-## Testing Locally with A2A Inspector
-
-Before connecting your A2A server to ARK, you can test it locally using the A2A Inspector:
+## Testing Your A2A Server
 
 ### Option 1: A2A Inspector (Recommended)
-
-The A2A Inspector is a web-based tool for testing and debugging A2A servers:
 
 ```bash
 # Install the A2A Inspector
@@ -64,605 +36,144 @@ npm install -g @a2a-integration/inspector
 
 # Start the inspector
 a2a-inspector
-
-# Or use the web version
-# Visit: https://inspector.a2a-integration.org
 ```
 
-**Using the Inspector:**
-1. Enter your server URL: `http://localhost:8000`
-2. Click "Discover Agent" to load your agent card
-3. Test agent execution with sample messages
-4. Debug protocol compliance issues
-5. View detailed request/response logs
-
-### Option 2: A2A Agent Card Validation
-
-```bash
-# Install the Capiscio CLI for A2A validation
-npm install -g capiscio-cli
-
-# Validate your agent card
-capiscio validate http://localhost:8000/.well-known/agent.json
-
-# Interactive validation
-capiscio
-```
+Then enter your server URL: `http://localhost:8000`
 
 ### Option 2: Manual Testing with curl
 
 ```bash
 # Test agent discovery
-curl http://localhost:8000/.well-known/agent.json
+curl http://localhost:8000/.well-known/agent.json | jq .
 
 # Test health endpoint
 curl http://localhost:8000/health
 
-# Test A2A JSON-RPC endpoint (example)
+# Send a message
 curl -X POST http://localhost:8000/ \
   -H "Content-Type: application/json" \
   -d '{
     "jsonrpc": "2.0",
-    "method": "execute",
+    "method": "message/send",
     "params": {
       "message": {
-        "parts": [{"text": "Hello, test message"}]
+        "messageId": "test-1",
+        "contextId": "ctx-1",
+        "role": "user",
+        "parts": [{"kind": "text", "text": "Hello world"}]
       }
     },
     "id": 1
-  }'
+  }' | jq .
 ```
 
-This allows you to:
-- Validate A2A protocol compliance
-- Test agent card format
-- Debug responses
-- Verify endpoint accessibility
+## Integrating with ARK
 
-## Exposing to ARK
-
-### Option 1: Local Development (Recommended for Testing)
-
-For local development, you need to expose your local A2A server to the Kubernetes cluster. The approach depends on your cluster type:
-
-#### Minikube
-```yaml
-apiVersion: ark.mckinsey.com/v1prealpha1
-kind: A2AServer
-metadata:
-  name: my-local-agent
-spec:
-  address:
-    value: "http://host.minikube.internal:8000"
-  description: "My local A2A agent"
-```
-
-#### Docker Desktop
-```yaml
-apiVersion: ark.mckinsey.com/v1prealpha1
-kind: A2AServer
-metadata:
-  name: my-local-agent
-spec:
-  address:
-    value: "http://host.docker.internal:8000"
-  description: "My local A2A agent"
-```
-
-#### Kind (Kubernetes in Docker)
-```yaml
-apiVersion: ark.mckinsey.com/v1prealpha1
-kind: A2AServer
-metadata:
-  name: my-local-agent
-spec:
-  address:
-    value: "http://host.docker.internal:8000"
-  description: "My local A2A agent"
-```
-
-#### Remote Clusters
-```yaml
-apiVersion: ark.mckinsey.com/v1prealpha1
-kind: A2AServer
-metadata:
-  name: my-local-agent
-spec:
-  address:
-    value: "http://YOUR_LOCAL_IP:8000"
-  description: "My local A2A agent"
-```
-
-**Important Notes:**
-- The host trick is only needed to access an A2A server **outside** the cluster
-- Your agent card must also point to the cluster host address (not localhost)
-- For production, containerize your server and deploy it in-cluster instead
-
-**Future Enhancement:** We're working on an `ark cluster host-address` command that will automatically detect the correct host address for your cluster type, making this much cleaner.
-
-#### Updating Your Agent Card for Local Development
-
-When running locally, you must update your agent card URL to match the cluster host address:
-
-```python
-# For minikube
-agent_card = AgentCard(
-    name="my_agent",
-    description="My custom agent",
-    url="http://host.minikube.internal:8000/",  # Must match A2AServer address
-    version="1.0.0",
-    # ... rest of configuration
-)
-
-# For Docker Desktop
-agent_card = AgentCard(
-    name="my_agent", 
-    description="My custom agent",
-    url="http://host.docker.internal:8000/",  # Must match A2AServer address
-    version="1.0.0",
-    # ... rest of configuration
-)
-```
-
-### Option 2: Remote Server
-
-If your A2A server is running on a remote host:
+Once your A2A server is running, create an A2AServer resource:
 
 ```yaml
 apiVersion: ark.mckinsey.com/v1prealpha1
 kind: A2AServer
-metadata:
-  name: my-remote-agent
-spec:
-  address:
-    value: "http://my-server.example.com:8000"
-  description: "My remote A2A agent"
-```
-
-### Option 3: In-Cluster Deployment (Production)
-
-For production, containerize your A2A server and deploy it in the cluster:
-
-```yaml
-apiVersion: ark.mckinsey.com/v1prealpha1
-kind: A2AServer
-metadata:
-  name: my-cluster-agent
-spec:
-  address:
-    valueFrom:
-      serviceRef:
-        name: my-a2a-service
-        port: "8000"
-  description: "My in-cluster A2A agent"
-```
-
-## Containerizing Your A2A Server
-
-Containerizing your A2A server is recommended for production deployments and makes it easier to manage dependencies and scaling.
-
-### Dockerfile Example
-
-```dockerfile
-FROM python:3.11-slim
-
-WORKDIR /app
-
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install Python dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Copy your server code
-COPY my_a2a_server.py .
-
-# Create non-root user for security
-RUN addgroup --system agent && adduser --system --uid 1001 --home /home/agent --ingroup agent agent
-RUN chown -R agent:agent /app
-USER agent
-
-# Expose port
-EXPOSE 8000
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8000/health || exit 1
-
-# Run the server
-CMD ["python", "my_a2a_server.py"]
-```
-
-### requirements.txt
-
-```txt
-a2a-sdk[sqlite]>=0.2.6
-starlette>=0.27.0
-uvicorn>=0.23.0
-python-dotenv>=1.0.0
-```
-
-### Build and Deploy
-
-```bash
-# Build the image
-docker build -t my-a2a-server:latest .
-
-# Test locally
-docker run -p 8000:8000 my-a2a-server:latest
-
-# Push to your registry
-docker push your-registry/my-a2a-server:latest
-
-# Create Kubernetes deployment
-kubectl create deployment my-a2a-server --image=your-registry/my-a2a-server:latest
-kubectl expose deployment my-a2a-server --port=8000 --type=ClusterIP
-```
-
-### Environment Variables
-
-For production deployments, use Kubernetes secrets for sensitive data:
-
-```yaml
-apiVersion: v1
-kind: Secret
-metadata:
-  name: my-a2a-secrets
-type: Opaque
-stringData:
-  AZURE_OPENAI_API_KEY: "your-api-key-here"
-  DATABASE_URL: "postgresql://user:pass@host:port/db"
-```
-
-```yaml
-apiVersion: apps/v1
-kind: Deployment
 metadata:
   name: my-a2a-server
 spec:
-  template:
-    spec:
-      containers:
-      - name: a2a-server
-        image: your-registry/my-a2a-server:latest
-        env:
-        - name: AZURE_OPENAI_API_KEY
-          valueFrom:
-            secretKeyRef:
-              name: my-a2a-secrets
-              key: AZURE_OPENAI_API_KEY
-```
-
-### Helm Chart Example
-
-For production deployments, consider using a Helm chart for better management and configuration:
-
-**Chart.yaml:**
-```yaml
-apiVersion: v2
-name: my-a2a-server
-description: My A2A Server Helm Chart
-version: 0.1.0
-appVersion: "1.0.0"
-```
-
-**values.yaml:**
-```yaml
-image:
-  repository: your-registry/my-a2a-server
-  tag: latest
-  pullPolicy: IfNotPresent
-
-replicaCount: 1
-
-service:
-  type: ClusterIP
-  port: 8000
-
-resources:
-  limits:
-    cpu: 500m
-    memory: 512Mi
-  requests:
-    cpu: 250m
-    memory: 256Mi
-
-env:
-  - name: AZURE_OPENAI_API_KEY
-    valueFrom:
-      secretKeyRef:
-        name: azure-openai-secret
-        key: token
-  - name: AZURE_API_BASE
-    valueFrom:
-      secretKeyRef:
-        name: azure-openai-secret
-        key: base-url
-
-# Enable A2AServer resource creation
-a2aserver:
-  enabled: true
-  description: "My A2A Server deployed via Helm"
-```
-
-**templates/deployment.yaml:**
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: {{ include "my-a2a-server.fullname" . }}
-  labels:
-    {{- include "my-a2a-server.labels" . | nindent 4 }}
-spec:
-  replicas: {{ .Values.replicaCount }}
-  selector:
-    matchLabels:
-      {{- include "my-a2a-server.selectorLabels" . | nindent 6 }}
-  template:
-    metadata:
-      labels:
-        {{- include "my-a2a-server.selectorLabels" . | nindent 8 }}
-    spec:
-      containers:
-      - name: a2a-server
-        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
-        imagePullPolicy: {{ .Values.image.pullPolicy }}
-        ports:
-        - containerPort: 8000
-        env:
-        {{- toYaml .Values.env | nindent 8 }}
-        resources:
-        {{- toYaml .Values.resources | nindent 10 }}
-        livenessProbe:
-          httpGet:
-            path: /health
-            port: 8000
-          initialDelaySeconds: 30
-          periodSeconds: 10
-        readinessProbe:
-          httpGet:
-            path: /.well-known/agent.json
-            port: 8000
-          initialDelaySeconds: 5
-          periodSeconds: 5
-```
-
-**templates/service.yaml:**
-```yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: {{ include "my-a2a-server.fullname" . }}
-  labels:
-    {{- include "my-a2a-server.labels" . | nindent 4 }}
-spec:
-  type: {{ .Values.service.type }}
-  ports:
-  - port: {{ .Values.service.port }}
-    targetPort: 8000
-    protocol: TCP
-    name: http
-  selector:
-    {{- include "my-a2a-server.selectorLabels" . | nindent 4 }}
-```
-
-**templates/a2aserver.yaml:**
-```yaml
-{{- if .Values.a2aserver.enabled }}
-apiVersion: ark.mckinsey.com/v1prealpha1
-kind: A2AServer
-metadata:
-  name: {{ include "my-a2a-server.fullname" . }}
-  labels:
-    {{- include "my-a2a-server.labels" . | nindent 4 }}
-spec:
   address:
-    valueFrom:
-      serviceRef:
-        name: {{ include "my-a2a-server.fullname" . }}
-        port: "{{ .Values.service.port }}"
-  description: {{ .Values.a2aserver.description }}
-{{- end }}
+    value: "http://host.docker.internal:8000"  # For Docker Desktop
+    # value: "http://host.minikube.internal:8000"  # For Minikube
+  description: "My A2A server"
 ```
 
-**Deploy with Helm:**
+Apply it:
 ```bash
-# Install the chart
-helm install my-a2a-server ./my-a2a-server-chart
-
-# Upgrade
-helm upgrade my-a2a-server ./my-a2a-server-chart
-
-# Uninstall
-helm uninstall my-a2a-server
+kubectl apply -f my-a2a-server.yaml
 ```
 
-## Agent Card Configuration
+ARK will automatically discover your agent and make it available for queries!
 
-The agent card is crucial for ARK discovery. Make sure your agent card includes:
+## Building Your Own A2A Server
 
-```python
-agent_card = AgentCard(
-    name="descriptive_agent_name",  # Will become part of ARK agent name
-    description="Clear description of what the agent does",
-    url="http://your-server:8000/",  # Must match your server URL
-    version="1.0.0",
-    defaultInputModes=["text/plain"],
-    defaultOutputModes=["text/plain"],
-    capabilities=AgentCapabilities(streaming=False),
-    skills=[
-        AgentSkill(
-            id="unique_skill_id",
-            name="Human Readable Skill Name",
-            description="What this skill does",
-            tags=["relevant", "tags"],
-            examples=["example input 1", "example input 2"],
-            inputModes=["text/plain"],
-            outputModes=["text/plain"],
-        )
-    ],
-)
-```
-
-## Using Your A2A Agent in ARK
-
-Once your A2AServer is created, ARK automatically discovers your agents:
+### 1. Start with the Simple Agent Template
 
 ```bash
-# List discovered agents
-kubectl get agents
-
-# Query your agent
-fark agent my-local-agent-my-agent "Hello, what can you do?"
+cp -r samples/a2a/simple-agent my-custom-agent
+cd my-custom-agent
 ```
 
-## Advanced Examples
+### 2. Modify the Agent Logic
 
-### LangChain Integration
-
-```python
-from langchain.agents import create_openai_functions_agent
-from langchain.tools import tool
-from langchain_openai import ChatOpenAI
-
-@tool
-def get_weather(city: str) -> str:
-    """Get weather for a city"""
-    return f"Weather in {city}: Sunny, 72°F"
-
-# Create LangChain agent
-llm = ChatOpenAI(model="gpt-4")
-tools = [get_weather]
-agent = create_openai_functions_agent(llm, tools, "You are a helpful weather assistant")
-
-class LangChainExecutor:
-    async def execute(self, context, event_queue):
-        # Extract message
-        message_text = context.message.parts[0].root.text
-        
-        # Run LangChain agent
-        result = await asyncio.get_event_loop().run_in_executor(
-            None, agent.invoke, {"input": message_text}
-        )
-        
-        # Send response (implementation details omitted for brevity)
-        # ... send result back via event_queue
-```
-
-### CrewAI Integration
+Edit `src/simple_a2a_server/main.py`:
 
 ```python
-from crewai import Agent, Task, Crew
-
-# Create CrewAI agent
-researcher = Agent(
-    role='Researcher',
-    goal='Research topics thoroughly',
-    backstory='Expert researcher with attention to detail'
-)
-
-class CrewAIExecutor:
+class MyAgentExecutor:
     async def execute(self, context, event_queue):
+        # Extract the user's message
         message_text = context.message.parts[0].root.text
         
-        # Create task and crew
-        task = Task(description=message_text, agent=researcher)
-        crew = Crew(agents=[researcher], tasks=[task])
-        
-        # Execute
-        result = await asyncio.get_event_loop().run_in_executor(
-            None, crew.kickoff
-        )
+        # Your custom logic here
+        result = await self.process_message(message_text)
         
         # Send response back
-        # ... implementation details
+        response_message = Message(
+            messageId=str(uuid.uuid4()),
+            contextId=context.message.context_id,
+            taskId=context.task_id,
+            role=Role.agent,
+            parts=[Part(root=TextPart(kind="text", text=result))],
+        )
+        await event_queue.enqueue_event(response_message)
 ```
 
-## Best Practices
+### 3. Update Agent Card
 
-### Development
-- **Start Local**: Test with A2A Inspector before connecting to ARK
-- **Use Health Checks**: Always include a `/health` endpoint
-- **Clear Agent Cards**: Make descriptions and examples clear and specific
-- **Error Handling**: Handle malformed requests gracefully
+Modify the skills in `create_agent_card()`:
 
-### Production
-- **Containerize**: Use Docker for consistent deployments
-- **Resource Limits**: Set appropriate CPU/memory limits
-- **Monitoring**: Include logging and metrics
-- **Security**: Use HTTPS and authentication where appropriate
+```python
+skills = [
+    AgentSkill(
+        id="my_skill",
+        name="My Skill",
+        description="What my agent can do",
+        tags=["custom", "example"],
+        examples=["Example input 1", "Example input 2"],
+        inputModes=["text/plain"],
+        outputModes=["text/plain"],
+    ),
+]
+```
 
-### ARK Integration
-- **Unique Names**: Ensure agent names don't conflict
-- **Proper Annotations**: ARK adds useful metadata to discovered agents
-- **Test Queries**: Verify agents work through ARK's query system
+### 4. Update Project Configuration
 
-## Troubleshooting
+Edit `pyproject.toml`:
+```toml
+[project]
+name = "my-a2a-server"
+description = "My custom A2A server"
+```
 
-### Common Issues
+## Deployment Options
 
-**Agent not discovered:**
+### Local Development
+```bash
+make dev  # Runs on localhost:8000
+```
+
+### Kubernetes Deployment
+```bash
+make install  # Builds Docker image and deploys to K8s
+```
+
+## Common Issues
+
+**Connection Refused:**
+- Use `http://host.docker.internal:8000` for Docker Desktop
+- Use `http://host.minikube.internal:8000` for Minikube
+
+**Agent Not Discovered:**
 - Check A2AServer status: `kubectl describe a2aserver my-server`
-- Verify agent card is accessible: `curl http://your-server/.well-known/agent.json`
-- Check ARK controller logs for discovery errors
-
-**Connection refused:**
-- For local development, ensure `host.minikube.internal` is accessible from cluster
-- For remote servers, check firewall and network connectivity
-- Verify the correct port is exposed
-
-**Query execution fails:**
-- Check A2A server logs for execution errors
-- Verify message format compatibility
-- Test with A2A Inspector first
-
-## Upcoming Convenience Features
-
-We're working on several features to make A2A server development and deployment easier:
-
-### `ark a2aserver upload`
-A convenience command for uploading and deploying A2A servers:
-
-```bash
-# Upload and deploy your A2A server
-ark a2aserver upload ./my-a2a-server --name my-agent
-
-# This will:
-# 1. Build your Docker image
-# 2. Push to registry
-# 3. Create Kubernetes deployment
-# 4. Create A2AServer resource
-# 5. Wait for agent discovery
-```
-
-### `ark cluster host-address`
-Automatically detect the correct host address for your cluster:
-
-```bash
-# Get the host address for your cluster
-ark cluster host-address
-# Output: host.minikube.internal (for minikube)
-# Output: host.docker.internal (for Docker Desktop)
-# Output: 192.168.1.100 (for remote clusters)
-```
-
-### `ark a2aserver template`
-Generate A2A server templates with best practices:
-
-```bash
-# Generate a Python A2A server template
-ark a2aserver template python --name my-agent --output ./my-agent
-
-# Generate a Node.js template
-ark a2aserver template nodejs --name my-agent --output ./my-agent
-```
+- Verify agent card: `curl http://your-server/.well-known/agent.json`
 
 ## Next Steps
 
-- **Convenience Upload**: We're working on `ark a2aserver upload` for easier deployment
-- **Helm Charts**: Consider creating Helm charts for complex A2A servers
-- **Advanced Features**: Explore streaming responses and multi-skill agents
-- **Integration**: Connect with [A2A Gateway](/developer-guide/a2a-gateway) for agent-to-agent communication
+- **[A2A Servers](../../developer-guide/a2a-server)** - ARK A2A server documentation
+- **[A2A Gateway](../../developer-guide/a2a-gateway)** - ARK's A2A gateway
+- **[A2A Protocol Spec](https://github.com/a2a-integration/a2a-spec)** - Official A2A protocol

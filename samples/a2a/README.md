@@ -7,18 +7,19 @@ This directory contains complete, runnable examples of A2A (Agent-to-Agent) serv
 ### 🚀 **Getting Started**
 
 #### [Simple Agent](simple-agent/)
-**Complete A2A server example with production-ready features**
+**Complete A2A server example for learning**
 
 - ✅ Basic conversation
 - ✅ Simple math operations
 - ✅ Echo functionality
-- ✅ Docker containerization
-- ✅ Helm chart for Kubernetes
 - ✅ Comprehensive error handling
-- ✅ Production deployment ready
 - ✅ Perfect for learning the A2A protocol
 
 ```bash
+# Option 1: Integrated with ARK (Recommended)
+devspace dev
+
+# Option 2: Manual setup
 cd simple-agent
 make init
 make dev
@@ -42,7 +43,7 @@ make install
 
 | Sample | Lines of Code | Features | Use Case |
 |--------|---------------|----------|----------|
-| **Simple Agent** | ~400 | Conversation, Math, Echo | Learning, production |
+| **Simple Agent** | ~400 | Conversation, Math, Echo | Learning A2A protocol |
 | **Weather Agent** | ~500+ | Weather API, LangChain | Framework integration |
 
 ## How to Choose

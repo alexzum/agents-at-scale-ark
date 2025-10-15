@@ -25,29 +25,24 @@ lint-fix: # fix linting issues
 	black src/simple_a2a_server/
 	isort src/simple_a2a_server/
 
-.PHONY: build
-build: # build container
-	../../../scripts/build-and-push.sh -i simple-agent
-
 .PHONY: install
-install: build # build and deploy
-	@sh -c ' \
-			set -a; \
-			if [ -f .env ]; then . ./.env; fi; \
-			set +a; \
-			kubectl create secret generic simple-agent-secret \
-				--from-literal=server-url="$${A2A_SERVER_URL:-http://simple-agent:8000}" \
-				--namespace="$${NAMESPACE:-default}" \
-				--dry-run=client -o yaml | kubectl apply -f -; \
-			helm upgrade --install simple-agent chart/ \
-				--namespace="$${NAMESPACE:-default}" \
-				--wait --timeout=60s; \
-		'
+install: # deploy to kubernetes (requires manual A2AServer creation)
+	@echo "To deploy to Kubernetes:"
+	@echo "1. Create an A2AServer resource pointing to your local server"
+	@echo "2. Use: kubectl apply -f - <<EOF"
+	@echo "   apiVersion: ark.mckinsey.com/v1prealpha1"
+	@echo "   kind: A2AServer"
+	@echo "   metadata:"
+	@echo "     name: simple-agent"
+	@echo "   spec:"
+	@echo "     address:"
+	@echo "       value: \"http://host.docker.internal:8000\""
+	@echo "     description: \"Simple agent with conversation, math, and echo capabilities\""
+	@echo "   EOF"
 
 .PHONY: uninstall
-uninstall: # remove resources
-	helm uninstall simple-agent --ignore-not-found
-	kubectl delete secret simple-agent-secret --ignore-not-found
+uninstall: # remove A2AServer resource
+	kubectl delete a2aserver simple-agent --ignore-not-found
 
 .PHONY: status
 status: # show status
