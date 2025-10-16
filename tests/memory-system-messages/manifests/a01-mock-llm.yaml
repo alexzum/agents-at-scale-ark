@@ -1,5 +1,5 @@
-# Mock LLM server using mock-llm helm chart
-# This will echo back all messages sent to it, allowing us to verify message delivery
+# Mock OpenAI server using mock-llm (https://github.com/dwmkerr/mock-llm)
+# Returns all messages to validate memory system message delivery
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -17,17 +17,9 @@ data:
               "object": "chat.completion",
               "model": "{{jmes request model}}",
               "choices": [{
-                "message": {
-                  "role": "assistant",
-                  "content": "MOCK_RESPONSE: {{jmes request messages}}"
-                },
+                "message": {{jmes request messages}},
                 "finish_reason": "stop"
-              }],
-              "usage": {
-                "prompt_tokens": 100,
-                "completion_tokens": 50,
-                "total_tokens": 150
-              }
+              }]
             }
 ---
 apiVersion: v1
@@ -41,42 +33,29 @@ spec:
   - port: 80
     targetPort: 8080
 ---
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: v1
+kind: Pod
 metadata:
   name: mock-llm
+  labels:
+    app: mock-llm
 spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: mock-llm
-  template:
-    metadata:
-      labels:
-        app: mock-llm
-    spec:
-      containers:
-      - name: mock-llm
-        image: ghcr.io/dwmkerr/mock-llm:0.1.8
-        ports:
-        - containerPort: 8080
-        volumeMounts:
-        - name: config
-          mountPath: /app/mock-llm.yaml
-          subPath: mock-llm.yaml
-        readinessProbe:
-          httpGet:
-            path: /health
-            port: 8080
-          initialDelaySeconds: 2
-          periodSeconds: 5
-        livenessProbe:
-          httpGet:
-            path: /health
-            port: 8080
-          initialDelaySeconds: 5
-          periodSeconds: 10
-      volumes:
-      - name: config
-        configMap:
-          name: mock-llm-config
+  containers:
+  - name: mock-llm
+    image: ghcr.io/dwmkerr/mock-llm:0.1.8
+    ports:
+    - containerPort: 8080
+    volumeMounts:
+    - name: config
+      mountPath: /app/mock-llm.yaml
+      subPath: mock-llm.yaml
+    readinessProbe:
+      httpGet:
+        path: /health
+        port: 8080
+      initialDelaySeconds: 2
+      periodSeconds: 5
+  volumes:
+  - name: config
+    configMap:
+      name: mock-llm-config

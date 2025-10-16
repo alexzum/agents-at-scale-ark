@@ -9,8 +9,29 @@ spec:
           file: "manifests/a00-rbac.yaml"
       - apply:
           file: "manifests/a01-mock-llm.yaml"
+      - assert:
+          timeout: 30s
+          resource:
+            apiVersion: v1
+            kind: Pod
+            metadata:
+              name: mock-llm
+            status:
+              phase: Running
+              (contains(conditions[?type == 'Ready'].status, 'True')): true
       - apply:
           file: "manifests/a02-memory.yaml"
+      - script:
+          content: |
+            # Wait for mock-llm service to be ready
+            echo "Waiting for mock-llm service to be ready..."
+            kubectl wait --for=condition=ready pod -l app=mock-llm -n $NAMESPACE --timeout=30s
+            echo "Waiting 20 seconds for DNS propagation..."
+            sleep 20
+            echo "Mock-llm service should be ready now!"
+          env:
+          - name: NAMESPACE
+            value: ($namespace)
       - apply:
           file: "manifests/a03-model.yaml"
       - apply:
