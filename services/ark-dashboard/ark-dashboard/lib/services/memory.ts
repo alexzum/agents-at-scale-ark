@@ -51,11 +51,6 @@ interface MemoryListResponse {
   total?: number;
 }
 
-
-
-
-
-
 export const memoryService = {
   // Get all memory resources in a namespace
   async getMemoryResources(): Promise<MemoryResource[]> {

@@ -1,6 +1,6 @@
 "use client"
 
-import { MemorySection } from "@/components/sections/memory-section"
+import { MemorySection } from "@/components/sections"
 import { useSearchParams } from "next/navigation"
 import { Suspense } from "react"
 import { BreadcrumbElement, PageHeader } from "@/components/common/page-header"

@@ -25,6 +25,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState, useMemo, useRef } from "react";
 
 import { Database, MessageSquare, ChevronDown } from "lucide-react";
+import { DeleteMemoryDropdownMenu } from "./delete-memory";
 
 interface MemorySectionProps {
   readonly initialFilters?: Partial<MemoryFilters>;
@@ -266,8 +267,6 @@ export function MemorySection({
     }
   };
 
-
-
   const handleItemsPerPageChange = (newLimit: number) => {
     // Only update URL - let the useEffect handle state updates
     updateUrlParams({
@@ -275,8 +274,6 @@ export function MemorySection({
       page: 1
     });
   };
-
-
 
   if (loading) {
     return (
@@ -468,6 +465,11 @@ export function MemorySection({
         >
           Clear Filters
         </Button>
+        <DeleteMemoryDropdownMenu
+          className="ml-auto"
+          selectedQuery={searchParams.get("queryId")}
+          selectedSession={searchParams.get("sessionId")}
+        />
       </div>
 
       {/* Messages Table */}
