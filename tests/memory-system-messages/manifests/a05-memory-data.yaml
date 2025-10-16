@@ -1,0 +1,44 @@
+# This creates a ConfigMap that will be used to populate memory with test data
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: memory-test-data
+data:
+  setup-script.sh: |
+    #!/bin/bash
+    # This script would populate the memory service with test data
+    # For now, we'll create a simple test that verifies memory functionality
+    
+    echo "Setting up memory test data..."
+    
+    # Create test session with previous conversation
+    curl -X POST http://ark-cluster-memory:8080/messages \
+      -H "Content-Type: application/json" \
+      -d '{
+        "session_id": "test-session-123",
+        "query_id": "test-query-1",
+        "messages": [
+          {
+            "role": "system",
+            "content": "You are a helpful assistant that remembers previous conversations."
+          },
+          {
+            "role": "user",
+            "content": "Hello, I need help with my project."
+          },
+          {
+            "role": "assistant",
+            "content": "Hello! I'd be happy to help you with your project. What specific aspect would you like assistance with?"
+          },
+          {
+            "role": "user",
+            "content": "I'm working on a memory system for an AI application."
+          },
+          {
+            "role": "assistant",
+            "content": "That sounds interesting! Memory systems are crucial for AI applications. Are you looking to implement persistent conversation history, or something more specific?"
+          }
+        ]
+      }'
+    
+    echo "Memory test data setup complete!"

@@ -1,0 +1,13 @@
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Query
+metadata:
+  name: memory-system-prompt-test
+spec:
+  input: "What is my current system prompt?"
+  memory:
+    name: test-memory
+  sessionId: "test-session-123"
+  targets:
+  - type: agent
+    name: memory-test-agent
+  timeout: "30s"

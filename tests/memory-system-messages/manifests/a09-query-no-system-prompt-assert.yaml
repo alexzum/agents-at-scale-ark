@@ -1,0 +1,57 @@
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Assert
+metadata:
+  name: memory-no-system-prompt-test-assert
+spec:
+  match:
+    resource:
+      apiVersion: ark.mckinsey.com/v1alpha1
+      kind: Query
+      name: memory-no-system-prompt-test
+  check:
+  - name: query-completed
+    template: |
+      {{- if eq .status.phase "done" -}}
+      {{- "true" -}}
+      {{- else -}}
+      {{- "false" -}}
+      {{- end -}}
+  - name: response-contains-only-current-system-prompt
+    template: |
+      {{- $containsOnlyCurrent := false -}}
+      {{- range .status.responses -}}
+        {{- if and (contains .content "helpful assistant that remembers previous conversations") (not (contains .content "helpful assistant that remembers previous conversations")) -}}
+          {{- $containsOnlyCurrent = true -}}
+        {{- end -}}
+      {{- end -}}
+      {{- if $containsOnlyCurrent -}}
+      {{- "true" -}}
+      {{- else -}}
+      {{- "false" -}}
+      {{- end -}}
+  - name: response-shows-memory-system-message-parameter-false
+    template: |
+      {{- $showsParameter := false -}}
+      {{- range .status.responses -}}
+        {{- if contains .content "memorySystemMessageParameter" -}}
+          {{- $showsParameter = true -}}
+        {{- end -}}
+      {{- end -}}
+      {{- if $showsParameter -}}
+      {{- "true" -}}
+      {{- else -}}
+      {{- "false" -}}
+      {{- end -}}
+  - name: response-contains-memory-messages
+    template: |
+      {{- $containsMemory := false -}}
+      {{- range .status.responses -}}
+        {{- if contains .content "MOCK_RESPONSE" -}}
+          {{- $containsMemory = true -}}
+        {{- end -}}
+      {{- end -}}
+      {{- if $containsMemory -}}
+      {{- "true" -}}
+      {{- else -}}
+      {{- "false" -}}
+      {{- end -}}

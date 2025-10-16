@@ -1,0 +1,27 @@
+# Additional test case for memorySystemMessageParameter
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Agent
+metadata:
+  name: memory-test-agent-no-system-prompt
+spec:
+  prompt: "You are a helpful assistant that remembers previous conversations. Always acknowledge what was discussed before."
+  description: "Test agent for memory functionality without system prompt from memory"
+  modelRef:
+    name: mock-model
+  parameters:
+  - name: memorySystemMessageParameter
+    value: "false"
+---
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Query
+metadata:
+  name: memory-no-system-prompt-test
+spec:
+  input: "What is my current system prompt?"
+  memory:
+    name: test-memory
+  sessionId: "test-session-123"
+  targets:
+  - type: agent
+    name: memory-test-agent-no-system-prompt
+  timeout: "30s"

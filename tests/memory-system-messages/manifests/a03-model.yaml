@@ -1,0 +1,14 @@
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Model
+metadata:
+  name: mock-model
+spec:
+  type: openai
+  model:
+    value: gpt-4-mock
+  config:
+    openai:
+      baseUrl:
+        value: http://mock-llm
+      apiKey:
+        value: dummy-key

@@ -1,0 +1,83 @@
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Assert
+metadata:
+  name: memory-mock-llm-test-assert
+spec:
+  match:
+    resource:
+      apiVersion: ark.mckinsey.com/v1alpha1
+      kind: Query
+      name: memory-mock-llm-test
+  check:
+  - name: query-completed
+    template: |
+      {{- if eq .status.phase "done" -}}
+      {{- "true" -}}
+      {{- else -}}
+      {{- "false" -}}
+      {{- end -}}
+  - name: response-contains-mock-response
+    template: |
+      {{- $containsMock := false -}}
+      {{- range .status.responses -}}
+        {{- if contains .content "MOCK_RESPONSE" -}}
+          {{- $containsMock = true -}}
+        {{- end -}}
+      {{- end -}}
+      {{- if $containsMock -}}
+      {{- "true" -}}
+      {{- else -}}
+      {{- "false" -}}
+      {{- end -}}
+  - name: response-contains-system-message
+    template: |
+      {{- $containsSystem := false -}}
+      {{- range .status.responses -}}
+        {{- if contains .content "helpful assistant that remembers" -}}
+          {{- $containsSystem = true -}}
+        {{- end -}}
+      {{- end -}}
+      {{- if $containsSystem -}}
+      {{- "true" -}}
+      {{- else -}}
+      {{- "false" -}}
+      {{- end -}}
+  - name: response-contains-user-message
+    template: |
+      {{- $containsUser := false -}}
+      {{- range .status.responses -}}
+        {{- if contains .content "Echo back all the messages" -}}
+          {{- $containsUser = true -}}
+        {{- end -}}
+      {{- end -}}
+      {{- if $containsUser -}}
+      {{- "true" -}}
+      {{- else -}}
+      {{- "false" -}}
+      {{- end -}}
+  - name: response-contains-memory-messages
+    template: |
+      {{- $containsMemory := false -}}
+      {{- range .status.responses -}}
+        {{- if or (contains .content "Hello, I need help") (contains .content "memory system") (contains .content "AI application") -}}
+          {{- $containsMemory = true -}}
+        {{- end -}}
+      {{- end -}}
+      {{- if $containsMemory -}}
+      {{- "true" -}}
+      {{- else -}}
+      {{- "false" -}}
+      {{- end -}}
+  - name: response-shows-message-order
+    template: |
+      {{- $showsOrder := false -}}
+      {{- range .status.responses -}}
+        {{- if and (contains .content "MOCK_RESPONSE") (contains .content "helpful assistant") -}}
+          {{- $showsOrder = true -}}
+        {{- end -}}
+      {{- end -}}
+      {{- if $showsOrder -}}
+      {{- "true" -}}
+      {{- else -}}
+      {{- "false" -}}
+      {{- end -}}

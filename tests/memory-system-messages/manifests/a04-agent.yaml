@@ -1,0 +1,12 @@
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Agent
+metadata:
+  name: memory-test-agent
+spec:
+  prompt: "You are a helpful assistant that remembers previous conversations. Always acknowledge what was discussed before."
+  description: "Test agent for memory functionality"
+  modelRef:
+    name: mock-model
+  parameters:
+  - name: memorySystemMessageParameter
+    value: "true"

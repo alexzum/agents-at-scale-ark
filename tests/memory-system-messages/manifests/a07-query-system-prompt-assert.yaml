@@ -1,0 +1,44 @@
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Assert
+metadata:
+  name: memory-system-prompt-test-assert
+spec:
+  match:
+    resource:
+      apiVersion: ark.mckinsey.com/v1alpha1
+      kind: Query
+      name: memory-system-prompt-test
+  check:
+  - name: query-completed
+    template: |
+      {{- if eq .status.phase "done" -}}
+      {{- "true" -}}
+      {{- else -}}
+      {{- "false" -}}
+      {{- end -}}
+  - name: response-contains-current-system-prompt
+    template: |
+      {{- $containsCurrentPrompt := false -}}
+      {{- range .status.responses -}}
+        {{- if contains .content "helpful assistant that remembers previous conversations" -}}
+          {{- $containsCurrentPrompt = true -}}
+        {{- end -}}
+      {{- end -}}
+      {{- if $containsCurrentPrompt -}}
+      {{- "true" -}}
+      {{- else -}}
+      {{- "false" -}}
+      {{- end -}}
+  - name: response-shows-memory-system-message-parameter
+    template: |
+      {{- $showsParameter := false -}}
+      {{- range .status.responses -}}
+        {{- if contains .content "memorySystemMessageParameter" -}}
+          {{- $showsParameter = true -}}
+        {{- end -}}
+      {{- end -}}
+      {{- if $showsParameter -}}
+      {{- "true" -}}
+      {{- else -}}
+      {{- "false" -}}
+      {{- end -}}

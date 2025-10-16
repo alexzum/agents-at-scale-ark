@@ -1,0 +1,57 @@
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Assert
+metadata:
+  name: memory-continuity-test-assert
+spec:
+  match:
+    resource:
+      apiVersion: ark.mckinsey.com/v1alpha1
+      kind: Query
+      name: memory-continuity-test
+  check:
+  - name: query-completed
+    template: |
+      {{- if eq .status.phase "done" -}}
+      {{- "true" -}}
+      {{- else -}}
+      {{- "false" -}}
+      {{- end -}}
+  - name: response-contains-previous-discussion
+    template: |
+      {{- $containsPrevious := false -}}
+      {{- range .status.responses -}}
+        {{- if or (contains .content "memory system") (contains .content "AI application") (contains .content "persistent conversation") -}}
+          {{- $containsPrevious = true -}}
+        {{- end -}}
+      {{- end -}}
+      {{- if $containsPrevious -}}
+      {{- "true" -}}
+      {{- else -}}
+      {{- "false" -}}
+      {{- end -}}
+  - name: response-shows-conversation-flow
+    template: |
+      {{- $showsFlow := false -}}
+      {{- range .status.responses -}}
+        {{- if or (contains .content "discussed") (contains .content "mentioned") (contains .content "talked about") -}}
+          {{- $showsFlow = true -}}
+        {{- end -}}
+      {{- end -}}
+      {{- if $showsFlow -}}
+      {{- "true" -}}
+      {{- else -}}
+      {{- "false" -}}
+      {{- end -}}
+  - name: response-contains-all-messages
+    template: |
+      {{- $containsAll := false -}}
+      {{- range .status.responses -}}
+        {{- if and (contains .content "MOCK_RESPONSE") (contains .content "helpful assistant") -}}
+          {{- $containsAll = true -}}
+        {{- end -}}
+      {{- end -}}
+      {{- if $containsAll -}}
+      {{- "true" -}}
+      {{- else -}}
+      {{- "false" -}}
+      {{- end -}}

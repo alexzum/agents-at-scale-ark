@@ -1,0 +1,14 @@
+# Enhanced test case that specifically tests mock-llm message delivery
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Query
+metadata:
+  name: memory-mock-llm-test
+spec:
+  input: "Echo back all the messages you received"
+  memory:
+    name: test-memory
+  sessionId: "test-session-123"
+  targets:
+  - type: agent
+    name: memory-test-agent
+  timeout: "30s"

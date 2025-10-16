@@ -1,0 +1,57 @@
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Assert
+metadata:
+  name: memory-test-query-assert
+spec:
+  match:
+    resource:
+      apiVersion: ark.mckinsey.com/v1alpha1
+      kind: Query
+      name: memory-test-query
+  check:
+  - name: query-completed
+    template: |
+      {{- if eq .status.phase "done" -}}
+      {{- "true" -}}
+      {{- else -}}
+      {{- "false" -}}
+      {{- end -}}
+  - name: response-contains-memory-content
+    template: |
+      {{- $containsMemory := false -}}
+      {{- range .status.responses -}}
+        {{- if contains .content "MOCK_RESPONSE" -}}
+          {{- $containsMemory = true -}}
+        {{- end -}}
+      {{- end -}}
+      {{- if $containsMemory -}}
+      {{- "true" -}}
+      {{- else -}}
+      {{- "false" -}}
+      {{- end -}}
+  - name: response-contains-system-prompt
+    template: |
+      {{- $containsSystemPrompt := false -}}
+      {{- range .status.responses -}}
+        {{- if contains .content "helpful assistant that remembers" -}}
+          {{- $containsSystemPrompt = true -}}
+        {{- end -}}
+      {{- end -}}
+      {{- if $containsSystemPrompt -}}
+      {{- "true" -}}
+      {{- else -}}
+      {{- "false" -}}
+      {{- end -}}
+  - name: response-contains-previous-conversation
+    template: |
+      {{- $containsPrevious := false -}}
+      {{- range .status.responses -}}
+        {{- if or (contains .content "memory system") (contains .content "AI application") -}}
+          {{- $containsPrevious = true -}}
+        {{- end -}}
+      {{- end -}}
+      {{- if $containsPrevious -}}
+      {{- "true" -}}
+      {{- else -}}
+      {{- "false" -}}
+      {{- end -}}

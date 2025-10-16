@@ -1,0 +1,13 @@
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Query
+metadata:
+  name: memory-test-query
+spec:
+  input: "Can you remind me what we discussed about my project?"
+  memory:
+    name: test-memory
+  sessionId: "test-session-123"
+  targets:
+  - type: agent
+    name: memory-test-agent
+  timeout: "30s"

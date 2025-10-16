@@ -1,0 +1,91 @@
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: memory-system-messages
+spec:
+  steps:
+    - try:
+      - apply:
+          file: "manifests/a00-rbac.yaml"
+      - apply:
+          file: "manifests/a01-mock-llm.yaml"
+      - apply:
+          file: "manifests/a02-memory.yaml"
+      - apply:
+          file: "manifests/a03-model.yaml"
+      - apply:
+          file: "manifests/a04-agent.yaml"
+      - apply:
+          file: "manifests/a05-memory-data.yaml"
+      - apply:
+          file: "manifests/a06-query.yaml"
+      - assert:
+          resource:
+            apiVersion: ark.mckinsey.com/v1alpha1
+            kind: Query
+            metadata:
+              name: memory-test-query
+            status:
+              phase: done
+      - apply:
+          file: "manifests/a07-query-system-prompt.yaml"
+      - assert:
+          resource:
+            apiVersion: ark.mckinsey.com/v1alpha1
+            kind: Query
+            metadata:
+              name: test-query-system-prompt
+            status:
+              phase: done
+      - apply:
+          file: "manifests/a08-query-continuity.yaml"
+      - assert:
+          resource:
+            apiVersion: ark.mckinsey.com/v1alpha1
+            kind: Query
+            metadata:
+              name: test-query-continuity
+            status:
+              phase: done
+      - apply:
+          file: "manifests/a09-query-no-system-prompt.yaml"
+      - assert:
+          resource:
+            apiVersion: ark.mckinsey.com/v1alpha1
+            kind: Query
+            metadata:
+              name: test-query-no-system-prompt
+            status:
+              phase: done
+      - apply:
+          file: "manifests/a10-query-mock-llm.yaml"
+      - assert:
+          resource:
+            apiVersion: ark.mckinsey.com/v1alpha1
+            kind: Query
+            metadata:
+              name: test-query-mock-llm
+            status:
+              phase: done
+      catch:
+      - events: {}
+      - describe:
+          apiVersion: ark.mckinsey.com/v1alpha1
+          kind: Query
+          name: memory-test-query
+      - describe:
+          apiVersion: ark.mckinsey.com/v1alpha1
+          kind: Query
+          name: memory-system-prompt-test
+      - describe:
+          apiVersion: ark.mckinsey.com/v1alpha1
+          kind: Query
+          name: memory-continuity-test
+      - describe:
+          apiVersion: ark.mckinsey.com/v1alpha1
+          kind: Query
+          name: memory-no-system-prompt-test
+      - describe:
+          apiVersion: ark.mckinsey.com/v1alpha1
+          kind: Query
+          name: memory-mock-llm-test
