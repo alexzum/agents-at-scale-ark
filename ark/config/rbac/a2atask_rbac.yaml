@@ -1,0 +1,55 @@
+---
+# Allow default service accounts in user namespaces to create A2ATask resources
+# This is needed when A2A agents return task responses that need to be tracked
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: a2atask-creator
+rules:
+- apiGroups:
+  - ark.mckinsey.com
+  resources:
+  - a2atasks
+  verbs:
+  - create
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - ark.mckinsey.com
+  resources:
+  - a2atasks/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - ark.mckinsey.com
+  resources:
+  - a2aservers
+  verbs:
+  - get
+  - list
+  - watch
+---
+# Bind the a2atask-creator role to all default service accounts
+# This allows queries executed in user namespaces to create A2ATasks when needed
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: a2atask-creator-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: a2atask-creator
+subjects:
+# Allow default service accounts in common namespaces to create A2ATasks
+- kind: ServiceAccount
+  name: default
+  namespace: default
+- kind: ServiceAccount
+  name: default
+  namespace: ark-system
+# You can add more namespaces here as needed

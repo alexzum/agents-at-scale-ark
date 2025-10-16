@@ -225,17 +225,18 @@ func setupControllers(mgr ctrl.Manager) {
 		name       string
 		reconciler interface{ SetupWithManager(ctrl.Manager) error }
 	}{
-		{"Agent", &controller.AgentReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme(), Recorder: mgr.GetEventRecorderFor("agent-controller")}},
+		{"Agent", &controller.AgentReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme()}},
 		{"Query", &controller.QueryReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme(), Recorder: mgr.GetEventRecorderFor("query-controller")}},
 		{"Tool", &controller.ToolReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme()}},
 		{"Team", &controller.TeamReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme()}},
 		{"A2AServer", &controller.A2AServerReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme(), Recorder: mgr.GetEventRecorderFor("a2aserver-controller")}},
 		{"MCPServer", &controller.MCPServerReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme(), Recorder: mgr.GetEventRecorderFor("mcpserver-controller")}},
-		{"Model", &controller.ModelReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme(), Recorder: mgr.GetEventRecorderFor("model-controller")}},
+		{"Model", &controller.ModelReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme()}},
 		{"Memory", &controller.MemoryReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme(), Recorder: mgr.GetEventRecorderFor("memory-controller")}},
 		{"ExecutionEngine", &controller.ExecutionEngineReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme(), Recorder: mgr.GetEventRecorderFor("executionengine-controller")}},
 		{"Evaluator", &controller.EvaluatorReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme()}},
 		{"Evaluation", &controller.EvaluationReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme(), Recorder: mgr.GetEventRecorderFor("evaluation-controller")}},
+		{"A2ATask", &controller.A2ATaskReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme(), Recorder: mgr.GetEventRecorderFor("a2atask-controller")}},
 	}
 
 	for _, reconciler := range controllers {

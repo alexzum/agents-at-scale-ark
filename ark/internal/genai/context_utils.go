@@ -46,6 +46,15 @@ func getSessionID(ctx context.Context) string {
 	return ""
 }
 
+func getQueryName(ctx context.Context) string {
+	if val := ctx.Value(queryNameKey); val != nil {
+		if queryName, ok := val.(string); ok {
+			return queryName
+		}
+	}
+	return ""
+}
+
 // WithExecutionMetadata adds execution metadata to context for streaming
 func WithExecutionMetadata(ctx context.Context, metadata map[string]interface{}) context.Context {
 	// Avoid nested context in loop by accumulating in temporary variable
