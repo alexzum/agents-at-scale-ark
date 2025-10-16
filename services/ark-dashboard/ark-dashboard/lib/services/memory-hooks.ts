@@ -1,8 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { memoryService } from "./memory";
+import { MemoryMessagesFilters, memoryService } from "./memory";
 import { toast } from "sonner";
+import { useEffect } from "react";
 
 export const GET_MEMORY_RESOURCES_QUERY_KEY = "get-memory-resources";
+export const GET_SESSIONS_QUERY_KEY = "get-sessions";
+export const GET_ALL_MEMORY_MESSAGES_QUERY_KEY = "get-all-memory-messages";
 
 const getErrorMessage = (error: unknown): string => {
   if (error instanceof Error) {
@@ -12,10 +15,63 @@ const getErrorMessage = (error: unknown): string => {
 }
 
 export const useGetMemoryResources = () => {
-  return useQuery({
+  const query = useQuery({
     queryKey: [GET_MEMORY_RESOURCES_QUERY_KEY],
     queryFn: memoryService.getMemoryResources
   });
+
+  useEffect(() => {
+    if (query.error) {
+      toast.error("Failed to get Memory Resources", {
+        description:
+          query.error instanceof Error
+            ? query.error.message
+            : "An unexpected error occurred"
+      });
+    }
+  }, [query.error])
+
+  return query
+};
+
+export const useGetSessions = () => {
+  const query = useQuery({
+    queryKey: [GET_SESSIONS_QUERY_KEY],
+    queryFn: memoryService.getSessions
+  });
+
+  useEffect(() => {
+    if (query.error) {
+      toast.error("Failed to get Sessions", {
+        description:
+          query.error instanceof Error
+            ? query.error.message
+            : "An unexpected error occurred"
+      });
+    }
+  }, [query.error])
+
+  return query
+};
+
+export const useGetAllMemoryMessages = (filters: MemoryMessagesFilters) => {
+  const query = useQuery({
+    queryKey: [GET_ALL_MEMORY_MESSAGES_QUERY_KEY, filters.memory, filters.session, filters.query],
+    queryFn: () => memoryService.getAllMemoryMessages(filters)
+  });
+
+  useEffect(() => {
+    if (query.error) {
+      toast.error("Failed to get Memory Messages", {
+        description:
+          query.error instanceof Error
+            ? query.error.message
+            : "An unexpected error occurred"
+      });
+    }
+  }, [query.error])
+
+  return query
 };
 
 export const useDeleteQueryMemory = () => {
@@ -25,7 +81,9 @@ export const useDeleteQueryMemory = () => {
     mutationFn: memoryService.deleteQuery,
     onSuccess: (_, { queryId }) => {
       queryClient.invalidateQueries({ queryKey: [GET_MEMORY_RESOURCES_QUERY_KEY] })
-      toast.success(`Successfully deleted Memory entries for Query: ${queryId}`)
+      queryClient.invalidateQueries({ queryKey: [GET_SESSIONS_QUERY_KEY] })
+      queryClient.invalidateQueries({ queryKey: [GET_ALL_MEMORY_MESSAGES_QUERY_KEY] })
+      toast.success(`Successfully deleted Query: ${queryId} from Memory`)
     },
     onError: (error, { queryId }) => {
       console.error(`Failed to delete Query: ${queryId} from Memory:`, error)
@@ -43,6 +101,8 @@ export const useDeleteSessionMemory = () => {
     mutationFn: memoryService.deleteSession,
     onSuccess: (_, sessionId) => {
       queryClient.invalidateQueries({ queryKey: [GET_MEMORY_RESOURCES_QUERY_KEY] })
+      queryClient.invalidateQueries({ queryKey: [GET_SESSIONS_QUERY_KEY] })
+      queryClient.invalidateQueries({ queryKey: [GET_ALL_MEMORY_MESSAGES_QUERY_KEY] })
       toast.success(`Successfully deleted Session: ${sessionId} from Memory`)
     },
     onError: (error, sessionId) => {
@@ -61,6 +121,8 @@ export const useResetMemory = () => {
     mutationFn: memoryService.resetMemory,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [GET_MEMORY_RESOURCES_QUERY_KEY] })
+      queryClient.invalidateQueries({ queryKey: [GET_SESSIONS_QUERY_KEY] })
+      queryClient.invalidateQueries({ queryKey: [GET_ALL_MEMORY_MESSAGES_QUERY_KEY] })
       toast.success('Successfully reseted Memory')
     },
     onError: (error) => {

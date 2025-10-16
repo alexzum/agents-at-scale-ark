@@ -35,7 +35,7 @@ export function Pagination({
   };
 
   return (
-    <div className="flex items-center justify-between mt-4">
+    <div className="flex items-center justify-between mt-4 space-x-4">
       <div className="flex items-center space-x-2">
         <span className="text-sm text-gray-500 dark:text-gray-400">
           Items per page:
@@ -44,7 +44,7 @@ export function Pagination({
           value={itemsPerPage.toString()}
           onValueChange={handleItemsPerPageChange}
         >
-          <SelectTrigger className="w-20">
+          <SelectTrigger className="w-20 h-8">
             <SelectValue placeholder={itemsPerPage.toString()} />
           </SelectTrigger>
           <SelectContent>
