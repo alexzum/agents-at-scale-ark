@@ -12,4 +12,3 @@ spec:
       serviceRef:
         name: {{ include "mcp-filesystem.name" . }}-server
         port: http
-        path: /mcp

@@ -3,26 +3,28 @@ import { randomUUID } from 'node:crypto';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { isInitializeRequest } from '@modelcontextprotocol/sdk/types.js';
-import { createServer } from './filesystem/index.js';
+import { MCPAdapter } from './adapter.js';
+import { FilesystemAdapter } from './adapters/filesystem/adapter.js';
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
 import { rm } from 'fs/promises';
 import { dirname } from 'path';
 
 export type Session = {
-  path: string;
+  sessionId: string;
   createdAt: string;
   lastAccessed: string;
+  config: Record<string, any>;
 };
 
 const PORT = process.env.PORT ? parseInt(process.env.PORT) : 8080;
 const SESSION_FILE = process.env.SESSION_FILE || '/data/sessions/sessions.json';
 const MAX_SESSIONS = parseInt(process.env.MAX_SESSIONS || '1000');
-const CLEANUP_SESSION_FILES = process.env.CLEANUP_SESSION_FILES === 'true';
-const DATA_ROOT = '/data';
+const BASE_DATA_DIR = process.env.BASE_DATA_DIR || '/data';
 
 const app = express();
 app.use(express.json());
 
+const adapter: MCPAdapter = new FilesystemAdapter();
 const sessions = new Map<string, Session>();
 const transports: { [sessionId: string]: StreamableHTTPServerTransport } = {};
 const servers: { [sessionId: string]: Server } = {};
@@ -64,15 +66,6 @@ function saveSessions(): void {
   }
 }
 
-async function cleanupSessionDirectory(sessionPath: string): Promise<void> {
-  try {
-    const dirPath = `${DATA_ROOT}/${sessionPath}`;
-    await rm(dirPath, { recursive: true, force: true });
-    console.log(`[Session] Cleaned up directory: ${dirPath}`);
-  } catch (error) {
-    console.error(`[Session] Failed to cleanup directory ${sessionPath}:`, error);
-  }
-}
 
 function updateSessionAccess(sessionId: string): void {
   const index = sessionAccessOrder.indexOf(sessionId);
@@ -94,25 +87,20 @@ async function evictOldestSession(): Promise<void> {
   if (sessionAccessOrder.length === 0) return;
 
   const oldestSessionId = sessionAccessOrder[0];
-  const session = sessions.get(oldestSessionId);
 
-  console.log(`[Session] Evicting oldest session: ${oldestSessionId} (cleanup: ${CLEANUP_SESSION_FILES})`);
+  console.log(`[Session] Evicting oldest session: ${oldestSessionId}`);
 
   sessionAccessOrder.shift();
   sessions.delete(oldestSessionId);
+  delete transports[oldestSessionId];
+  delete servers[oldestSessionId];
   saveSessions();
-
-  if (CLEANUP_SESSION_FILES && session?.path) {
-    await cleanupSessionDirectory(session.path);
-  }
 
   console.log(`[Session] Evicted session: ${oldestSessionId}`);
 }
 
 async function deleteSession(sessionId: string): Promise<void> {
-  const session = sessions.get(sessionId);
-
-  console.log(`[Session] Deleting session: ${sessionId} (cleanup: ${CLEANUP_SESSION_FILES})`);
+  console.log(`[Session] Deleting session: ${sessionId}`);
 
   delete transports[sessionId];
   delete servers[sessionId];
@@ -121,10 +109,6 @@ async function deleteSession(sessionId: string): Promise<void> {
   const index = sessionAccessOrder.indexOf(sessionId);
   if (index !== -1) {
     sessionAccessOrder.splice(index, 1);
-  }
-
-  if (CLEANUP_SESSION_FILES && session?.path) {
-    await cleanupSessionDirectory(session.path);
   }
 
   saveSessions();
@@ -136,120 +120,86 @@ loadSessions();
 app.post('/mcp', async (req, res) => {
   const sessionId = (req.headers['Mcp-Session-Id'] ??
     req.headers['mcp-session-id']) as string | undefined;
-  let transport: StreamableHTTPServerTransport;
 
-  if (sessionId && transports[sessionId] && servers[sessionId]) {
-    transport = transports[sessionId];
-    console.log(`[Session] Reusing existing transport and server for session ${sessionId}`);
-    updateSessionAccess(sessionId);
-  } else if (sessionId && transports[sessionId] && !servers[sessionId]) {
-    const session = sessions.get(sessionId);
-    if (!session) {
-      console.log(`[Session] Session not found or expired: ${sessionId}`);
-      res.status(400).json({
-        jsonrpc: '2.0',
-        error: {
-          code: -32000,
-          message: 'Session not found or expired',
-        },
-        id: null,
-      });
-      return;
-    }
+  try {
+    let transport: StreamableHTTPServerTransport;
 
-    transport = transports[sessionId];
-    console.log(`[Session] Transport exists but server missing for session ${sessionId}, recreating server`);
-
-    const server = await createServer(session.path);
-    servers[sessionId] = server;
-    await server.connect(transport);
-    updateSessionAccess(sessionId);
-  } else if (sessionId && !transports[sessionId]) {
-    const session = sessions.get(sessionId);
-
-    if (!session) {
-      console.log(`[Session] Session not found or expired: ${sessionId}`);
-      res.status(400).json({
-        jsonrpc: '2.0',
-        error: {
-          code: -32000,
-          message: 'Session not found or expired',
-        },
-        id: null,
-      });
-      return;
-    }
-
-    transport = new StreamableHTTPServerTransport({
-      sessionIdGenerator: () => sessionId,
-      onsessioninitialized: () => {
-        transports[sessionId] = transport;
-      },
-    });
-
-    transport.onclose = () => {
-      delete transports[sessionId];
-      delete servers[sessionId];
-      console.log(`[Transport] Closed session ${sessionId}, session data kept for reconnection`);
-    };
-
-    const server = await createServer(session.path);
-    servers[sessionId] = server;
-    await server.connect(transport);
-    updateSessionAccess(sessionId);
-
-    console.log(`[Session] Reconnected session ${sessionId} with path: ${session.path || 'default'}`);
-  } else if (!sessionId && isInitializeRequest(req.body)) {
-    if (sessions.size >= MAX_SESSIONS) {
-      await evictOldestSession();
-    }
-
-    const newSessionId = randomUUID();
-    const now = new Date().toISOString();
-    const session: Session = {
-      path: newSessionId,
-      createdAt: now,
-      lastAccessed: now,
-    };
-
-    sessions.set(newSessionId, session);
-    sessionAccessOrder.push(newSessionId);
-    saveSessions();
-
-    console.log(`[Session] Created new session ${newSessionId} with path: ${session.path}`);
-
-    transport = new StreamableHTTPServerTransport({
-      sessionIdGenerator: () => newSessionId,
-      onsessioninitialized: sessionId => {
-        transports[sessionId] = transport;
-      },
-    });
-
-    transport.onclose = () => {
-      if (transport.sessionId) {
-        delete transports[transport.sessionId];
-        delete servers[transport.sessionId];
-        console.log(`[Transport] Closed session ${transport.sessionId}, session data kept for reconnection`);
+    if (sessionId && transports[sessionId]) {
+      // Reuse existing transport for known session
+      transport = transports[sessionId];
+      console.log(`[Session] Reusing existing transport for session ${sessionId}`);
+      updateSessionAccess(sessionId);
+    } else if (!sessionId && isInitializeRequest(req.body)) {
+      // New initialization request - create new session
+      if (sessions.size >= MAX_SESSIONS) {
+        await evictOldestSession();
       }
-    };
 
-    const server = await createServer(newSessionId);
-    servers[newSessionId] = server;
+      const newSessionId = randomUUID();
+      const now = new Date().toISOString();
+      const session: Session = {
+        sessionId: newSessionId,
+        createdAt: now,
+        lastAccessed: now,
+        config: {},
+      };
 
-    await server.connect(transport);
-  } else {
-    res.status(400).json({
-      jsonrpc: '2.0',
-      error: {
-        code: -32000,
-        message: 'Bad Request: No valid session ID provided',
-      },
-      id: null,
-    });
-    return;
+      sessions.set(newSessionId, session);
+      sessionAccessOrder.push(newSessionId);
+      saveSessions();
+
+      console.log(`[Session] Creating new session ${newSessionId}`);
+
+      transport = new StreamableHTTPServerTransport({
+        sessionIdGenerator: () => newSessionId,
+        onsessioninitialized: (sid) => {
+          console.log(`[Session] Session initialized with ID: ${sid}`);
+          transports[sid] = transport;
+        },
+      });
+
+      transport.onclose = () => {
+        const sid = transport.sessionId;
+        if (sid) {
+          delete transports[sid];
+          delete servers[sid];
+          console.log(`[Transport] Closed session ${sid}, session data kept for reconnection`);
+        }
+      };
+
+      const server = await adapter.createServer();
+      servers[newSessionId] = server;
+      await server.connect(transport);
+      await transport.handleRequest(req, res, req.body);
+      return;
+    } else {
+      // Invalid request - no session ID or not an initialization request
+      res.status(400).json({
+        jsonrpc: '2.0',
+        error: {
+          code: -32000,
+          message: 'Bad Request: No valid session ID provided',
+        },
+        id: null,
+      });
+      return;
+    }
+
+    // Handle request with existing transport
+    await transport.handleRequest(req, res, req.body);
+  } catch (error) {
+    console.error('[Session] Error handling MCP request:', error);
+    if (!res.headersSent) {
+      res.status(500).json({
+        jsonrpc: '2.0',
+        error: {
+          code: -32603,
+          message: 'Internal server error',
+        },
+        id: null,
+      });
+    }
   }
-
-  await transport.handleRequest(req, res, req.body);
 });
 
 const handleSessionRequest = async (
@@ -296,6 +246,6 @@ app.get('/health', (req, res) => {
 
 app.listen(PORT);
 console.log(`MCP server listening on port ${PORT}`);
+console.log(`Base data directory: ${BASE_DATA_DIR}`);
 console.log(`Session file: ${SESSION_FILE}`);
 console.log(`Max sessions: ${MAX_SESSIONS}`);
-console.log(`Cleanup session files on delete: ${CLEANUP_SESSION_FILES}`);

@@ -50,6 +50,24 @@ export class FilesystemContext {
     }
   }
 
+  async setBaseDirectory(directoryPath: string): Promise<void> {
+    const absolute = path.isAbsolute(directoryPath)
+      ? path.resolve(directoryPath)
+      : path.resolve(process.cwd(), directoryPath);
+
+    const normalizedPath = normalizePath(absolute);
+
+    await fs.mkdir(normalizedPath, { recursive: true });
+
+    this.baseDirectory = normalizedPath;
+
+    if (!this.allowedDirectories.includes(normalizedPath)) {
+      this.allowedDirectories.push(normalizedPath);
+    }
+
+    console.log(`[Directory] Set base directory to: ${normalizedPath}`);
+  }
+
   async validatePath(requestedPath: string): Promise<string> {
     const basePath = this.baseDirectory;
     const pathWithBasePath = basePath

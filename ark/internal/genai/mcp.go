@@ -87,21 +87,17 @@ func performBackoff(ctx context.Context, attempt int, baseURL string) error {
 }
 
 func createTransport(baseURL string, headers map[string]string) mcp.Transport {
-	// Create HTTP client with headers
 	httpClient := &http.Client{
 		Timeout: 30 * time.Second,
 	}
 
-	// If we have headers, wrap the transport
-	if len(headers) > 0 {
-		httpClient.Transport = &headerTransport{
-			headers: headers,
-			base:    http.DefaultTransport,
-		}
+	httpClient.Transport = &headerTransport{
+		headers: headers,
+		base:    http.DefaultTransport,
 	}
 
 	return &mcp.StreamableClientTransport{
-		Endpoint:   baseURL + "/mcp",
+		Endpoint:   strings.TrimSuffix(baseURL, "/") + "/mcp",
 		HTTPClient: httpClient,
 		MaxRetries: 5,
 	}
@@ -113,9 +109,12 @@ type headerTransport struct {
 }
 
 func (t *headerTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	req.Header.Set("Accept", "application/json, text/event-stream")
+
 	for k, v := range t.headers {
 		req.Header.Set(k, v)
 	}
+
 	return t.base.RoundTrip(req)
 }
 

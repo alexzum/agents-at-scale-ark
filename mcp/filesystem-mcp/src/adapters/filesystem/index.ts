@@ -21,12 +21,10 @@ import {
   headFile,
 } from "./lib.js";
 
-const BASE_PATH = "/data";
+const BASE_PATH = process.env.BASE_DATA_DIR || "/mcp-data";
 
-export const createServer = async (sessionPath?: string) => {
-  const fsContext = new FilesystemContext(
-    path.join(BASE_PATH, sessionPath || "shared")
-  );
+export const createServer = async () => {
+  const fsContext = new FilesystemContext(BASE_PATH);
   await fsContext.initialize();
 
   // Schema definitions
@@ -309,26 +307,29 @@ export const createServer = async (sessionPath?: string) => {
             );
           }
 
-          let resolvedPath: string;
-          let inputPath = parsed.data.path;
+          // Extract workspace name from path (remove any leading slashes or BASE_PATH references)
+          let workspaceName = parsed.data.path;
 
-          const baseName = path.basename(BASE_PATH);
-          if (inputPath.startsWith(baseName + "/") || inputPath.startsWith(baseName + path.sep)) {
-            inputPath = inputPath.substring(baseName.length + 1);
+          // Strip leading slashes
+          workspaceName = workspaceName.replace(/^\/+/, '');
+
+          // If path includes base path name, extract just the workspace part
+          const basePathName = path.basename(BASE_PATH);
+          if (workspaceName.startsWith(basePathName + "/") || workspaceName.startsWith(basePathName + path.sep)) {
+            workspaceName = workspaceName.substring(basePathName.length + 1);
           }
 
-          if (path.isAbsolute(inputPath)) {
-            resolvedPath = path.resolve(inputPath);
-          } else {
-            resolvedPath = path.resolve(path.join(BASE_PATH, inputPath));
-          }
+          // Create workspace directory under BASE_PATH
+          const workspacePath = path.join(BASE_PATH, workspaceName);
 
-          await fsContext.addAllowedDirectory(resolvedPath);
+          // Set the base directory (creates directory and updates context)
+          await fsContext.setBaseDirectory(workspacePath);
+
           return {
             content: [
               {
                 type: "text",
-                text: `Successfully added allowed directory: ${resolvedPath}`,
+                text: `Successfully set base directory: ${workspacePath}`,
               },
             ],
           };

@@ -1,6 +1,6 @@
 # MCP Filesystem Server with Session Management
 
-MCP Filesystem Server with persistent session support, LRU eviction, and reconnection capabilities.
+MCP-compliant filesystem server with persistent session tracking and annotation-driven workspace configuration.
 
 ## Quickstart
 
@@ -18,13 +18,14 @@ make dev
 
 ## Features
 
-- **Persistent Sessions**: Sessions survive server restarts via file-based storage
+- **MCP Protocol Compliant**: Full implementation of MCP session lifecycle
+- **Persistent Session Tracking**: Session metadata survives server restarts via file-based storage
 - **LRU Eviction**: Automatically evicts least recently used sessions when limit reached
-- **Reconnection**: Clients can reconnect with same session ID and maintain configuration
-- **Session Isolation**: Each session operates in isolated directory (`/data/{sessionId}/`)
+- **Annotation-Driven Configuration**: Workspaces configured via ARK query annotations
+- **Shared Base Directory**: All operations under `/mcp-data/` with user-specified workspaces
 - **All Filesystem Operations**: Read, write, edit, move, search, list, tree
 
-Based on the marketplace filesystem MCP adapter with enhanced session management.
+Based on the marketplace filesystem MCP adapter with production-ready session management.
 
 ## Testing
 
@@ -38,14 +39,39 @@ See `LOCAL_TESTING.md` for comprehensive test procedures covering:
 
 Environment variables (configured in `chart/values.yaml`):
 - `PORT`: Server port (default: 8080)
-- `SESSION_FILE`: Path to session storage file (default: /data/sessions/sessions.json)
+- `BASE_DATA_DIR`: Base directory for all filesystem operations (default: /mcp-data)
+- `SESSION_FILE`: Path to session metadata storage (default: /data/sessions/sessions.json)
 - `MAX_SESSIONS`: Maximum concurrent sessions (default: 1000)
-- `CLEANUP_SESSION_FILES`: Delete session directories on eviction (default: false)
 
 Helm chart options:
-- `persistence.size`: Storage size for `/data` volume (default: 10Gi)
+- `persistence.size`: Storage size for persistent volume (default: 10Gi)
 - `persistence.storageClass`: Storage class for PVC
 - `resources`: CPU and memory limits/requests
+
+## Workspace Configuration
+
+Workspaces are configured via ARK query annotations using the `set_base_directory` tool:
+
+```yaml
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Query
+metadata:
+  name: my-query
+  annotations:
+    "ark.mckinsey.com/mcp-server-settings": |
+      {"default/mcp-filesystem": {
+        "toolCalls": [{
+          "name": "set_base_directory",
+          "arguments": {"path": "my-workspace"}
+        }]
+      }}
+spec:
+  input: "List all files"
+  targets:
+    - name: filesystem-agent
+```
+
+This creates and configures `/mcp-data/my-workspace/` as the working directory for all filesystem operations in that query.
 
 ## Using with ARK
 
@@ -84,8 +110,23 @@ For detailed usage examples and session management, see `docs/content/user-guide
 
 ## Architecture
 
-Wrapper + adapter pattern:
-- **Wrapper** (`src/index.ts`): Session management, persistence, LRU eviction
-- **Adapter** (`src/filesystem/`): MCP protocol, file operations, path validation
+**Clean separation of concerns:**
 
-Each session gets isolated `FilesystemContext` with its own base directory and allowed directories.
+### Session Wrapper (`src/index.ts`)
+- MCP protocol session lifecycle (ID generation, tracking)
+- Session metadata persistence (sessions.json)
+- LRU eviction and cleanup
+- Transport management
+- **Generic and reusable** - can be copied to other MCP servers
+
+### Filesystem Adapter (`src/adapters/filesystem/`)
+- MCP tool definitions and implementations
+- File operations (read, write, edit, search, list, tree)
+- Path validation and security
+- Workspace management via `set_base_directory`
+
+### Key Design Principles
+- **MCP sessions ≠ application state**: Sessions track connections, not configuration
+- **Annotations as source of truth**: Workspace configuration comes from ARK annotations
+- **Single base directory**: All sessions share `/mcp-data/` with user-specified subdirectories
+- **No per-session directories**: Workspaces are explicitly named and persistent

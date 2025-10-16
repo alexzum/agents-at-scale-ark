@@ -299,14 +299,14 @@ math-agent: The calculation 7 * 8 / 5 is equal to 11.2.
 
 ## Filesystem MCP Server with Session Management
 
-The Filesystem MCP Server provides persistent file operations with session-based isolation. Each session gets its own isolated workspace while supporting session persistence across pod restarts and automatic cleanup via LRU eviction.
+The Filesystem MCP Server provides persistent file operations with annotation-driven workspace configuration. All sessions share a common base directory (`/data/`) with explicitly named workspaces configured via ARK query annotations.
 
 ### Features
 
-- **Session Isolation**: Each session operates in an isolated directory (`/data/{sessionId}/`)
-- **Persistent Sessions**: Sessions survive pod restarts via file-based storage
+- **Annotation-Driven Workspaces**: Workspaces configured via `ark.mckinsey.com/mcp-server-settings` annotations
+- **Shared Base Directory**: All operations under `/data/` with user-specified workspace subdirectories
+- **Persistent Sessions**: Session metadata survives pod restarts via file-based storage
 - **LRU Eviction**: Automatically evicts least recently used sessions when limit reached
-- **Reconnection**: Clients can reconnect with the same session ID and access their files
 - **Comprehensive Tools**: Read, write, search, list, tree, edit files and directories
 - **Security**: Path validation prevents traversal attacks and unauthorized access
 
@@ -343,13 +343,13 @@ Configure via Helm values or environment variables:
 # values.yaml
 env:
   PORT: "8080"
+  BASE_DATA_DIR: "/data"              # Shared base directory for all workspaces
   SESSION_FILE: "/data/sessions/sessions.json"
   MAX_SESSIONS: "1000"                    # Maximum concurrent sessions
-  CLEANUP_SESSION_FILES: "false"          # Delete files on session eviction
 
 persistence:
   enabled: true
-  size: 10Gi                               # Storage for session files
+  size: 10Gi                               # Storage for workspace files
   storageClass: ""                         # Use default storage class
 ```
 
@@ -432,20 +432,22 @@ ark query agent/filesystem "Create notes.txt with content 'Meeting at 3pm', then
 
 > **Important**: Each `ark query` command creates a new isolated session. To perform multiple operations on the same files, include all operations in a single query as shown above.
 
-### Session Management
+### Workspace Configuration via Annotations
 
-**Automatic Session Creation**: Each `ark query` command creates a new isolated session with its own workspace directory (`/data/{session-id}/`). The ARK controller manages session IDs automatically.
+**Automatic Session Creation**: Each `ark query` command creates a new MCP session. The ARK controller manages session IDs automatically.
 
-**Session Isolation**: Files created in one session are completely isolated from other sessions:
+**Workspace Isolation**: Workspaces are configured via annotations, not sessions. Without annotation configuration, queries use the shared `/data/` base:
 
 ```bash
-# First query - creates Session A with data.txt
-ark query agent/filesystem "Create file data.txt with content 'Session A data'"
+# Query without workspace annotation - files go to /data/
+ark query agent/filesystem "Create file data.txt with content 'test data'"
 
-# Second query - creates NEW Session B, cannot see Session A's files
+# Different query, no workspace configured - same /data/ base
 ark query agent/filesystem "Read data.txt"
-# Result: File not found (because this is a different session)
+# Result: File found (same base directory, no isolation)
 ```
+
+To achieve isolation, configure workspaces via annotations (see example below).
 
 **Session Persistence**: While sessions persist across pod restarts, each `ark query` invocation currently creates a fresh session. Session persistence is primarily useful for:
 - Direct MCP client connections (via port-forward)
@@ -506,17 +508,17 @@ The filesystem MCP server provides these tools:
 | `mcp-filesystem-move-file` | Move or rename files |
 | `mcp-filesystem-search-files` | Find files by name pattern |
 | `mcp-filesystem-get-file-info` | Get file metadata |
-| `mcp-filesystem-set-base-directory` | Add allowed directory |
+| `mcp-filesystem-set-base-directory` | Set base directory for file operations |
 
-### Advanced: Shared Directory Access
+### Advanced: Workspace Configuration with Annotations
 
-By default, each session can only access its own isolated directory. To grant access to shared directories:
+Use annotations to configure explicit workspaces under `/data/` for isolation and organization:
 
 ```yaml
 apiVersion: ark.mckinsey.com/v1alpha1
 kind: Query
 metadata:
-  name: shared-files-query
+  name: project-a-query
   annotations:
     "ark.mckinsey.com/mcp-server-settings": |
       {
@@ -524,19 +526,33 @@ metadata:
           "toolCalls": [
             {
               "name": "set_base_directory",
-              "arguments": {"path": "/shared/team-docs"}
+              "arguments": {"path": "project-a"}
             }
           ]
         }
       }
 spec:
-  input: List files in the shared team documents
+  input: Create a file called data.txt with content 'Project A data'
   targets:
   - type: agent
     name: filesystem
 ```
 
-This grants the session access to both its isolated directory and `/shared/team-docs`.
+This creates and configures `/data/project-a/` as the working directory. Different queries can use different workspace names for isolation:
+
+```yaml
+# Query for Project B - isolated from Project A
+annotations:
+  "ark.mckinsey.com/mcp-server-settings": |
+    {"default/mcp-filesystem": {
+      "toolCalls": [{
+        "name": "set_base_directory",
+        "arguments": {"path": "project-b"}
+      }]
+    }}
+```
+
+Files in `/data/project-a/` and `/data/project-b/` are completely isolated.
 
 ### Monitoring and Troubleshooting
 
@@ -552,10 +568,10 @@ kubectl exec -it $(kubectl get pod -l app.kubernetes.io/name=mcp-filesystem -o n
 ```
 
 **Session logs show:**
-- Session creation: `[Session] Created new session <uuid> with path: <uuid>`
-- Reconnection: `[Session] Reconnected session <uuid>`
-- Eviction: `[Session] Evicted oldest session: <uuid>`
-- Deletion: `[Session] Deleted session: <uuid>`
+- Session creation: `[Session] Creating new session <uuid>`
+- Workspace creation: `[Directory] Created/verified workspace directory: /data/<workspace>`
+- Eviction: `[Session] Evicting oldest session: <uuid>`
+- Deletion: `[Session] Deleting session: <uuid>`
 
 **Check storage usage:**
 
@@ -599,31 +615,34 @@ See `mcp/filesystem-mcp/LOCAL_TESTING.md` for comprehensive test scenarios inclu
 
 ### Architecture
 
-The filesystem MCP server uses a wrapper + adapter architecture:
+The filesystem MCP server uses a wrapper + adapter architecture with clean separation:
 
 ```
 ┌─────────────────────────────────────────┐
 │ Wrapper (src/index.ts)                  │
-│ - Session management                    │
+│ - Session management (generic)          │
 │ - File-based persistence                │
 │ - LRU eviction policy                   │
 │ - Transport handling                    │
+│ - NO filesystem knowledge               │
 └─────────────────────────────────────────┘
               │
               ▼
 ┌─────────────────────────────────────────┐
-│ Adapter (src/filesystem/)               │
+│ Adapter (src/adapters/filesystem/)      │
 │ - MCP protocol implementation           │
 │ - File operations                       │
 │ - Path validation & security            │
 │ - Tool definitions                      │
+│ - Workspace management                  │
 └─────────────────────────────────────────┘
 ```
 
-Each session gets an isolated `FilesystemContext` instance with its own:
-- Base directory (`/data/{sessionId}/`)
-- Allowed directories list (for security)
-- Path validation logic
+**Key Design:**
+- **Shared Base**: All sessions share `/data/` via `FilesystemContext`
+- **Annotation-Driven**: Workspaces configured via `set_base_directory` tool calls
+- **Generic Wrapper**: Can be reused for other MCP servers (no filesystem coupling)
+- **Workspace Isolation**: Achieved through explicit naming, not session IDs
 
-This ensures complete isolation between sessions while allowing reconnection with the same configuration.
+This ensures flexibility and reusability while providing workspace-based isolation.
 ```

@@ -29,12 +29,12 @@ spec:
           env:
             - name: PORT
               value: {{ .Values.env.PORT | quote }}
+            - name: BASE_DATA_DIR
+              value: {{ .Values.env.BASE_DATA_DIR | quote }}
             - name: SESSION_FILE
               value: {{ .Values.env.SESSION_FILE | quote }}
             - name: MAX_SESSIONS
               value: {{ .Values.env.MAX_SESSIONS | quote }}
-            - name: CLEANUP_SESSION_FILES
-              value: {{ .Values.env.CLEANUP_SESSION_FILES | quote }}
           livenessProbe:
             httpGet:
               path: /health
