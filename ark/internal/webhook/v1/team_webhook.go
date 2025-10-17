@@ -169,7 +169,7 @@ func (v *TeamCustomValidator) validateGraphStrategy(team *arkv1alpha1.Team) erro
 		memberNames[member.Name] = true
 	}
 
-	transitionMap := make(map[string]bool)
+	// Validate that all edges reference valid team members
 	for i, edge := range team.Spec.Graph.Edges {
 		if !memberNames[edge.From] {
 			return fmt.Errorf("graph edge %d: 'from' member '%s' not found in team members", i, edge.From)
@@ -177,10 +177,7 @@ func (v *TeamCustomValidator) validateGraphStrategy(team *arkv1alpha1.Team) erro
 		if !memberNames[edge.To] {
 			return fmt.Errorf("graph edge %d: 'to' member '%s' not found in team members", i, edge.To)
 		}
-		if _, exists := transitionMap[edge.From]; exists {
-			return fmt.Errorf("member '%s' has more than one outgoing edge", edge.From)
-		}
-		transitionMap[edge.From] = true
+		// Allow multiple outgoing edges from the same member
 	}
 
 	return nil

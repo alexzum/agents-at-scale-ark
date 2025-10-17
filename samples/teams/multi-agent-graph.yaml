@@ -1,0 +1,80 @@
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Agent
+metadata:
+  name: coordinator
+spec:
+  prompt: "You are a project coordinator. You gather information from multiple specialists and synthesize their responses into a comprehensive plan."
+---
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Agent
+metadata:
+  name: researcher
+spec:
+  prompt: "You are a research specialist. Provide detailed market research and competitive analysis."
+---
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Agent
+metadata:
+  name: technical-expert
+spec:
+  prompt: "You are a technical expert. Provide technical feasibility analysis and implementation recommendations."
+---
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Agent
+metadata:
+  name: financial-analyst
+spec:
+  prompt: "You are a financial analyst. Provide cost analysis, budget estimates, and ROI projections."
+---
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Agent
+metadata:
+  name: synthesizer
+spec:
+  prompt: "You are a synthesis expert. Combine insights from multiple specialists into a cohesive final report."
+---
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Team
+metadata:
+  name: multi-agent-graph-team
+spec:
+  strategy: graph
+  description: "A team that demonstrates multi-agent communication with multiple outgoing edges"
+  maxTurns: 10
+  members:
+  - name: coordinator
+    type: agent
+  - name: researcher
+    type: agent
+  - name: technical-expert
+    type: agent
+  - name: financial-analyst
+    type: agent
+  - name: synthesizer
+    type: agent
+  graph:
+    edges:
+    # Coordinator talks to multiple specialists
+    - from: coordinator
+      to: researcher
+    - from: coordinator
+      to: technical-expert
+    - from: coordinator
+      to: financial-analyst
+    # All specialists report back to synthesizer
+    - from: researcher
+      to: synthesizer
+    - from: technical-expert
+      to: synthesizer
+    - from: financial-analyst
+      to: synthesizer
+---
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Query
+metadata:
+  name: query-multi-agent-graph
+spec:
+  targets:
+    - type: team
+      name: multi-agent-graph-team
+  input: "Analyze the feasibility of launching a new AI-powered customer service platform. Consider market research, technical requirements, and financial projections."
