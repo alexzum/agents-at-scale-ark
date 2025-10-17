@@ -1,0 +1,9 @@
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Query
+metadata:
+  name: echo-test-query
+spec:
+  input: Hello from A2A echo agent!
+  targets:
+    - type: a2a
+      name: mock-llm-echo
