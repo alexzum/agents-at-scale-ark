@@ -201,8 +201,8 @@ func extractTextFromMessageResult(result *protocol.MessageResult) (string, error
 
 // extractTextFromTask extracts text from a completed or failed Task
 func extractTextFromTask(task *protocol.Task) (string, error) {
-	if task.Status == nil {
-		return "", fmt.Errorf("task has no status")
+	if task.Status.State == "" {
+		return "", fmt.Errorf("task has no status state")
 	}
 
 	switch task.Status.State {
