@@ -1,0 +1,32 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+BRANCH_NAME=$(git symbolic-ref --short HEAD 2>/dev/null)
+
+if [ -z "$BRANCH_NAME" ]; then
+  echo "Warning: Unable to determine branch name"
+  exit 0
+fi
+
+BRANCH_PATTERN="^(PROJ-[0-9]+|PROJ-000)-.*$"
+
+if ! echo "$BRANCH_NAME" | grep -qE "$BRANCH_PATTERN"; then
+  echo ""
+  echo "❌ Branch name validation failed!"
+  echo ""
+  echo "Branch name: $BRANCH_NAME"
+  echo "Required pattern: PROJ-XXX-description or PROJ-000-description"
+  echo ""
+  echo "Examples:"
+  echo "  ✅ PROJ-123-add-user-auth"
+  echo "  ✅ PROJ-000-update-readme (for non-Jira work)"
+  echo "  ❌ feature/add-auth"
+  echo ""
+  echo "To bypass this check (not recommended): git push --no-verify"
+  echo ""
+  exit 1
+fi
+
+echo "✅ Branch name validation passed: $BRANCH_NAME"
+exit 0
+

@@ -1,0 +1,15 @@
+aws_region  = "us-east-1"
+environment = "dev"
+
+cluster_name       = "ark-pr-review"
+kubernetes_version = "1.28"
+
+node_instance_types      = ["t3.medium"]
+node_group_min_size      = 2
+node_group_max_size      = 5
+node_group_desired_size  = 2
+
+review_log_retention_days = 90
+
+# jira_cidr_blocks = ["10.x.x.x/16"]
+

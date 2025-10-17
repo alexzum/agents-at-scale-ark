@@ -1,0 +1,52 @@
+{{- if .Values.arkResources.deploy -}}
+---
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Agent
+metadata:
+  name: code-quality-reviewer
+  namespace: {{ .Values.config.kubernetesNamespace }}
+  labels:
+    app: ark-pr-reviewer
+    agent-type: code-quality
+    {{- include "ark-pr-reviewer.labels" . | nindent 4 }}
+spec:
+  modelRef:
+    name: default
+    namespace: default
+  prompt: |
+{{ .Files.Get "k8s/agent-code-quality-prompt.txt" | indent 4 }}
+---
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Agent
+metadata:
+  name: functionality-analyzer
+  namespace: {{ .Values.config.kubernetesNamespace }}
+  labels:
+    app: ark-pr-reviewer
+    agent-type: functionality
+    {{- include "ark-pr-reviewer.labels" . | nindent 4 }}
+spec:
+  modelRef:
+    name: default
+    namespace: default
+  prompt: |
+{{ .Files.Get "k8s/agent-functionality-prompt.txt" | indent 4 }}
+---
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Team
+metadata:
+  name: {{ .Values.config.teamName }}
+  namespace: {{ .Values.config.kubernetesNamespace }}
+  labels:
+    app: ark-pr-reviewer
+    {{- include "ark-pr-reviewer.labels" . | nindent 4 }}
+spec:
+  strategy: round-robin
+  maxTurns: 1
+  members:
+    - type: agent
+      name: code-quality-reviewer
+    - type: agent
+      name: functionality-analyzer
+{{- end }}
+

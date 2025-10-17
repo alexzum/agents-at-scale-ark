@@ -253,6 +253,26 @@ PostgreSQL-based memory service configuration.
 - **Backend**: PostgreSQL with session isolation
 - **Use case**: Persistent conversation storage
 
+### 🔍 PR Review Team
+
+#### `pr-review-team/` - AI-Powered Pull Request Review
+Automated PR review system using ARK agents, GitHub API, and Jira integration.
+- **Agents**: 
+  - `code-quality-reviewer` - Analyzes security, patterns, complexity
+  - `functionality-analyzer` - Validates against Jira requirements
+- **Team**: `pr-review-team` - Round-robin execution
+- **Service**: FastAPI service orchestrating reviews
+- **Features**: 
+  - GitHub API integration for PR data
+  - Jira REST API for ticket validation
+  - Markdown-formatted results with severity levels
+  - GitHub Actions workflow integration
+  - Terraform infrastructure for AWS deployment
+- **Prerequisites**: GitHub token, Jira API credentials (optional), default model
+- **Use case**: Automated code review and requirement validation
+- **Deploy**: See `samples/pr-review-team/README.md` for complete setup
+- **Documentation**: [PR Review Team Guide](/user-guide/samples/pr-review-team)
+
 ### 🎯 Query Patterns
 
 #### `queries/basic-query.yaml` - Simple Query

@@ -1,0 +1,15 @@
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Team
+metadata:
+  name: pr-review-team
+  namespace: default
+  labels:
+    app: ark-pr-reviewer
+spec:
+  strategy: sequential
+  members:
+    - type: agent
+      name: code-quality-reviewer
+    - type: agent
+      name: functionality-analyzer
+

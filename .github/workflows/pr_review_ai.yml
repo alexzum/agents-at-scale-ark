@@ -1,0 +1,134 @@
+name: AI PR Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR number to review'
+        required: true
+        type: number
+
+concurrency:
+  group: ai-review-${{ github.event.pull_request.number || inputs.pr_number }}
+  cancel-in-progress: true
+
+jobs:
+  trigger-review:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Extract PR metadata
+        id: pr-metadata
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            PR_NUMBER=${{ inputs.pr_number }}
+          else
+            PR_NUMBER=${{ github.event.pull_request.number }}
+          fi
+          
+          REPO="${{ github.repository }}"
+          BRANCH_NAME="${{ github.head_ref || github.ref_name }}"
+          COMMIT_SHA="${{ github.event.pull_request.head.sha || github.sha }}"
+          
+          echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+          echo "repository=$REPO" >> $GITHUB_OUTPUT
+          echo "branch_name=$BRANCH_NAME" >> $GITHUB_OUTPUT
+          echo "commit_sha=$COMMIT_SHA" >> $GITHUB_OUTPUT
+          
+          echo "=== PR Review Metadata ==="
+          echo "PR: $PR_NUMBER"
+          echo "Repository: $REPO"
+          echo "Branch: $BRANCH_NAME"
+          echo "Commit: $COMMIT_SHA"
+      
+      - name: Trigger ARK PR Review
+        id: trigger-review
+        env:
+          ARK_ENDPOINT: ${{ secrets.ARK_PR_REVIEW_ENDPOINT }}
+          ARK_TOKEN: ${{ secrets.ARK_PR_REVIEW_TOKEN }}
+        run: |
+          REVIEW_RESPONSE=$(curl -s -X POST "$ARK_ENDPOINT/review/pr" \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer $ARK_TOKEN" \
+            -d '{
+              "repository": "${{ steps.pr-metadata.outputs.repository }}",
+              "pr_number": ${{ steps.pr-metadata.outputs.pr_number }},
+              "branch_name": "${{ steps.pr-metadata.outputs.branch_name }}",
+              "commit_sha": "${{ steps.pr-metadata.outputs.commit_sha }}"
+            }')
+          
+          echo "Review Response: $REVIEW_RESPONSE"
+          
+          REVIEW_ID=$(echo "$REVIEW_RESPONSE" | jq -r '.review_id')
+          STATUS=$(echo "$REVIEW_RESPONSE" | jq -r '.status')
+          
+          echo "review_id=$REVIEW_ID" >> $GITHUB_OUTPUT
+          echo "status=$STATUS" >> $GITHUB_OUTPUT
+          
+          echo "=== Review Initiated ==="
+          echo "Review ID: $REVIEW_ID"
+          echo "Status: $STATUS"
+      
+      - name: Comment on PR
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const reviewId = '${{ steps.trigger-review.outputs.review_id }}';
+            const status = '${{ steps.trigger-review.outputs.status }}';
+            
+            let body = '';
+            
+            if (reviewId && status) {
+              body = `## 🤖 AI PR Review
+
+Automated review has been initiated!
+
+**Review ID:** \`${reviewId}\`
+**Status:** ${status}
+
+The AI agents are analyzing this PR. Results will be logged to S3 for manual review.
+
+### What's being reviewed:
+- ✅ Code quality and patterns
+- ✅ Functionality vs Jira ticket requirements
+- ✅ Security vulnerabilities
+- ✅ Performance considerations
+
+Review logs will be available in S3: \`s3://ark-pr-review-pr-reviews/reviews/${context.repo.owner}/${context.repo.repo}/${context.issue.number}/\`
+
+_This is an automated message from the ARK PR Review system._`;
+            } else {
+              body = `## ⚠️ AI PR Review
+
+Failed to initiate automated review. Please check the workflow logs for details.
+
+_This is an automated message from the ARK PR Review system._`;
+            }
+            
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: body
+            });
+      
+      - name: Summary
+        if: always()
+        run: |
+          echo "### AI PR Review Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **PR Number:** ${{ steps.pr-metadata.outputs.pr_number }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch:** ${{ steps.pr-metadata.outputs.branch_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Review ID:** ${{ steps.trigger-review.outputs.review_id }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status:** ${{ steps.trigger-review.outputs.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Review results will be logged to S3 for manual review." >> $GITHUB_STEP_SUMMARY
+

@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "ark-pr-reviewer.fullname" . }}-config
+  namespace: {{ .Values.config.kubernetesNamespace }}
+  labels:
+    {{- include "ark-pr-reviewer.labels" . | nindent 4 }}
+data:
+  service-name: {{ .Values.config.serviceName | quote }}
+  log-level: {{ .Values.config.logLevel | quote }}
+  github-api-url: {{ .Values.config.githubApiUrl | quote }}
+  jira-timeout: {{ .Values.config.jiraTimeout | quote }}
+  jira-fallback-enabled: {{ .Values.config.jiraFallbackEnabled | quote }}
+  aws-region: {{ .Values.config.awsRegion | quote }}
+  s3-bucket: {{ .Values.config.s3Bucket | quote }}
+  s3-prefix: {{ .Values.config.s3Prefix | quote }}
+  kubernetes-namespace: {{ .Values.config.kubernetesNamespace | quote }}
+  team-name: {{ .Values.config.teamName | quote }}
+  review-timeout: {{ .Values.config.reviewTimeout | quote }}
+  api-port: {{ .Values.config.apiPort | quote }}
+  metrics-port: {{ .Values.config.metricsPort | quote }}
+

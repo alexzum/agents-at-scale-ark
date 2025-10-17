@@ -1,0 +1,47 @@
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Tool
+metadata:
+  name: pr-review
+  namespace: default
+  labels:
+    app: ark-pr-reviewer
+    category: code-review
+spec:
+  type: http
+  description: "Triggers an AI-powered pull request review using ARK agents. Analyzes code quality, security, and validates against Jira ticket requirements."
+  inputSchema:
+    type: object
+    properties:
+      repository:
+        type: string
+        description: "GitHub repository in format 'owner/repo'"
+        pattern: "^[^/]+/[^/]+$"
+      pr_number:
+        type: integer
+        description: "Pull request number"
+        minimum: 1
+      branch_name:
+        type: string
+        description: "Branch name (optional, will be fetched if not provided)"
+      commit_sha:
+        type: string
+        description: "Commit SHA (optional, will use latest if not provided)"
+    required: ["repository", "pr_number"]
+  http:
+    url: "http://ark-pr-reviewer.default.svc.cluster.local:8080/review/pr"
+    method: POST
+    headers:
+      - name: "Content-Type"
+        value:
+          value: "application/json"
+    body: |
+      {
+        "repository": "{{.input.repository}}",
+        "pr_number": {{.input.pr_number}}
+        {{- if .input.branch_name}},
+        "branch_name": "{{.input.branch_name}}"{{end}}
+        {{- if .input.commit_sha}},
+        "commit_sha": "{{.input.commit_sha}}"{{end}}
+      }
+    timeout: 300s
+

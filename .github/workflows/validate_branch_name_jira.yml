@@ -1,0 +1,81 @@
+name: Validate Branch Name (Jira)
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+jobs:
+  validate-branch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate branch name contains Jira ticket
+        id: validate
+        run: |
+          BRANCH_NAME="${{ github.head_ref }}"
+          PATTERN="^(PROJ-[0-9]+|PROJ-000)-.*$"
+          
+          echo "Branch name: $BRANCH_NAME"
+          
+          if echo "$BRANCH_NAME" | grep -qE "$PATTERN"; then
+            echo "✅ Branch name validation passed"
+            echo "valid=true" >> $GITHUB_OUTPUT
+          else
+            echo "❌ Branch name validation failed"
+            echo "valid=false" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Add label if invalid
+        if: steps.validate.outputs.valid == 'false'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              labels: ['invalid-branch-name']
+            });
+      
+      - name: Comment with instructions if invalid
+        if: steps.validate.outputs.valid == 'false'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const branch = '${{ github.head_ref }}';
+            const comment = `## ⚠️ Branch Name Validation Failed
+            
+            Your branch name **${branch}** does not follow the required naming convention.
+            
+            ### Required Pattern
+            \`PROJ-XXX-description\` or \`PROJ-000-description\`
+            
+            ### Examples
+            - ✅ \`PROJ-123-add-user-authentication\`
+            - ✅ \`PROJ-456-fix-memory-leak\`
+            - ✅ \`PROJ-000-update-documentation\` (for non-Jira work)
+            - ❌ \`feature/add-auth\`
+            - ❌ \`bugfix-memory-leak\`
+            
+            ### For non-Jira work
+            Use \`PROJ-000\` prefix for:
+            - Infrastructure changes
+            - Documentation updates
+            - Spike/research work
+            - Dependency updates
+            
+            Please rename your branch and create a new PR, or update your branch name if possible.
+            
+            See [CONTRIBUTING.md](${context.payload.repository.html_url}/blob/main/CONTRIBUTING.md) for more details.`;
+            
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: comment
+            });
+      
+      - name: Report validation result
+        if: steps.validate.outputs.valid == 'false'
+        run: |
+          echo "::notice::Branch name does not follow required pattern. This is non-blocking but should be fixed."
+

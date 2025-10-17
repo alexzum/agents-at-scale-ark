@@ -16,6 +16,50 @@ There are quite a few ways to contribute, such as:
 
 The ARK team pledges to foster and maintain a friendly community. We enforce a [Code of Conduct](./CODE_OF_CONDUCT.md) to ensure every contributor is welcomed and treated with respect.
 
+## Branch Naming Convention
+
+**MANDATORY**: All branches must follow the naming pattern: `PROJ-XXX-description` or `PROJ-000-description`
+
+### Pattern
+
+```
+PROJ-<ticket-number>-<short-description>
+```
+
+### Examples
+
+✅ **Valid branch names:**
+- `PROJ-123-add-user-authentication`
+- `PROJ-456-fix-memory-leak-executor`
+- `PROJ-789-refactor-query-processing`
+- `PROJ-000-update-documentation` (for non-Jira work)
+- `PROJ-000-bump-dependencies` (for infrastructure changes)
+
+❌ **Invalid branch names:**
+- `feature/add-auth`
+- `bugfix-memory-leak`
+- `docs-update`
+- `main-branch-changes`
+
+### PROJ-000 Convention
+
+Use `PROJ-000` for work without a specific Jira ticket:
+- Documentation updates
+- Dependency updates
+- Infrastructure configuration
+- Spike/research work
+- General maintenance
+
+### Enforcement
+
+1. **Local enforcement**: Husky pre-push hook validates branch names
+2. **CI enforcement**: GitHub Actions adds warning label to invalid PRs
+
+To bypass local validation (not recommended):
+```bash
+git push --no-verify
+```
+
 ## Ways of Working
 
 **Principle 1: Team Planning and Prioritization**

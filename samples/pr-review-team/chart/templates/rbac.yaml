@@ -1,0 +1,31 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ include "ark-pr-reviewer.fullname" . }}
+  namespace: {{ .Values.config.kubernetesNamespace }}
+  labels:
+    {{- include "ark-pr-reviewer.labels" . | nindent 4 }}
+rules:
+  - apiGroups: ["ark.mckinsey.com"]
+    resources: ["queries"]
+    verbs: ["create", "get", "list", "watch"]
+  - apiGroups: ["ark.mckinsey.com"]
+    resources: ["queries/status"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ include "ark-pr-reviewer.fullname" . }}
+  namespace: {{ .Values.config.kubernetesNamespace }}
+  labels:
+    {{- include "ark-pr-reviewer.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ include "ark-pr-reviewer.fullname" . }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "ark-pr-reviewer.serviceAccountName" . }}
+    namespace: {{ .Values.config.kubernetesNamespace }}
+

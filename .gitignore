@@ -151,3 +151,12 @@ node_modules/
 .devspace/
 services/*/ark_sdk-*.whl
 services/ark-dashboard/ark-dashboard/lib/api/generated/openapi.json
+
+# PR review results from local testing
+pr-*-review.json
+pr-*-review.md
+
+# PR review sample artifacts
+samples/pr-review-team/service/.venv/
+samples/pr-review-team/service/.env
+samples/pr-review-team/service/src/**/__pycache__/

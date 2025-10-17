@@ -1,0 +1,119 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "ark-pr-reviewer.fullname" . }}
+  namespace: {{ .Values.config.kubernetesNamespace }}
+  labels:
+    {{- include "ark-pr-reviewer.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "ark-pr-reviewer.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
+        {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels:
+        {{- include "ark-pr-reviewer.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "ark-pr-reviewer.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.config.apiPort }}
+              protocol: TCP
+            - name: metrics
+              containerPort: {{ .Values.config.metricsPort }}
+              protocol: TCP
+          livenessProbe:
+            {{- toYaml .Values.livenessProbe | nindent 12 }}
+          readinessProbe:
+            {{- toYaml .Values.readinessProbe | nindent 12 }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          env:
+            - name: SERVICE_NAME
+              value: {{ .Values.config.serviceName | quote }}
+            - name: LOG_LEVEL
+              value: {{ .Values.config.logLevel | quote }}
+            - name: GITHUB_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "ark-pr-reviewer.fullname" . }}-secrets
+                  key: github-token
+            - name: GITHUB_API_URL
+              value: {{ .Values.config.githubApiUrl | quote }}
+            - name: JIRA_BASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "ark-pr-reviewer.fullname" . }}-secrets
+                  key: jira-base-url
+            - name: JIRA_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "ark-pr-reviewer.fullname" . }}-secrets
+                  key: jira-username
+                  optional: true
+            - name: JIRA_API_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "ark-pr-reviewer.fullname" . }}-secrets
+                  key: jira-api-token
+                  optional: true
+            - name: JIRA_TIMEOUT
+              value: {{ .Values.config.jiraTimeout | quote }}
+            - name: JIRA_FALLBACK_ENABLED
+              value: {{ .Values.config.jiraFallbackEnabled | quote }}
+            - name: AWS_REGION
+              value: {{ .Values.config.awsRegion | quote }}
+            - name: S3_BUCKET
+              value: {{ .Values.config.s3Bucket | quote }}
+            - name: S3_PREFIX
+              value: {{ .Values.config.s3Prefix | quote }}
+            - name: KUBERNETES_NAMESPACE
+              value: {{ .Values.config.kubernetesNamespace | quote }}
+            - name: TEAM_NAME
+              value: {{ .Values.config.teamName | quote }}
+            - name: REVIEW_TIMEOUT
+              value: {{ .Values.config.reviewTimeout | quote }}
+            - name: API_PORT
+              value: {{ .Values.config.apiPort | quote }}
+            - name: METRICS_PORT
+              value: {{ .Values.config.metricsPort | quote }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+

@@ -1,0 +1,19 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: pr-review-team
+
+namespace: default
+
+resources:
+  - agents/code-quality-reviewer.yaml
+  - agents/functionality-analyzer.yaml
+  - teams/pr-review-team.yaml
+  - tool-pr-review.yaml
+
+labels:
+  - pairs:
+      app: ark-pr-reviewer
+      use-case: pr-review-automation
+

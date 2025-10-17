@@ -1,0 +1,744 @@
+# PR Review System Architecture
+
+This document provides detailed architectural information about the AI-powered PR review system built with ARK.
+
+## System Overview
+
+The PR review system automatically analyzes pull requests for code quality and requirement alignment using specialized ARK agents orchestrated by a team strategy.
+
+## Architecture Diagram
+
+```
+┌──────────────┐
+│  Developer   │
+│  Git Push    │
+└──────┬───────┘
+       │
+       ▼
+┌──────────────────────────────────────────┐
+│          GitHub Repository               │
+│  ┌────────────────────────────────────┐  │
+│  │   Pull Request Created/Updated     │  │
+│  └────────────┬───────────────────────┘  │
+└───────────────┼──────────────────────────┘
+                │
+                ▼
+┌───────────────────────────────────────────┐
+│       GitHub Actions Workflow             │
+│  .github/workflows/pr_review_ai.yml       │
+│                                           │
+│  1. Extract PR metadata                   │
+│  2. Call ARK PR Reviewer Service API      │
+│  3. Post status comment                   │
+└───────────────┬───────────────────────────┘
+                │
+                ▼
+┌───────────────────────────────────────────┐
+│     ARK PR Reviewer Service (FastAPI)     │
+│     samples/pr-review-team/service/       │
+│                                           │
+│  ┌─────────────────────────────────────┐ │
+│  │  1. Fetch PR diff from GitHub API   │ │
+│  │  2. Extract Jira ticket from branch │ │
+│  │  3. Fetch Jira ticket details       │ │
+│  │  4. Create ARK Query resource       │ │
+│  │  5. Wait for completion             │ │
+│  │  6. Return results                  │ │
+│  └─────────────────────────────────────┘ │
+└───────────────┬───────────────────────────┘
+                │
+        ┌───────┴────────┐
+        │                │
+        ▼                ▼
+┌─────────────┐  ┌──────────────┐
+│ GitHub API  │  │  Jira API    │
+│ (PR Data)   │  │  (Tickets)   │
+└─────────────┘  └──────────────┘
+                │
+                ▼
+┌───────────────────────────────────────────┐
+│        ARK Query Resource (K8s)           │
+│                                           │
+│  apiVersion: ark.mckinsey.com/v1alpha1    │
+│  kind: Query                              │
+│  spec:                                    │
+│    input: "PR diff + Jira context"        │
+│    targets:                               │
+│      - type: team                         │
+│        name: pr-review-team               │
+└───────────────┬───────────────────────────┘
+                │
+                ▼
+┌───────────────────────────────────────────┐
+│    ARK Team: pr-review-team               │
+│    Strategy: round-robin, maxTurns: 2     │
+│                                           │
+│  ┌────────────────┐  ┌─────────────────┐ │
+│  │ Turn 1:        │  │ Turn 2:         │ │
+│  │ Code Quality   │  │ Functionality   │ │
+│  │ Reviewer       │  │ Analyzer        │ │
+│  └────────────────┘  └─────────────────┘ │
+└───────────────┬───────────────────────────┘
+                │
+        ┌───────┴────────┐
+        │                │
+        ▼                ▼
+┌─────────────────────────────────────────┐
+│  Code Quality Reviewer Agent            │
+│                                         │
+│  Analyzes:                              │
+│  - Security vulnerabilities             │
+│  - Code patterns & complexity           │
+│  - Error handling                       │
+│  - Test coverage                        │
+│  - Project standards (CLAUDE.md)        │
+│                                         │
+│  Output: Markdown with severity levels  │
+│  🔴 Critical 🟠 High 🟡 Medium          │
+│  🔵 Low ℹ️ Info                         │
+└─────────────────────────────────────────┘
+
+┌─────────────────────────────────────────┐
+│  Functionality Analyzer Agent           │
+│                                         │
+│  Validates:                             │
+│  - Jira ticket requirement coverage     │
+│  - Out-of-scope changes                 │
+│  - Breaking changes                     │
+│  - Completeness                         │
+│                                         │
+│  Output: Markdown with alignment        │
+│  ✅ Covered ❌ Missing ⚠️ Out of Scope  │
+└─────────────────┬───────────────────────┘
+                  │
+                  ▼
+          ┌───────────────┐
+          │  Query Result │
+          │  (Markdown)   │
+          └───────┬───────┘
+                  │
+                  ▼
+          ┌───────────────┐
+          │  S3 / Logs    │
+          │  (Optional)   │
+          └───────────────┘
+```
+
+## Component Details
+
+### 1. Branch Validation Layer
+
+Enforces Jira ticket naming convention at multiple points:
+
+**Local Validation (Husky)**:
+- Pre-push Git hook
+- Validates branch name before push
+- Pattern: `PROJECT-XXX-description` or `PROJECT-000-description`
+- Location: `.husky/pre-push`
+- Bypass: `git push --no-verify` (not recommended)
+
+**CI Validation (GitHub Actions)**:
+- Backup validation in CI pipeline
+- Adds warning label to non-compliant PRs
+- Does not block merge (advisory)
+- Location: `.github/workflows/validate_branch_name_jira.yml`
+
+### 2. GitHub Actions Integration
+
+**Workflow**: `.github/workflows/pr_review_ai.yml`
+
+**Triggers**:
+- `pull_request` (opened, synchronize, reopened)
+
+**Process**:
+1. Extract PR metadata (number, repository, branch, commit SHA)
+2. Call ARK PR Reviewer Service API endpoint
+3. Wait for review completion (with timeout)
+4. Post status comment to PR (optional)
+5. Upload results as workflow artifact
+
+**Configuration**:
+```yaml
+env:
+  ARK_SERVICE_URL: ${{ secrets.ARK_PR_REVIEW_ENDPOINT }}
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+```
+
+### 3. ARK PR Reviewer Service
+
+**Technology**: Python FastAPI service
+
+**Endpoints**:
+- `POST /review/pr` - Initiate PR review
+- `GET /review/{review_id}` - Get review status
+- `GET /health` - Health check
+- `GET /metrics` - Prometheus metrics (optional)
+
+**Flow**:
+
+1. **Receive Request**: PR metadata from GitHub Actions
+2. **Fetch PR Data**: Use GitHub API (PyGithub)
+   - PR diff
+   - File list
+   - Commit messages
+   - PR description
+3. **Extract Jira Key**: Parse branch name for ticket pattern
+   - Pattern: `[A-Z]+-\d+` (e.g., ARKQB-376)
+   - Special: `-000` suffix means no ticket
+4. **Fetch Jira Data** (optional): Use Jira REST API
+   - Ticket summary
+   - Description
+   - Acceptance criteria
+   - Status
+5. **Create Query**: Generate ARK Query resource
+   - Input: PR diff + Jira context
+   - Target: pr-review-team
+   - Namespace: ark-pr-review
+6. **Wait for Completion**: Poll Query status
+   - Timeout: 5 minutes
+   - Check interval: 5 seconds
+7. **Extract Results**: Parse agent responses
+   - Convert to Markdown format
+   - Add metadata (review ID, timestamps)
+8. **Return Results**: JSON response with Markdown content
+9. **Log to S3** (optional): Store review for audit
+
+**Dependencies**:
+- `fastapi` - Web framework
+- `PyGithub` - GitHub API client
+- `requests` - Jira API client
+- `kubernetes` - K8s API client for Query creation
+- `boto3` - S3 logging (optional)
+- `prometheus_client` - Metrics (optional)
+
+**Configuration** (environment variables):
+```bash
+GITHUB_TOKEN              # GitHub API token
+JIRA_BASE_URL            # Jira instance URL
+JIRA_USERNAME            # Jira username
+JIRA_API_TOKEN           # Jira API token
+KUBERNETES_NAMESPACE     # ARK namespace (ark-pr-review)
+TEAM_NAME                # ARK team name (pr-review-team)
+API_PORT                 # Service port (8080)
+LOG_LEVEL                # Logging level (INFO)
+S3_BUCKET                # S3 bucket for logs (optional)
+```
+
+### 4. ARK Query Resource
+
+**Resource Type**: `Query` (ark.mckinsey.com/v1alpha1)
+
+**Specification**:
+```yaml
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Query
+metadata:
+  name: pr-320-1760699595
+  namespace: ark-pr-review
+  labels:
+    app: ark-pr-reviewer
+    review-id: d62e49a9-6c9a-4d5b-9e08-5e1bb8d1270e
+    pr-number: "320"
+spec:
+  input: |
+    # Pull Request Review Request
+    
+    **Repository**: mckinsey/agents-at-scale-ark
+    **PR Number**: 320
+    **Branch**: chore/ARKQB-376-update-langchain-docs
+    **Commit**: 2aed04e583682220b86c05783304a4a77e4362f1
+    
+    ## PR Description
+    [Full PR description...]
+    
+    ## Files Changed
+    [List of modified files...]
+    
+    ## Diff
+    [Full diff...]
+    
+    ## Jira Ticket: ARKQB-376
+    **Summary**: A2A LongChain Sample and guides needs improvement
+    **Description**: [Full ticket description...]
+    **Status**: In Review
+  
+  targets:
+    - type: team
+      name: pr-review-team
+  
+  ttl: 2592000  # 30 days
+```
+
+**Lifecycle**:
+1. **Created**: Service creates Query via Kubernetes API
+2. **Scheduled**: ARK controller picks up Query
+3. **Executing**: Team and agents process the request
+4. **Done**: Results stored in Query status
+5. **TTL Cleanup**: Query deleted after 30 days
+
+### 5. ARK Team Resource
+
+**Resource Type**: `Team` (ark.mckinsey.com/v1alpha1)
+
+**Specification**:
+```yaml
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Team
+metadata:
+  name: pr-review-team
+  namespace: ark-pr-review
+spec:
+  strategy: round-robin
+  maxTurns: 2
+  members:
+    - type: agent
+      name: code-quality-reviewer
+    - type: agent
+      name: functionality-analyzer
+```
+
+**Strategy Details**:
+- **round-robin**: Execute members in sequence
+- **maxTurns: 2**: Run 2 complete rounds (both agents execute once)
+- **Execution order**: Code quality → Functionality → (end)
+
+**Alternative Strategies**:
+- `sequential`: Agents run in strict order
+- `selector`: Dynamic agent selection based on input
+- `graph`: Complex workflows with dependencies
+
+### 6. ARK Tool Resource
+
+**Resource Type**: `Tool` (ark.mckinsey.com/v1alpha1)
+
+**Specification**:
+```yaml
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Tool
+metadata:
+  name: pr-review
+  namespace: ark-pr-review
+spec:
+  type: http
+  description: "Triggers an AI-powered PR review..."
+  inputSchema:
+    type: object
+    properties:
+      repository:
+        type: string
+        description: "GitHub repository in format 'owner/repo'"
+      pr_number:
+        type: integer
+        description: "Pull request number"
+    required: ["repository", "pr_number"]
+  http:
+    url: "http://ark-pr-reviewer.ark-pr-review.svc.cluster.local:8080/review/pr"
+    method: POST
+    timeout: 300s
+```
+
+**Purpose**: Exposes the PR review service as an ARK Tool, allowing other agents to trigger PR reviews programmatically.
+
+**Usage by Other Agents**:
+```yaml
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Agent
+metadata:
+  name: release-manager
+spec:
+  prompt: "You manage releases and can trigger PR reviews."
+  tools:
+    - type: custom
+      name: pr-review
+      namespace: ark-pr-review
+```
+
+With this configuration, any agent can now call the PR review tool:
+- Query the agent: "Review PR #320 in mckinsey/agents-at-scale-ark"
+- Agent invokes the `pr-review` tool
+- Service processes the review
+- Results returned to the agent
+
+### 7. ARK Agent Resources
+
+#### Code Quality Reviewer
+
+**Model**: Uses default model from `default` namespace
+
+**Prompt Structure**:
+- Project standards from CLAUDE.md
+- Security vulnerability patterns
+- Code complexity guidelines
+- Error handling requirements
+- Test coverage expectations
+- Output format (Markdown with severity levels)
+
+**Output Format**:
+```markdown
+# Code Quality Review
+
+## Summary
+[2-3 sentence overview]
+
+## Findings
+
+### 🔴 Critical
+[Security vulnerabilities, data loss risks]
+
+### 🟠 High
+[Bugs affecting functionality, performance issues]
+
+### 🟡 Medium
+[Code quality issues, minor performance problems]
+
+### 🔵 Low
+[Style inconsistencies, refactoring opportunities]
+
+### ℹ️ Info
+[Suggestions, best practices]
+```
+
+#### Functionality Analyzer
+
+**Model**: Uses default model from `default` namespace
+
+**Prompt Structure**:
+- Jira ticket context (if available)
+- Requirement coverage validation
+- Out-of-scope change detection
+- Breaking change identification
+- Completeness assessment
+- Output format (Markdown with alignment indicators)
+
+**Output Format**:
+```markdown
+# Functionality Analysis
+
+## Jira Integration
+**Jira Ticket Available**: ✅ Yes / ❌ No
+
+## Alignment Assessment
+**Overall Alignment**: ✅ Good / ⚠️ Partial / ❌ Poor
+
+## Summary
+[2-3 sentence assessment]
+
+## ✅ Covered Requirements
+- [List of requirements addressed]
+
+## ❌ Missing Requirements
+- [List of requirements not found]
+
+## ⚠️ Out of Scope Changes
+- [List of unrelated changes]
+```
+
+## Data Flow
+
+### 1. PR Creation Flow
+
+```
+Developer → Git Push → GitHub
+  ↓
+GitHub PR Created
+  ↓
+GitHub Actions Triggered
+  ↓
+POST /review/pr (PR metadata)
+  ↓
+Service: Fetch PR from GitHub API
+  ↓
+Service: Extract Jira ticket from branch
+  ↓
+Service: Fetch Jira ticket (if exists)
+  ↓
+Service: Create ARK Query
+  ↓
+ARK Controller: Schedule Query
+  ↓
+ARK Team: Execute round-robin
+  ↓
+Code Quality Agent: Analyze (turn 1)
+  ↓
+Functionality Agent: Analyze (turn 2)
+  ↓
+Query Status: Done
+  ↓
+Service: Poll and fetch results
+  ↓
+Service: Return Markdown results
+  ↓
+GitHub Actions: Post comment (optional)
+```
+
+### 2. Data Structures
+
+**PR Metadata**:
+```json
+{
+  "repository": "owner/repo",
+  "pr_number": 320,
+  "branch_name": "chore/ARKQB-376-description",
+  "commit_sha": "2aed04e583682220b86c05783304a4a77e4362f1",
+  "title": "PR title",
+  "description": "PR description"
+}
+```
+
+**GitHub API Response** (simplified):
+```json
+{
+  "diff": "...",
+  "files": [{"filename": "...", "patch": "..."}],
+  "commits": [{"sha": "...", "message": "..."}]
+}
+```
+
+**Jira API Response** (simplified):
+```json
+{
+  "key": "ARKQB-376",
+  "fields": {
+    "summary": "Ticket title",
+    "description": "Ticket description",
+    "status": {"name": "In Review"}
+  }
+}
+```
+
+**Agent Response**:
+```json
+{
+  "name": "code-quality-reviewer",
+  "content": "# Code Quality Review\n\n...",
+  "role": "assistant"
+}
+```
+
+## Security Considerations
+
+### Credential Management
+
+**Local Development**:
+- `.env` file (gitignored)
+- Never commit credentials
+
+**Kubernetes Deployment**:
+- Kubernetes Secrets for GitHub/Jira tokens
+- IRSA (IAM Roles for Service Accounts) for AWS
+- Secret rotation policies
+
+**Best Practices**:
+- Least privilege access
+- Separate credentials per environment
+- Audit logging enabled
+- Token expiration policies
+
+### API Access
+
+**GitHub API**:
+- Personal Access Token (PAT) or GitHub App
+- Scope: `repo` (read access to private repos)
+- Rate limits: 5,000 requests/hour (authenticated)
+
+**Jira API**:
+- Username + API token (Jira Cloud)
+- Basic auth or OAuth (Jira Server/DC)
+- Network access may require VPN or IP whitelist
+
+**ARK API**:
+- Service account with Query create permissions
+- RBAC: `create`, `get`, `watch` on Queries
+- Namespace-scoped access only
+
+### Network Security
+
+**GitHub Actions → Service**:
+- HTTPS only
+- Optional: Authentication token
+- Optional: IP whitelist
+
+**Service → GitHub/Jira**:
+- HTTPS only
+- Credential validation
+- Timeout and retry logic
+- Rate limit handling
+
+**Service → Kubernetes**:
+- In-cluster service account
+- RBAC-controlled access
+- TLS for API communication
+
+## Performance Characteristics
+
+### Latency
+
+**Typical Review Time**: 30-60 seconds
+- GitHub API call: 1-2 seconds
+- Jira API call: 1-2 seconds
+- Query creation: < 1 second
+- Agent execution: 20-40 seconds
+- Result retrieval: < 1 second
+
+**Factors Affecting Performance**:
+- PR size (number of files, lines changed)
+- Model response time
+- Jira ticket complexity
+- Network latency
+- Agent prompt length
+
+### Scalability
+
+**Concurrent Reviews**:
+- Service: Can handle multiple concurrent requests
+- ARK: Query scheduling and agent parallelization
+- Model: Rate limits from provider (Azure OpenAI, etc.)
+
+**Resource Requirements**:
+- Service: 256MB memory, 0.1 CPU (idle)
+- Service: 512MB memory, 0.5 CPU (active)
+- Agents: Managed by ARK controller
+- Queries: Lightweight K8s resources
+
+### Cost Considerations
+
+**Model API Costs**:
+- Depends on PR size and model pricing
+- Typical PR: 2,000-10,000 tokens input
+- Agent responses: 500-2,000 tokens output
+- Total: $0.02-$0.10 per PR (gpt-4o-mini pricing)
+
+**Infrastructure Costs**:
+- EKS cluster: ~$150/month (t3.medium nodes)
+- S3 storage: < $5/month
+- Data transfer: Minimal
+
+**Optimization**:
+- Use smaller models (gpt-4o-mini vs gpt-4)
+- Implement caching for repeated reviews
+- Prune old Query resources (TTL)
+- Archive S3 logs to Glacier
+
+## Monitoring and Observability
+
+### Metrics
+
+**Service Metrics** (Prometheus):
+- `pr_review_duration_seconds` - Review latency
+- `github_api_requests_total` - GitHub API calls
+- `jira_api_requests_total` - Jira API calls
+- `ark_query_creation_total` - Queries created
+- `ark_query_completion_seconds` - Query execution time
+- `agent_execution_failures_total` - Agent failures
+
+**ARK Metrics**:
+- Query execution time
+- Agent success/failure rates
+- Model token usage
+- Team execution patterns
+
+### Logging
+
+**Service Logs**:
+- Request/response logging
+- API call traces
+- Error logging with context
+- Performance metrics
+
+**Location**:
+- Local: `/tmp/ark-pr-reviewer.log`
+- Kubernetes: `kubectl logs -n ark-pr-review -l app=ark-pr-reviewer`
+- S3: Optional structured logs
+
+**Log Levels**:
+- ERROR: Service failures, API errors
+- WARN: Jira ticket not found, rate limits
+- INFO: Request processing, query creation
+- DEBUG: Detailed API responses, query status
+
+### Troubleshooting
+
+**Common Issues**:
+
+1. **Agent not available**: Check model and agent status
+2. **Query timeout**: Check agent execution logs
+3. **GitHub API rate limit**: Increase token quota or implement caching
+4. **Jira connection failed**: Verify network access and credentials
+5. **Invalid branch name**: Check branch naming convention
+
+**Debugging Tools**:
+- `kubectl get queries -n ark-pr-review`
+- `kubectl describe query <name> -n ark-pr-review`
+- `kubectl logs -n ark-pr-review -l app=ark-pr-reviewer`
+- Service logs: `/tmp/ark-pr-reviewer.log`
+
+## Deployment Options
+
+### Local Development
+
+**Use Cases**:
+- Testing agent prompts
+- Developing service features
+- Validating against historical PRs
+
+**Setup**:
+- Run service locally with `./local-test.sh`
+- Agents deployed to local K8s (kind, minikube, etc.)
+- Results saved to repo root
+
+### Kubernetes (In-Cluster)
+
+**Use Cases**:
+- Production deployment
+- Integrated with GitHub Actions
+- S3 logging and metrics
+
+**Setup**:
+- Deploy via Helm chart
+- Configure secrets
+- Enable monitoring
+
+### AWS EKS (Production)
+
+**Use Cases**:
+- Dedicated cluster for ARK
+- Isolated from other workloads
+- Production-grade reliability
+
+**Setup**:
+- Provision with Terraform
+- Deploy ARK controller
+- Deploy PR reviewer service
+- Configure GitHub integration
+
+See `samples/pr-review-team/infrastructure/aws/` for Terraform configurations.
+
+## Future Enhancements
+
+### Planned Features
+
+1. **Automatic PR Comments**: Post agent findings as PR comments (currently manual)
+2. **Incremental Reviews**: Only review changed files in updates
+3. **Review Caching**: Cache reviews for identical diffs
+4. **Custom Agents**: Allow per-repository agent customization
+5. **Metrics Dashboard**: Grafana dashboard for review analytics
+6. **Batch Processing**: Review multiple PRs in parallel
+
+### Extensibility
+
+The architecture is designed for extension:
+
+- **Add Agents**: Create new agents for specific checks (security, performance, etc.)
+- **Modify Team**: Change strategy or add conditional logic
+- **Custom Integrations**: Add other ticket systems (Linear, Azure DevOps, etc.)
+- **Notification Channels**: Slack, email, webhooks
+- **Policy Enforcement**: Block merge based on critical findings
+
+## Related Resources
+
+- [ARK Query API](/reference/resources/query)
+- [ARK Team Strategies](/reference/resources/team)
+- [ARK Agent Configuration](/reference/resources/agent)
+- [GitHub Actions Documentation](https://docs.github.com/en/actions)
+- [Jira REST API](https://developer.atlassian.com/cloud/jira/platform/rest/v3/)
+

@@ -1,0 +1,17 @@
+apiVersion: v2
+name: ark-pr-reviewer
+description: AI-powered PR review service using ARK agents
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+keywords:
+  - ark
+  - pr-review
+  - ai
+  - agents
+maintainers:
+  - name: ARK Team
+home: https://github.com/mckinsey/agents-at-scale-ark
+sources:
+  - https://github.com/mckinsey/agents-at-scale-ark
+

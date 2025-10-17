@@ -1,0 +1,497 @@
+# AI-Powered PR Review with ARK
+
+Learn how to build an automated pull request review system using ARK agents. This sample demonstrates a complete end-to-end solution integrating GitHub, Jira, and specialized AI agents to provide code quality analysis and requirements validation.
+
+## What You'll Build
+
+An automated PR review system with:
+- **Code Quality Review Agent**: Analyzes security, patterns, complexity, error handling, and adherence to project standards
+- **Functionality Analysis Agent**: Validates PR changes against Jira ticket requirements
+- **Round-Robin Team**: Coordinates both agents to provide comprehensive reviews
+- **FastAPI Service**: Orchestrates GitHub/Jira integration and ARK query execution
+- **GitHub Actions Integration**: Automatically reviews all pull requests
+- **Markdown Output**: Clean, readable reviews ready to copy into Jira
+
+## Architecture
+
+```
+Developer Push → GitHub PR → GitHub Actions → ARK Service → ARK Query
+                                                    ↓            ↓
+                                              GitHub API    PR Review Team
+                                              Jira API    (Round-Robin)
+                                                               ↓
+                                                    ┌──────────┴──────────┐
+                                              Code Quality      Functionality
+                                               Reviewer          Analyzer
+                                                    └──────────┬──────────┘
+                                                              ↓
+                                                    Markdown Results
+```
+
+### Component Overview
+
+1. **Branch Validation** (Pre-commit/CI): Enforces Jira ticket naming convention
+2. **GitHub Actions Workflow**: Triggers on PR events, calls ARK service
+3. **ARK Service** (FastAPI): Fetches PR data, creates ARK queries
+4. **ARK Agents**: Specialized reviewers with project-aware prompts
+5. **ARK Team**: Coordinates agent execution
+6. **Results**: Markdown-formatted reviews with severity levels
+
+## Prerequisites
+
+- ARK installed and running (follow the [quickstart guide](/quickstart))
+- GitHub repository with admin access
+- GitHub Personal Access Token with `repo` scope
+- Jira API credentials (optional, for ticket validation)
+- kubectl access to your Kubernetes cluster
+
+```bash
+# Verify ARK is running
+kubectl get pods -n ark-system
+
+# Verify default model is available
+kubectl get models -n default
+```
+
+## Step 1: Deploy ARK Resources
+
+### 1.1 Create Agents
+
+The sample includes two specialized agents:
+
+**Code Quality Reviewer** - Analyzes code against project standards:
+- Security vulnerabilities (SQL injection, XSS, secrets exposure)
+- Code patterns and complexity
+- Error handling and resource management
+- Test coverage
+- Adherence to CLAUDE.md conventions
+
+**Functionality Analyzer** - Validates against requirements:
+- Jira ticket requirement coverage
+- Out-of-scope changes detection
+- Breaking changes identification
+- Completeness assessment
+
+Deploy all ARK resources (agents, team, tool):
+
+```bash
+cd samples/pr-review-team
+
+# Deploy all resources using kustomize (to default namespace)
+kubectl apply -k .
+
+# Verify all resources are ready
+kubectl get agents,teams,tools -n default | grep -E "pr-review|code-quality|functionality"
+```
+
+Expected output:
+```
+NAME                                            MODEL     AVAILABLE   AGE
+agent.ark.mckinsey.com/code-quality-reviewer    default   True        10s
+agent.ark.mckinsey.com/functionality-analyzer   default   True        10s
+
+NAME                                   AGE
+team.ark.mckinsey.com/pr-review-team   10s
+
+NAME                              AGE
+tool.ark.mckinsey.com/pr-review   10s
+```
+
+**What was deployed:**
+
+1. **Agents**: Two specialized review agents in the `default` namespace
+2. **Team**: Round-robin coordinator with `maxTurns: 2`
+3. **Tool**: HTTP tool exposing the PR review service API for other agents
+
+**Note**: Resources are deployed to the `default` namespace to ensure they're immediately visible in the ARK Dashboard UI. The Dashboard currently only displays resources from the `default` namespace in its dropdown selector.
+
+## Step 2: Test Locally
+
+Before deploying to production, test the system locally:
+
+### 2.1 Configure Service
+
+```bash
+cd samples/pr-review-team/service
+
+# Create .env file with your credentials
+cat > .env << EOF
+# GitHub Configuration
+GITHUB_TOKEN=ghp_your_github_personal_access_token
+
+# Jira Configuration (optional)
+JIRA_BASE_URL=https://your-company.atlassian.net
+JIRA_USERNAME=your.email@company.com
+JIRA_API_TOKEN=your_jira_api_token
+
+# Service Configuration
+API_PORT=8081
+LOG_LEVEL=INFO
+KUBERNETES_NAMESPACE=ark-pr-review
+TEAM_NAME=pr-review-team
+EOF
+```
+
+**Getting Credentials**:
+
+- **GitHub Token**: [github.com/settings/tokens](https://github.com/settings/tokens) - Select `repo` scope
+- **Jira Token**: [id.atlassian.com/manage-profile/security/api-tokens](https://id.atlassian.com/manage-profile/security/api-tokens)
+
+### 2.2 Install Dependencies
+
+```bash
+# Install uv if not already installed
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Install dependencies
+make init
+```
+
+### 2.3 Run Test
+
+```bash
+# Test against a PR (example: PR #320)
+./local-test.sh mckinsey/agents-at-scale-ark 320
+```
+
+The script will:
+1. Deploy ARK resources (agents, team)
+2. Start the FastAPI service
+3. Fetch PR details from GitHub
+4. Extract Jira ticket from branch name
+5. Create ARK Query
+6. Wait for agents to complete
+7. Save results as Markdown
+
+### 2.4 View Results
+
+```bash
+# View readable Markdown output
+cat ../../pr-320-review.md
+
+# View raw JSON
+cat ../../pr-320-review.json
+
+# View service logs
+tail -f /tmp/ark-pr-reviewer.log
+```
+
+**Example Output**:
+
+```markdown
+# Code Quality Review
+
+## Summary
+The PR follows project standards with comprehensive documentation and sample code...
+
+## Findings
+
+### 🟡 Medium
+- **File**: `samples/example/service.py:42`
+- **Issue**: Environment variable handling could be clearer
+- **Suggestion**: Document required env vars in README
+
+### 🔵 Low
+- **File**: `samples/example/Dockerfile:16`
+- **Issue**: Consider adding healthcheck instruction
+- **Suggestion**: Add HEALTHCHECK to improve container robustness
+
+# Functionality Analysis
+
+## Jira Integration
+**Jira Ticket Available**: ✅ Yes
+
+## Alignment Assessment
+**Overall Alignment**: ✅ Good
+
+## Summary
+The PR fully addresses ARKQB-376 requirements by improving documentation and clarifying configuration...
+
+## ✅ Covered Requirements
+- Clarified environment variables for Azure OpenAI integration
+- Updated sample to use specific deployment model names
+- Provided detailed README with troubleshooting steps
+```
+
+## Step 3: Deploy to Kubernetes (Optional)
+
+For production deployment:
+
+### 3.1 Deploy via Helm
+
+```bash
+cd samples/pr-review-team
+
+# Install chart
+helm install ark-pr-reviewer ./chart \
+  --namespace ark-pr-review \
+  --create-namespace \
+  --set config.githubToken=$GITHUB_TOKEN \
+  --set config.jiraBaseUrl=https://your-company.atlassian.net \
+  --set config.jiraUsername=your.email@company.com \
+  --set config.jiraApiToken=$JIRA_API_TOKEN
+```
+
+### 3.2 Verify Deployment
+
+```bash
+# Check service is running
+kubectl get pods -n ark-pr-review
+
+# Check service health
+kubectl port-forward -n ark-pr-review svc/ark-pr-reviewer 8080:8080
+curl http://localhost:8080/health
+```
+
+## Step 4: Set Up GitHub Integration
+
+### 4.1 Configure Repository Secrets
+
+In your GitHub repository settings, add:
+
+1. **`ARK_PR_REVIEW_ENDPOINT`** - Service URL (e.g., `http://ark-pr-reviewer.ark-pr-review.svc.cluster.local:8080`)
+2. **`ARK_PR_REVIEW_TOKEN`** - Authentication token (optional, if auth enabled)
+
+### 4.2 Enable GitHub Actions Workflow
+
+The workflow is already active in this repository at [`.github/workflows/pr_review_ai.yml`](https://github.com/mckinsey/agents-at-scale-ark/blob/main/.github/workflows/pr_review_ai.yml).
+
+For your own repository:
+
+```bash
+# Copy example workflow
+cp samples/pr-review-team/github-workflows/pr_review_ai.yml.example \
+   .github/workflows/pr_review_ai.yml
+
+# Commit and push
+git add .github/workflows/pr_review_ai.yml
+git commit -m "feat: add AI PR review workflow"
+git push
+```
+
+The workflow will now automatically run on:
+- Pull request opened
+- Pull request synchronized (new commits)
+- Pull request reopened
+
+## Customization
+
+### Modify Agent Prompts
+
+Edit agent definitions in `samples/pr-review-team/agents/` to customize:
+
+**Code Quality Checks**:
+```yaml
+spec:
+  prompt: |
+    # Code Quality Review Guidelines
+    
+    ## Project Standards
+    - Follow patterns in CLAUDE.md
+    - No comments unless explicitly requested
+    - Use type hints in Python
+    
+    ## Your Custom Standards
+    - Check for specific patterns
+    - Enforce custom security rules
+    - Validate naming conventions
+    
+    ## Output Format
+    Use clean Markdown with severity levels...
+```
+
+**Jira Validation Logic**:
+```yaml
+spec:
+  prompt: |
+    # Functionality Analysis
+    
+    ## Custom Requirements Validation
+    - Check acceptance criteria format
+    - Validate test coverage requirements
+    - Ensure documentation updates
+    
+    ## Output Format
+    Report covered/missing requirements...
+```
+
+### Adjust Team Strategy
+
+Edit `samples/pr-review-team/teams/pr-review-team.yaml`:
+
+```yaml
+spec:
+  strategy: round-robin
+  maxTurns: 3  # Allow more turns for complex reviews
+  
+  # Or add more agents
+  members:
+    - type: agent
+      name: code-quality-reviewer
+    - type: agent
+      name: functionality-analyzer
+    - type: agent
+      name: security-specialist  # Add custom agent
+```
+
+### Modify Service Logic
+
+The service code in `samples/pr-review-team/service/src/ark_pr_reviewer/` can be customized to:
+
+- Add new API integrations
+- Modify query generation logic
+- Customize response formatting
+- Add webhook notifications
+- Integrate with other tools
+
+See `samples/pr-review-team/service/README.md` for development guide.
+
+## Repository-Wide Integration
+
+This sample integrates with repository-wide standards enforced in this repository:
+
+### Branch Naming Convention
+
+**Required Pattern**: `PROJECT-XXX-description` or `PROJECT-000-description`
+
+**Enforcement**:
+- **Local**: [`.husky/pre-push`](https://github.com/mckinsey/agents-at-scale-ark/blob/main/.husky/pre-push) validates before push
+- **CI**: [`.github/workflows/validate_branch_name_jira.yml`](https://github.com/mckinsey/agents-at-scale-ark/blob/main/.github/workflows/validate_branch_name_jira.yml) adds warning labels
+
+**Examples**:
+- ✅ `ARKQB-376-update-langchain-docs`
+- ✅ `PROJ-000-update-contributing-guide`
+- ❌ `feature/add-auth`
+
+See [CONTRIBUTING.md](https://github.com/mckinsey/agents-at-scale-ark/blob/main/CONTRIBUTING.md) for full details.
+
+### Conventional Commits
+
+All commit messages and PR titles must follow [Conventional Commits](https://www.conventionalcommits.org/):
+
+- `feat:` - New features
+- `fix:` - Bug fixes
+- `docs:` - Documentation changes
+- `chore:` - Maintenance tasks
+- `refactor:` - Code refactoring
+- `test:` - Test additions
+- `ci:` - CI/CD changes
+
+## Troubleshooting
+
+### Agents Not Running
+
+```bash
+# Check agent status
+kubectl get agents -n ark-pr-review
+kubectl describe agent code-quality-reviewer -n ark-pr-review
+
+# Check model availability
+kubectl get model default -n default
+
+# View agent logs (if available)
+kubectl logs -n ark-system -l app=ark-controller
+```
+
+### Service Connection Issues
+
+```bash
+# Check service logs
+kubectl logs -n ark-pr-review -l app=ark-pr-reviewer
+
+# Test service locally
+curl http://localhost:8081/health
+
+# Check GitHub token
+export GITHUB_TOKEN=ghp_your_token
+curl -H "Authorization: token $GITHUB_TOKEN" https://api.github.com/user
+```
+
+### Query Execution Failures
+
+```bash
+# List queries
+kubectl get queries -n ark-pr-review
+
+# Inspect failed query
+kubectl get query pr-320-timestamp -n ark-pr-review -o yaml
+
+# Check query status
+kubectl describe query pr-320-timestamp -n ark-pr-review
+```
+
+### Jira Connection Issues
+
+```bash
+# Test Jira connectivity
+curl -u "email@company.com:token" \
+  "https://company.atlassian.net/rest/api/2/issue/PROJECT-123"
+
+# Check service logs for Jira errors
+tail -f /tmp/ark-pr-reviewer.log | grep -i jira
+```
+
+## Advanced Topics
+
+### AWS Deployment
+
+For production AWS deployment:
+
+See `samples/pr-review-team/infrastructure/aws/README.md` for Terraform configuration to provision:
+- EKS cluster
+- S3 bucket for review logs
+- AWS Secrets Manager for credentials
+- IAM roles and policies
+
+### S3 Logging
+
+Enable S3 logging in production:
+
+```yaml
+# chart/values.yaml
+config:
+  s3Bucket: ark-pr-reviews
+  s3LogPrefix: reviews/
+  awsRegion: us-east-1
+```
+
+### Metrics and Monitoring
+
+The service exposes Prometheus metrics:
+
+```yaml
+config:
+  metricsEnabled: true
+  metricsPort: 9090
+```
+
+Metrics include:
+- PR review duration
+- Agent execution time
+- GitHub/Jira API success rates
+- Query failure rates
+
+## Next Steps
+
+1. **Test with more PRs**: Run `local-test.sh` against 5-10 recent PRs to evaluate output quality
+2. **Tune prompts**: Adjust agent prompts based on false positives/negatives
+3. **Enable in production**: Deploy to Kubernetes and enable GitHub Actions
+4. **Monitor quality**: Track developer feedback on review usefulness
+5. **Iterate**: Refine agents based on real-world usage
+
+## Resources
+
+- **Sample Code**: `samples/pr-review-team/`
+- **Architecture Details**: [architecture.mdx](./architecture)
+- **Service Documentation**: `samples/pr-review-team/service/README.md`
+- **GitHub Workflows**: `samples/pr-review-team/github-workflows/`
+- **Infrastructure**: `samples/pr-review-team/infrastructure/`
+
+## Related Documentation
+
+- [ARK Agents](/reference/resources/agent)
+- [ARK Teams](/reference/resources/team)
+- [ARK Queries](/reference/resources/query)
+- [Building with ARK SDK](/developer-guide/ark-sdk)
+- [Testing with Chainsaw](/developer-guide/testing)
+
