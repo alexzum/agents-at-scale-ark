@@ -611,8 +611,6 @@ curl -X POST http://localhost:8080/mcp \
   }'
 ```
 
-See `mcp/filesystem-mcp/LOCAL_TESTING.md` for comprehensive test scenarios including session persistence, reconnection, and LRU eviction testing.
-
 ### Architecture
 
 The filesystem MCP server uses a wrapper + adapter architecture with clean separation:
@@ -636,13 +634,4 @@ The filesystem MCP server uses a wrapper + adapter architecture with clean separ
 │ - Tool definitions                      │
 │ - Workspace management                  │
 └─────────────────────────────────────────┘
-```
-
-**Key Design:**
-- **Shared Base**: All sessions share `/data/` via `FilesystemContext`
-- **Annotation-Driven**: Workspaces configured via `set_base_directory` tool calls
-- **Generic Wrapper**: Can be reused for other MCP servers (no filesystem coupling)
-- **Workspace Isolation**: Achieved through explicit naming, not session IDs
-
-This ensures flexibility and reusability while providing workspace-based isolation.
 ```

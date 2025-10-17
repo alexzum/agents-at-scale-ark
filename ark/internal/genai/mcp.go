@@ -87,17 +87,21 @@ func performBackoff(ctx context.Context, attempt int, baseURL string) error {
 }
 
 func createTransport(baseURL string, headers map[string]string) mcp.Transport {
+	// Create HTTP client with headers
 	httpClient := &http.Client{
 		Timeout: 30 * time.Second,
 	}
 
-	httpClient.Transport = &headerTransport{
-		headers: headers,
-		base:    http.DefaultTransport,
+	// If we have headers, wrap the transport
+	if len(headers) > 0 {
+		httpClient.Transport = &headerTransport{
+			headers: headers,
+			base:    http.DefaultTransport,
+		}
 	}
 
 	return &mcp.StreamableClientTransport{
-		Endpoint:   strings.TrimSuffix(baseURL, "/") + "/mcp",
+		Endpoint:   baseURL + "/mcp",
 		HTTPClient: httpClient,
 		MaxRetries: 5,
 	}

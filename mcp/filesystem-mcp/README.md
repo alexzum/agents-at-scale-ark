@@ -22,24 +22,14 @@ make dev
 - **Persistent Session Tracking**: Session metadata survives server restarts via file-based storage
 - **LRU Eviction**: Automatically evicts least recently used sessions when limit reached
 - **Annotation-Driven Configuration**: Workspaces configured via ARK query annotations
-- **Shared Base Directory**: All operations under `/mcp-data/` with user-specified workspaces
+- **Shared Base Directory**: All operations under `/data/` with user-specified workspaces
 - **All Filesystem Operations**: Read, write, edit, move, search, list, tree
-
-Based on the marketplace filesystem MCP adapter with production-ready session management.
-
-## Testing
-
-See `LOCAL_TESTING.md` for comprehensive test procedures covering:
-- Session ID generation and persistence
-- Reconnection across pod restarts
-- LRU eviction (basic and access-based)
-- Session isolation and explicit deletion
 
 ## Configuration
 
 Environment variables (configured in `chart/values.yaml`):
 - `PORT`: Server port (default: 8080)
-- `BASE_DATA_DIR`: Base directory for all filesystem operations (default: /mcp-data)
+- `BASE_DATA_DIR`: Base directory for all filesystem operations (default: /data)
 - `SESSION_FILE`: Path to session metadata storage (default: /data/sessions/sessions.json)
 - `MAX_SESSIONS`: Maximum concurrent sessions (default: 1000)
 
@@ -71,7 +61,7 @@ spec:
     - name: filesystem-agent
 ```
 
-This creates and configures `/mcp-data/my-workspace/` as the working directory for all filesystem operations in that query.
+This creates and configures `/data/my-workspace/` as the working directory for all filesystem operations in that query.
 
 ## Using with ARK
 
@@ -128,5 +118,5 @@ For detailed usage examples and session management, see `docs/content/user-guide
 ### Key Design Principles
 - **MCP sessions ≠ application state**: Sessions track connections, not configuration
 - **Annotations as source of truth**: Workspace configuration comes from ARK annotations
-- **Single base directory**: All sessions share `/mcp-data/` with user-specified subdirectories
+- **Single base directory**: All sessions share `/data/` with user-specified subdirectories
 - **No per-session directories**: Workspaces are explicitly named and persistent
