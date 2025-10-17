@@ -115,7 +115,7 @@ func (v *TeamCustomValidator) validateNoMixedTeam(ctx context.Context, team *ark
 		if err := v.Client.Get(ctx, key, &agent); err != nil {
 			return fmt.Errorf("team member %d: failed to load agent '%s': %v", i, member.Name, err)
 		}
-		isExternal := agent.Spec.ExecutionEngine != nil && agent.Spec.ExecutionEngine.Name != "" && agent.Spec.ExecutionEngine.Name != ExecutionEngineA2A
+		isExternal := agent.Spec.ExecutionEngine != nil && agent.Spec.ExecutionEngine.Name != "" && agent.Spec.ExecutionEngine.Name != genai.ExecutionEngineA2A
 		if isExternal {
 			hasExternalAgents = true
 		} else {
@@ -144,11 +144,13 @@ func (v *TeamCustomValidator) validateStrategy(ctx context.Context, team *arkv1a
 
 func (v *TeamCustomValidator) validateSelectorModel(ctx context.Context, team *arkv1alpha1.Team) error {
 	// Resolve selector model name with default fallback
-	modelName, namespace := genai.ResolveModelSpec(team.Spec.Selector, team.Namespace)
+	modelName, namespace, err := genai.ResolveModelSpec(team.Spec.Selector, team.Namespace)
+	if err != nil {
+		return fmt.Errorf("failed to resolve selector model: %w", err)
+	}
 
 	// Validate that the model exists
-	err := v.ValidateLoadModel(ctx, modelName, namespace)
-	if err != nil {
+	if err := v.ValidateLoadModel(ctx, modelName, namespace); err != nil {
 		return fmt.Errorf("selector model %s not found in namespace %s: %v", modelName, namespace, err)
 	}
 

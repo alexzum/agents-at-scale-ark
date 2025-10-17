@@ -13,9 +13,14 @@ dependencies:
     path: ./services/ark-api
   ark-dashboard:
     path: ./services/ark-dashboard
-
+#  ark-api-a2a:
+#    path: ./services/ark-api-a2a
 #  ark-mcp:
 #    path: ./services/ark-mcp
+#  ark-evaluator:
+#    path: ./services/ark-evaluator
+#  executor-langchain:
+#    path: ./services/executor-langchain
 #   postgres-memory:
 #     path: ./services/postgres-memory
 
@@ -26,6 +31,9 @@ vars:
     source: env
     default: true
   ENABLE_GATEWAY_API_CRDS:
+    source: env
+    default: true
+  ENABLE_ARK_TENANT:
     source: env
     default: true
 
@@ -65,13 +73,28 @@ profiles:
             kubectl:
               manifests:
                 - "https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.3.0/standard-install.yaml"
+  - name: enable-ark-tenant
+    activation:
+      - vars:
+          ENABLE_ARK_TENANT: true
+    patches:
+      - op: add
+        path: deployments
+        value:
+          ark-tenant:
+            namespace: default
+            helm:
+              chart:
+                path: ./charts/ark-tenant
+              releaseName: ark-tenant
+              upgradeArgs: [ "--install" ]
 
 pipelines:
   deploy: |-
-    create_deployments --all
     run_dependency_pipelines ark --pipeline=deploy
+    create_deployments --all
     run_dependency_pipelines --all --exclude ark --pipeline=deploy
   dev: |-
-    create_deployments --all
     run_dependency_pipelines ark --pipeline=dev
+    create_deployments --all
     run_dependency_pipelines --all --exclude ark --pipeline=dev
