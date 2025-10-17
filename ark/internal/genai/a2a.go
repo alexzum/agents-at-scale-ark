@@ -193,9 +193,38 @@ func extractTextFromMessageResult(result *protocol.MessageResult) (string, error
 		logf.Log.Info("A2A message extracted", "text", text, "parts_count", len(r.Parts))
 		return text, nil
 	case *protocol.Task:
-		return "", fmt.Errorf("received task response, streaming not yet supported")
+		return extractTextFromTask(r)
 	default:
 		return "", fmt.Errorf("unexpected result type: %T", result.Result)
+	}
+}
+
+// extractTextFromTask extracts text from a completed or failed Task
+func extractTextFromTask(task *protocol.Task) (string, error) {
+	if task.Status == nil {
+		return "", fmt.Errorf("task has no status")
+	}
+
+	switch task.Status.State {
+	case TaskStateCompleted:
+		// Extract successful response from status.message
+		if task.Status.Message != nil && len(task.Status.Message.Parts) > 0 {
+			text := extractTextFromParts(task.Status.Message.Parts)
+			logf.Log.Info("A2A task completed", "text", text, "task_id", task.ID)
+			return text, nil
+		}
+		return "", fmt.Errorf("completed task has no message")
+
+	case TaskStateFailed:
+		// Extract error message from status.message
+		errorMsg := "task failed"
+		if task.Status.Message != nil && len(task.Status.Message.Parts) > 0 {
+			errorMsg = extractTextFromParts(task.Status.Message.Parts)
+		}
+		return "", fmt.Errorf("%s", errorMsg)
+
+	default:
+		return "", fmt.Errorf("task in state '%s' (expected %s or %s)", task.Status.State, TaskStateCompleted, TaskStateFailed)
 	}
 }
 
