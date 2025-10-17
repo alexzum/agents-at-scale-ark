@@ -207,13 +207,23 @@ func extractTextFromTask(task *protocol.Task) (string, error) {
 
 	switch task.Status.State {
 	case TaskStateCompleted:
-		// Extract successful response from status.message
-		if task.Status.Message != nil && len(task.Status.Message.Parts) > 0 {
-			text := extractTextFromParts(task.Status.Message.Parts)
-			logf.Log.Info("A2A task completed", "text", text, "task_id", task.ID)
-			return text, nil
+		// Extract all agent messages from history
+		var text strings.Builder
+		for _, msg := range task.History {
+			if msg.Role == protocol.MessageRoleAgent && len(msg.Parts) > 0 {
+				msgText := extractTextFromParts(msg.Parts)
+				if msgText != "" {
+					if text.Len() > 0 {
+						text.WriteString("\n")
+					}
+					text.WriteString(msgText)
+				}
+			}
 		}
-		return "", fmt.Errorf("completed task has no message")
+
+		result := text.String()
+		logf.Log.Info("A2A task completed", "text", result, "task_id", task.ID, "history_count", len(task.History))
+		return result, nil
 
 	case TaskStateFailed:
 		// Extract error message from status.message
