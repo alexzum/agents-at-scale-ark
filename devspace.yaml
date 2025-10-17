@@ -17,6 +17,8 @@ dependencies:
 #    path: ./services/ark-api-a2a
 #  ark-mcp:
 #    path: ./services/ark-mcp
+#  mcp-filesystem:
+#    path: ./mcp/filesystem-mcp
 #  ark-evaluator:
 #    path: ./services/ark-evaluator
 #  executor-langchain:
