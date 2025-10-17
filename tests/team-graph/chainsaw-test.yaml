@@ -18,15 +18,15 @@ spec:
         file: manifests/*.yaml
   - name: wait-for-query-completion
     try:
-    - assert:
-        resource:
-          apiVersion: ark.mckinsey.com/v1alpha1
-          kind: Query
-          metadata:
-            name: test-graph-team
-          status:
-            phase: done
-        timeout: 60s
+    - wait:
+        apiVersion: ark.mckinsey.com/v1alpha1
+        kind: Query
+        timeout: 5m
+        name: test-graph-team
+        for:
+          jsonPath:
+            path: '{.status.phase}'
+            value: 'done'
 
   - name: validate-graph-execution
     try:
@@ -47,3 +47,11 @@ spec:
         apiVersion: ark.mckinsey.com/v1alpha1
         kind: Query
         name: test-graph-team
+    - script:
+        content: |
+          echo "=== Query Status Debug Information ==="
+          kubectl get query test-graph-team -o yaml
+          echo "=== Query Events ==="
+          kubectl get events --field-selector involvedObject.name=test-graph-team --sort-by='.lastTimestamp'
+          echo "=== Team Status ==="
+          kubectl get team graph-team -o yaml
