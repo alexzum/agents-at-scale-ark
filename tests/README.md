@@ -32,6 +32,9 @@ End-to-end tests for Agents at Scale (ARK) using Chainsaw testing framework.
 #### Validation Tests
 - **`admission-failures/`** - Comprehensive admission controller validation
 
+#### Delete Functionality Tests
+- **`delete-functionality/`** - API and CLI delete operations for all resource types
+
 ### ❌ Critical Test Coverage Gaps
 
 | Resource Type | Current Tests | Available Samples | Coverage Status |
@@ -133,6 +136,17 @@ chainsaw test tests/
 ### Specific Test
 ```bash
 chainsaw test tests/queries/
+```
+
+### Delete Functionality Tests
+```bash
+# Run Chainsaw integration tests
+chainsaw test tests/delete-functionality/
+
+# Run comprehensive bash test script
+cd tests/delete-functionality
+chmod +x test-delete-api-cli.sh
+./test-delete-api-cli.sh
 ```
 
 ### Debug Mode

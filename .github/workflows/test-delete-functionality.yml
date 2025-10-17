@@ -1,0 +1,140 @@
+name: Test Delete Functionality
+
+on:
+  push:
+    branches: [main, feat/delete-query]
+    paths:
+      - 'tests/delete-functionality/**'
+      - 'services/ark-api/**'
+      - 'tools/ark-cli/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'tests/delete-functionality/**'
+      - 'services/ark-api/**'
+      - 'tools/ark-cli/**'
+  workflow_dispatch:
+
+jobs:
+  test-delete-functionality:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.24"
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22.x"
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y curl bc
+
+      - name: Setup K3s cluster
+        uses: ./.github/actions/setup-k3s
+        with:
+          metrics-enabled: false
+          traefik-enabled: false
+          k3s-channel: latest
+
+      - name: Setup E2E environment
+        uses: ./.github/actions/setup-e2e
+        with:
+          ark-image-tag: ${{ github.sha }}
+          install-coverage: "false"
+          install-evaluator: "false"
+          ci-cache-registry: ${{ vars.DOCKER_CICD_CACHE_REGISTRY || format('ghcr.io/{0}', github.repository_owner) }}
+          ci-cache-registry-username: ${{ secrets.DOCKER_CICD_CACHE_REGISTRY_USERNAME || github.actor }}
+          ci-cache-registry-password: ${{ secrets.DOCKER_CICD_CACHE_REGISTRY_PASSWORD || secrets.GITHUB_TOKEN }}
+
+      - name: Deploy ARK API
+        run: |
+          echo "=== Deploying ARK API ==="
+          helm upgrade --install ark-api services/ark-api/chart \
+            --namespace default \
+            --create-namespace \
+            --set app.image.repository="${{ vars.DOCKER_CICD_CACHE_REGISTRY || format('ghcr.io/{0}/{1}', github.repository_owner, github.event.repository.name) }}/ark-api" \
+            --set app.image.tag="${{ github.sha }}" \
+            --set app.image.pullPolicy="Always" \
+            --wait \
+            --timeout=5m
+
+      - name: Wait for ARK API to be ready
+        run: |
+          echo "=== Waiting for ARK API to be ready ==="
+          kubectl wait --for=condition=ready pod -l app=ark-api -n default --timeout=120s
+          
+          # Port forward for API access
+          kubectl port-forward -n default service/ark-api 8080:80 &
+          API_PID=$!
+          echo "API_PID=$API_PID" >> $GITHUB_ENV
+          
+          # Wait for port forward to be ready
+          sleep 10
+          
+          # Test API health
+          curl -f http://127.0.0.1:8080/health || exit 1
+
+      - name: Build ARK CLI
+        run: |
+          echo "=== Building ARK CLI ==="
+          cd tools/ark-cli
+          npm ci
+          npm run build
+          npm install -g .
+          
+          # Verify CLI installation
+          which ark
+          ark --version
+
+      - name: Run Chainsaw tests
+        run: |
+          echo "=== Installing Chainsaw ==="
+          curl -s -L "https://github.com/kyverno/chainsaw/releases/download/v0.2.12/chainsaw_linux_amd64.tar.gz" | \
+            tar xz -C /tmp
+          sudo mv /tmp/chainsaw /usr/local/bin/chainsaw
+          sudo chmod +x /usr/local/bin/chainsaw
+          
+          echo "=== Running Chainsaw Delete Tests ==="
+          cd tests/delete-functionality
+          chainsaw test .
+
+      - name: Run Bash test script
+        run: |
+          echo "=== Running Bash Delete Tests ==="
+          cd tests/delete-functionality
+          chmod +x test-delete-api-cli.sh
+          
+          # Set environment variables for tests
+          export API_BASE_URL="http://127.0.0.1:8080"
+          export CLI_BINARY="ark"
+          
+          ./test-delete-api-cli.sh
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: delete-functionality-test-results
+          path: |
+            tests/delete-functionality/
+            /tmp/test-delete-*/
+          retention-days: 7
+
+      - name: Cleanup
+        if: always()
+        run: |
+          # Kill port forward process
+          if [ -n "$API_PID" ]; then
+            kill $API_PID || true
+          fi
+          
+          # Clean up test resources
+          kubectl delete namespace test-delete-* --ignore-not-found=true || true
