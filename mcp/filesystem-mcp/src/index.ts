@@ -6,7 +6,6 @@ import { isInitializeRequest } from '@modelcontextprotocol/sdk/types.js';
 import { MCPAdapter } from './adapter.js';
 import { FilesystemAdapter } from './adapters/filesystem/adapter.js';
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
-import { rm } from 'fs/promises';
 import { dirname } from 'path';
 
 export type Session = {
