@@ -71,10 +71,10 @@ def _get_error_detail(status: dict) -> dict:
 
     # Determine the main error message
     if target_errors:
-        # Use the first target error as the main message
-        main_message = f"Query execution failed: {target_errors[0]['message']}"
+        # Use the first target error message directly
+        main_message = target_errors[0]['message']
     elif error_message:
-        main_message = f"Query execution failed: {error_message}"
+        main_message = error_message
     else:
         main_message = "Query execution failed: No error details available"
 
