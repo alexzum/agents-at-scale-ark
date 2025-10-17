@@ -46,9 +46,10 @@ jobs:
         with:
           docker-cicd-cache-registry: ${{ vars.DOCKER_CICD_CACHE_REGISTRY }}
 
-  # Code quality scan with SonarQube
-  # NOTE: This job is currently disabled - waiting for enterprise SonarQube configuration to be applied
+  # Code quality scan with SonarQube. Only enabled if the operator includes a
+  # sonar token.
   sonar_scan:
+    TODO if token is set?
     env:
       SONAR_TOKEN: ${{ secrets.SONARQUBE_TOKEN }}
       SONAR_HOST_URL: ${{ vars.SONARQUBE_HOST_URL }}
