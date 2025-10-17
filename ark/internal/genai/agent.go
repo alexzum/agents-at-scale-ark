@@ -4,10 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"strings"
 
 	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/packages/param"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -354,25 +354,46 @@ func resolveAgentHeaders(ctx context.Context, k8sClient client.Client, crd *arkv
 			return nil, nil, fmt.Errorf("failed to resolve header %s: %w", header.Name, err)
 		}
 
-		if len(header.PropagateTo) == 0 {
-			continue
-		}
-
-		for _, target := range header.PropagateTo {
-			if strings.HasPrefix(target, "model/") {
-				modelHeaders[header.Name] = value
-				log.Info("resolved agent header for model", "agent", crd.Name, "header", header.Name, "target", target)
-			} else if strings.HasPrefix(target, "mcpserver/") {
-				mcpServerName := strings.TrimPrefix(target, "mcpserver/")
-				mcpKey := fmt.Sprintf("%s/%s", crd.Namespace, mcpServerName)
-				if mcpHeadersMap[mcpKey] == nil {
-					mcpHeadersMap[mcpKey] = make(map[string]string)
-				}
-				mcpHeadersMap[mcpKey][header.Name] = value
-				log.Info("resolved agent header for MCP server", "agent", crd.Name, "header", header.Name, "target", target, "mcpKey", mcpKey)
+		if header.McpSelector == nil {
+			modelHeaders[header.Name] = value
+			log.Info("resolved agent header for model (default)", "agent", crd.Name, "header", header.Name)
+		} else {
+			if err := matchMCPServersForHeader(ctx, k8sClient, crd, header, value, mcpHeadersMap); err != nil {
+				return nil, nil, fmt.Errorf("failed to match MCP servers for header %s: %w", header.Name, err)
 			}
 		}
 	}
 
+	log.Info("resolved agent headers", "agent", crd.Name, "modelHeaders", len(modelHeaders), "mcpServerHeaders", len(mcpHeadersMap))
 	return modelHeaders, mcpHeadersMap, nil
+}
+
+func matchMCPServersForHeader(ctx context.Context, k8sClient client.Client, crd *arkv1alpha1.Agent, header arkv1alpha1.PropagatableHeader, value string, mcpHeadersMap map[string]map[string]string) error {
+	log := logf.FromContext(ctx)
+
+	selector, err := metav1.LabelSelectorAsSelector(header.McpSelector)
+	if err != nil {
+		return fmt.Errorf("invalid mcpSelector: %w", err)
+	}
+
+	var mcpServerList arkv1alpha1.MCPServerList
+	listOpts := &client.ListOptions{
+		Namespace:     crd.Namespace,
+		LabelSelector: selector,
+	}
+
+	if err := k8sClient.List(ctx, &mcpServerList, listOpts); err != nil {
+		return fmt.Errorf("failed to list MCP servers: %w", err)
+	}
+
+	for _, mcpServer := range mcpServerList.Items {
+		mcpKey := fmt.Sprintf("%s/%s", crd.Namespace, mcpServer.Name)
+		if mcpHeadersMap[mcpKey] == nil {
+			mcpHeadersMap[mcpKey] = make(map[string]string)
+		}
+		mcpHeadersMap[mcpKey][header.Name] = value
+		log.Info("matched MCP server for header", "agent", crd.Name, "header", header.Name, "mcpServer", mcpServer.Name, "mcpKey", mcpKey)
+	}
+
+	return nil
 }

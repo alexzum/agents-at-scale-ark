@@ -91,7 +91,7 @@ type PropagatableHeader struct {
 	// +kubebuilder:validation:Optional
 	ValueFrom *HeaderValueSource `json:"valueFrom,omitempty"`
 	// +kubebuilder:validation:Optional
-	PropagateTo []string `json:"propagateTo,omitempty"`
+	McpSelector *metav1.LabelSelector `json:"mcpSelector,omitempty"`
 }
 
 type ExpressionRule struct {

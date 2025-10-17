@@ -191,7 +191,7 @@ func (v *AgentCustomValidator) validateHeader(header arkv1alpha1.PropagatableHea
 		return err
 	}
 
-	return v.validateHeaderTargets(header.PropagateTo, index)
+	return nil
 }
 
 func (v *AgentCustomValidator) validateHeaderValue(header arkv1alpha1.PropagatableHeader, index int) error {
@@ -223,39 +223,4 @@ func (v *AgentCustomValidator) validateHeaderValueFrom(header arkv1alpha1.Propag
 	}
 
 	return nil
-}
-
-func (v *AgentCustomValidator) validateHeaderTargets(targets []string, headerIndex int) error {
-	for j, target := range targets {
-		if err := v.validatePropagateToTarget(target, headerIndex, j); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (v *AgentCustomValidator) validatePropagateToTarget(target string, headerIndex, targetIndex int) error {
-	if target == "" {
-		return fmt.Errorf("headers[%d].propagateTo[%d]: target cannot be empty", headerIndex, targetIndex)
-	}
-
-	if len(target) < 3 {
-		return fmt.Errorf("headers[%d].propagateTo[%d]: invalid target format '%s', expected 'model/*' or 'mcpserver/*'", headerIndex, targetIndex, target)
-	}
-
-	if target[:6] == "model/" {
-		if len(target) == 6 {
-			return fmt.Errorf("headers[%d].propagateTo[%d]: model target must specify a model name, e.g. 'model/default'", headerIndex, targetIndex)
-		}
-		return nil
-	}
-
-	if len(target) >= 10 && target[:10] == "mcpserver/" {
-		if len(target) == 10 {
-			return fmt.Errorf("headers[%d].propagateTo[%d]: mcpserver target must specify a server name, e.g. 'mcpserver/github'", headerIndex, targetIndex)
-		}
-		return nil
-	}
-
-	return fmt.Errorf("headers[%d].propagateTo[%d]: invalid target format '%s', must start with 'model/' or 'mcpserver/'", headerIndex, targetIndex, target)
 }

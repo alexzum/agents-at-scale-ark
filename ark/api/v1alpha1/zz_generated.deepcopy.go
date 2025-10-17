@@ -1292,10 +1292,10 @@ func (in *PropagatableHeader) DeepCopyInto(out *PropagatableHeader) {
 		*out = new(HeaderValueSource)
 		(*in).DeepCopyInto(*out)
 	}
-	if in.PropagateTo != nil {
-		in, out := &in.PropagateTo, &out.PropagateTo
-		*out = make([]string, len(*in))
-		copy(*out, *in)
+	if in.McpSelector != nil {
+		in, out := &in.McpSelector, &out.McpSelector
+		*out = new(v1.LabelSelector)
+		(*in).DeepCopyInto(*out)
 	}
 }
 
