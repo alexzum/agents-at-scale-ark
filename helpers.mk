@@ -16,7 +16,29 @@ BUILD_EXTRA_PATH := $(PATH)
 
 # Add brew prefix to PATH on macOS
 ifeq ($(shell uname -s),Darwin)
-	BUILD_EXTRA_PATH := $(shell brew --prefix openjdk)/bi:$(BUILD_EXTRA_PATH)
+	# Detect Homebrew installation directory
+	ifneq ($(wildcard /opt/homebrew/bin/brew),)
+		BREW_PREFIX := /opt/homebrew
+	else ifneq ($(wildcard /usr/local/bin/brew),)
+		BREW_PREFIX := /usr/local
+	else
+		BREW_PREFIX :=
+	endif
+
+	# Add Homebrew bin to PATH if found
+	ifneq ($(BREW_PREFIX),)
+		BUILD_EXTRA_PATH := $(BREW_PREFIX)/bin:$(BUILD_EXTRA_PATH)
+		# Add OpenJDK to PATH if available
+		ifneq ($(wildcard $(BREW_PREFIX)/opt/openjdk/bin),)
+			BUILD_EXTRA_PATH := $(BREW_PREFIX)/opt/openjdk/bin:$(BUILD_EXTRA_PATH)
+		endif
+	endif
+
+	# Add NVM Node.js to PATH if available
+	ifneq ($(wildcard $(HOME)/.nvm/versions/node),)
+		NVM_CURRENT := $(shell ls -t $(HOME)/.nvm/versions/node | head -1)
+		BUILD_EXTRA_PATH := $(HOME)/.nvm/versions/node/$(NVM_CURRENT)/bin:$(BUILD_EXTRA_PATH)
+	endif
 endif
 
 # ANSI color codes for help output

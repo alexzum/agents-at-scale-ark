@@ -11,10 +11,9 @@ metadata:
     {{- end }}
 spec:
   address:
-    valueFrom: 
+    valueFrom:
       serviceRef:
         name: {{ .Values.service.name }}
-        path: "/"
         port: "http"
         namespace: {{ .Release.Namespace }}
   timeout: "60s"

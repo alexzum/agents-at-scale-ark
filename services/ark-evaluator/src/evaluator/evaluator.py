@@ -42,11 +42,7 @@ class LLMEvaluator:
             agent_instructions = None
             if self._requires_agent_instructions(params):
                 logger.info("Attempting to resolve agent instructions...")
-                agent_instructions = await self._resolve_agent_context(request)
-                if agent_instructions:
-                    logger.info(f"Agent instructions resolved: name={agent_instructions.name}, hints={len(agent_instructions.scope_hints)}")
-                else:
-                    logger.warning("Agent instructions resolution failed")
+                agent_instructions = await self._resolve_agent_instructions(request)
             else:
                 logger.info("Agent instructions not required for this evaluation scope")
             
@@ -102,7 +98,7 @@ class LLMEvaluator:
         
         return requires_context
     
-    async def _resolve_agent_context(self, request: EvaluationRequest) -> Optional[AgentInstructions]:
+    async def _resolve_agent_instructions(self, request: EvaluationRequest) -> Optional[AgentInstructions]:
         """Resolve agent context from the first agent target in responses"""
         try:
             # Find first agent response
@@ -116,15 +112,15 @@ class LLMEvaluator:
                 return None
             
             # Resolve agent context
-            agent_context = await self.agent_resolver.resolve_agent(
+            agent_instrunctions = await self.agent_resolver.resolve_agent_instructions(
                 agent_name=agent_response.target.name,
                 namespace="default"  # Could be extracted from request metadata if needed
             )
             
-            if agent_context:
-                logger.info(f"Resolved agent context for {agent_context.name} with {len(agent_context.scope_hints)} scope hints")
+            if agent_instrunctions:
+                logger.info(f"Resolved agent context for {agent_instrunctions.name}")
             
-            return agent_context
+            return agent_instrunctions
             
         except Exception as e:
             logger.warning(f"Failed to resolve agent context: {str(e)}")
@@ -171,17 +167,15 @@ class LLMEvaluator:
         # Build agent instructions section
         agent_section = ""
         if agent_instructions:
-            scope_text = ", ".join(agent_instructions.scope_hints) if agent_instructions.scope_hints else "general purpose"
             agent_section = f"""
                     AGENT INSTRUCTIONS:
                     Name: {agent_instructions.name}
                     Purpose: {agent_instructions.description}
-                    Scope: {scope_text}
 
                     Expected Behavior:
                     - Should handle: {self._get_expected_inputs(agent_instructions)}
                     - Should refuse: {self._get_expected_refusals(agent_instructions)}
-                    """
+            """
         
         # Enhanced criteria definitions
         base_criteria = """
@@ -271,31 +265,6 @@ class LLMEvaluator:
                 """
 
         return prompt
-    
-    def _get_expected_inputs(self, agent_instructions: AgentInstructions) -> str:
-        """Generate expected inputs text based on agent scope hints"""
-        if "java" in agent_instructions.scope_hints and "javascript" in agent_instructions.scope_hints:
-            return "Java 8 code for modernization to JavaScript"
-        elif "code-conversion" in agent_instructions.scope_hints:
-            return "Code in the agent's source language"
-        else:
-            return "Inputs within the agent's specialty area"
-    
-    def _get_expected_refusals(self, agent_instructions: AgentInstructions) -> str:
-        """Generate expected refusals text based on agent scope hints"""
-        refusals = []
-
-        if "should-refuse-non-scope" in agent_instructions.scope_hints:
-            if "java" in agent_instructions.scope_hints:
-                refusals.append("Non-Java code (Python, C++, etc.)")
-
-        if "should-refuse-malformed" in agent_instructions.scope_hints:
-            refusals.append("Malformed or incomplete code")
-
-        if not refusals:
-            refusals.append("Inputs outside its intended scope")
-
-        return ", ".join(refusals)
     
     def _get_scope_criteria_format(self, params: EvaluationParameters) -> str:
         """Add scope criteria to format string if needed"""

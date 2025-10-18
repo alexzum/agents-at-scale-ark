@@ -33,7 +33,7 @@ memory:
   # Create a Memory CRD resource
   createMemoryCRD: true
   # Set this Memory as the default (names it "default")
-  setAsDefault: false
+  setAsDefault: true
   # Port for the HTTP server
   port: 8080
   # Maximum message size in bytes (10MB)

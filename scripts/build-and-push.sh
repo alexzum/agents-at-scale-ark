@@ -73,6 +73,8 @@ detect_cluster() {
         echo "minikube"
     elif kubectl config current-context | grep -q "k3s"; then
         echo "k3s"
+    elif kubectl config current-context | grep -q "orbstack"; then
+        echo "orbstack"
     elif kubectl config current-context | grep -q "default" && kubectl get nodes -o jsonpath='{.items[0].status.nodeInfo.containerRuntimeVersion}' 2>/dev/null | grep -q "k3s"; then
         echo "k3s"
     elif minikube status >/dev/null 2>&1; then
@@ -174,23 +176,37 @@ build_and_push_k3d() {
     local tag="$2"
     local dockerfile_path="$3"
     local build_context="$4"
-    
+
     echo -e "${blue}Building image for k3d cluster...${nc}"
-    
+
     # Build the image locally
     docker_build "$image_name" "$tag" "$dockerfile_path" "$build_context"
-    
+
     # Import image into k3d cluster
     echo -e "${blue}Importing image into k3d cluster...${nc}"
-    
+
     # Get current context and extract cluster name
     local context=$(kubectl config current-context)
     local cluster_name=${context#k3d-}  # Remove k3d- prefix
-    
+
     # Import image using k3d
     k3d image import "$image_name:$tag" -c "$cluster_name"
-    
+
     echo -e "${green}✔${nc} Image $image_name:$tag imported into k3d cluster"
+}
+
+build_and_push_orbstack() {
+    local image_name="$1"
+    local tag="$2"
+    local dockerfile_path="$3"
+    local build_context="$4"
+
+    echo -e "${blue}Building image for OrbStack cluster...${nc}"
+
+    # Build the image - OrbStack uses the same Docker daemon
+    docker_build "$image_name" "$tag" "$dockerfile_path" "$build_context"
+
+    echo -e "${green}✔${nc} Image $image_name:$tag built for OrbStack cluster"
 }
 
 main() {
@@ -336,9 +352,18 @@ main() {
             fi
             build_and_push_k3s "$IMAGE_NAME" "$TAG" "$DOCKERFILE_PATH" "$BUILD_CONTEXT"
             ;;
+        orbstack)
+            # OrbStack uses Docker daemon directly, just verify cluster is accessible
+            if ! kubectl get nodes >/dev/null 2>&1; then
+                echo -e "${red}error${nc}: OrbStack cluster not accessible"
+                echo "make sure OrbStack is running and Kubernetes is enabled"
+                exit 1
+            fi
+            build_and_push_orbstack "$IMAGE_NAME" "$TAG" "$DOCKERFILE_PATH" "$BUILD_CONTEXT"
+            ;;
         *)
             echo -e "${red}error${nc}: unsupported cluster type: $TARGET_CLUSTER"
-            echo "supported cluster types: kind, k3d, minikube, k3s"
+            echo "supported cluster types: kind, k3d, minikube, k3s, orbstack"
             exit 1
             ;;
     esac
