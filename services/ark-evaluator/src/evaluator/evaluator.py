@@ -4,6 +4,7 @@ from .types import EvaluationRequest, EvaluationResponse, EvaluationParameters, 
 from .llm_client import LLMClient
 from .model_resolver import ModelResolver
 from .agent_resolver import AgentResolver, AgentInstructions
+from .prompt_builder import build_evaluation_prompt
 
 logger = logging.getLogger(__name__)
 
@@ -56,7 +57,9 @@ class LLMEvaluator:
                 model=model,
                 params=params
             )
-            
+
+            logger.info(f"Raw LLM evaluation result:\n{evaluation_result}")
+
             # Parse evaluation result
             score, passed, metadata = self._parse_evaluation_result(evaluation_result, params)
             
@@ -128,143 +131,17 @@ class LLMEvaluator:
     
     def _build_evaluation_prompt(self, request: EvaluationRequest, params: EvaluationParameters, golden_examples, agent_instructions: Optional[AgentInstructions] = None) -> str:
         """
-        Build evaluation prompt using LLM-as-a-Judge pattern with golden dataset context
+        Build evaluation prompt using LLM-as-a-Judge pattern with golden dataset context.
+
+        This method now delegates to the EvaluationPromptBuilder for better maintainability.
         """
-        response_text = "\n".join([
-            f"Response from {resp.target.type} '{resp.target.name}':\n{resp.content}"
-            for resp in request.responses
-        ])
-        
-        evaluation_scope = ",".join(params.get_scope_list())
-
-        # Build golden examples section
-        examples_section = ""
-        if golden_examples:
-            examples_list = []
-            for example in golden_examples:
-                metadata_str = ""
-                if hasattr(example, 'metadata') and example.metadata:
-                    metadata_items = [f"{k}: {v}" for k, v in example.metadata.items()]
-                    metadata_str = f" ({', '.join(metadata_items)})"
-                examples_list.append(f"Input: {example.input}\nExpected Output: {example.expectedOutput}{metadata_str}")
-            
-            examples_text = "\n".join(f"Example {i+1}:\n{example}" for i, example in enumerate(examples_list))
-            examples_section = f"""
-                    REFERENCE EXAMPLES:
-                    Here are some reference examples to help guide your evaluation:
-                    
-                    {examples_text}
-                    
-                    Use these examples to understand the expected quality and style of responses for similar queries.
-                    """
-
-        # Use custom evaluator role or default
-        evaluator_role = (params.evaluator_role if params and params.evaluator_role 
-                         else "You are an AI evaluator tasked with assessing the quality of responses to user input and provided response.")
-        
-        logger.info(f"Using evaluator role: {evaluator_role[:100]}...")
-        
-        # Build agent instructions section
-        agent_section = ""
-        if agent_instructions:
-            agent_section = f"""
-                    AGENT INSTRUCTIONS:
-                    Name: {agent_instructions.name}
-                    Purpose: {agent_instructions.description}
-
-                    Expected Behavior:
-                    - Should handle: {self._get_expected_inputs(agent_instructions)}
-                    - Should refuse: {self._get_expected_refusals(agent_instructions)}
-            """
-        
-        # Enhanced criteria definitions
-        base_criteria = """
-                    1. Relevance: How well do the responses address the user's query?
-                    2. Accuracy: Are the responses factually correct and reliable?
-                    3. Completeness: Do the responses provide comprehensive information?
-                    4. Conciseness: Do the responses provide a concise information?
-                    5. Clarity: Are the responses clear and easy to understand?
-                    6. Usefulness: How helpful are the responses to the user?
-                    7. Context_Precision: How precise is the retrieved context in relation to the query?
-                    8. Context_Recall: How well does the response recall relevant information from the provided context?"""
-        
-        scope_criteria = ""
-        scope_instructions = ""
-        if agent_instructions and self._requires_agent_instructions(params):
-            logger.info(f"Adding scope instructions for agent: {agent_instructions.name}")
-            scope_criteria = """
-                    9. Compliance: Does the response stay within the agent's intended scope and domain?
-                    10. Appropriateness: Is the response appropriate given the input type and agent's specialty?
-                    11. Refusal Handling: If input is outside scope, does the agent properly refuse with explanation?"""
-
-            # Add strict scope evaluation instructions
-            scope_instructions = f"""
-
-                    CRITICAL SCOPE EVALUATION RULES:
-
-                    The agent "{agent_instructions.name}" is specialized for: {self._get_expected_inputs(agent_instructions)}
-                    Should refuse: {self._get_expected_refusals(agent_instructions)}
-
-                    *** SCOPE VIOLATION PENALTY: If the agent processes input that should be refused, this is a SEVERE violation deserving LOW score (0.0-0.3). ***
-
-                    SCORING GUIDELINES:
-                    - If input IS within agent scope AND agent provides good processing: HIGH score (0.8-1.0)
-                    - If input is within agent scope BUT agent refuses unnecessarily: MEDIUM score (0.4-0.7)
-                    - If input is outside agent scope AND agent properly refuses with explanation: HIGH score (0.8-1.0)
-                    - If input is outside agent scope BUT agent processes it anyway: LOW score (0.0-0.3) - THIS IS CRITICAL
-
-                    IMPORTANT: Analyze the input yourself to determine if it matches the agent's specialty. Look for language markers, syntax patterns, and content type.
-                    """
-            logger.info("Scope instructions added to prompt")
-        else:
-            logger.info(f"No scope instructions added. Agent instructions: {agent_instructions is not None}, requires instructions: {self._requires_agent_instructions(params) if params else False}")
-
-        # Add ADDITIONAL CONTEXT section if evaluation context is provided
-        context_section = ""
-        if params and params.context:
-            logger.info(f"Adding additional context section, length: {len(params.context)} characters")
-            context_section = f"""
-
-                    ADDITIONAL CONTEXT:
-                    The following context should be considered when evaluating the response:
-
-                    {params.context}
-
-                    This context represents the reference material or retrieval results that should be used to assess accuracy, relevance, context precision, and context recall.
-                    """
-
-        prompt = f"""{evaluator_role}
-
-                    USER QUERY:
-                    {request.input}
-
-                    RESPONSE TO EVALUATE:
-                    {response_text}
-
-                    {agent_section}
-                    {context_section}
-                    {examples_section}
-                    {scope_instructions}
-                    
-                    Consider all following criteria definition:
-                    {base_criteria}
-                    {scope_criteria}
-
-                    Evaluate the response only on the following criteria: {evaluation_scope}
-
-                    Assessment 
-
-                    Provide your evaluation in the following format:
-                    SCORE: [0-1]
-                    PASSED: [true/false] (by default true if SCORE >= 0.7)
-                    REASONING: [Brief explanation of your evaluation focusing on scope compliance]
-                    CRITERIA_SCORES: relevance=[0-1], accuracy=[0-1], completeness=[0-1], conciseness=[0-1], clarity=[0-1], usefulness=[0-1], context_precision=[0-1], context_recall=[0-1]{self._get_scope_criteria_format(params)}
-                    for CRITERIA_SCORES, only include the criteria in {evaluation_scope}
-
-                    Be objective and thorough in your assessment. PRIORITIZE scope compliance over other factors.
-                """
-
-        return prompt
+        return build_evaluation_prompt(
+            request=request,
+            params=params,
+            golden_examples=golden_examples,
+            agent_instructions=agent_instructions,
+            requires_agent_instructions=self._requires_agent_instructions(params)
+        )
     
     def _get_scope_criteria_format(self, params: EvaluationParameters) -> str:
         """Add scope criteria to format string if needed"""
@@ -281,19 +158,17 @@ class LLMEvaluator:
         score = "0"
         passed = False
         metadata = {}
-        
+
         for line in lines:
             line = line.strip()
             if line.startswith('SCORE:'):
                 score_str = line.split(':', 1)[1].strip()
                 try:
-                    # Try to parse as float first (0-1 scale)
                     score_float = float(score_str)
-                    
-                    # If score > 1, assume it's 0-100 scale and convert
+
                     if score_float > 1:
                         score_float = score_float / 100.0
-                    
+
                     score = f"{score_float:.2f}"
                     passed = score_float >= params.min_score
                 except ValueError:
@@ -307,5 +182,50 @@ class LLMEvaluator:
             elif line.startswith('CRITERIA_SCORES:'):
                 criteria_str = line.split(':', 1)[1].strip()
                 metadata['criteria_scores'] = criteria_str
-        
+
+        criteria_avg = self._calculate_criteria_average(metadata.get('criteria_scores', ''))
+        if criteria_avg is not None:
+            overall_score = float(score)
+            diff = abs(overall_score - criteria_avg)
+
+            if diff > 0.15:
+                logger.warning(
+                    f"Significant mismatch between overall score ({overall_score:.2f}) "
+                    f"and criteria average ({criteria_avg:.2f}), difference: {diff:.2f}"
+                )
+                logger.info(f"Using criteria average as the overall score")
+                score = f"{criteria_avg:.2f}"
+                passed = criteria_avg >= params.min_score
+                metadata['score_adjusted'] = 'true'
+                metadata['original_score'] = str(overall_score)
+
         return score, passed, metadata
+
+    def _calculate_criteria_average(self, criteria_scores_str: str) -> Optional[float]:
+        """
+        Calculate average score from criteria_scores string
+        Returns None if parsing fails
+        """
+        if not criteria_scores_str:
+            return None
+
+        try:
+            scores = []
+            entries = criteria_scores_str.split(',')
+            for entry in entries:
+                entry = entry.strip()
+                if '=' in entry:
+                    _, score_str = entry.split('=', 1)
+                    score_val = float(score_str.strip())
+                    if 0 <= score_val <= 1:
+                        scores.append(score_val)
+
+            if scores:
+                avg = sum(scores) / len(scores)
+                logger.info(f"Calculated criteria average: {avg:.2f} from {len(scores)} criteria")
+                return avg
+
+        except (ValueError, AttributeError) as e:
+            logger.warning(f"Failed to calculate criteria average: {str(e)}")
+
+        return None

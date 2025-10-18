@@ -83,15 +83,18 @@ const formatQualityValue = (value: number | string, unit?: string): string => {
   return String(value)
 }
 
-const addMetricFromCriteria = (criteriaName: string, score: number, metrics: QualityMetric[]) => {
+const addMetricFromCriteria = (criteriaName: string, score: number, metrics: QualityMetric[], defaultThreshold: number = 0.7) => {
   let metricType: QualityMetric['type'] = 'general'
   let description = ''
   let recommendation = ''
-  let threshold = 0.7 // Default threshold
-  
+
+  // Use the threshold from backend metadata (min_score_threshold)
+  // This ensures consistency with the actual evaluation requirements
+  const threshold = defaultThreshold
+
   // Determine metric type and details based on criteria name
   const keyLower = criteriaName.toLowerCase()
-  
+
   if (keyLower.includes('accuracy') || keyLower.includes('correct')) {
     metricType = 'accuracy'
     description = 'How accurate the response is to the ground truth'
@@ -120,7 +123,6 @@ const addMetricFromCriteria = (criteriaName: string, score: number, metrics: Qua
     metricType = 'reasoning'
     description = 'How well the system handles refusal scenarios'
     recommendation = 'Improve refusal detection and response strategies'
-    threshold = 0.5 // Lower threshold for refusal handling
   } else if (keyLower.includes('appropriateness') || keyLower.includes('appropriate')) {
     metricType = 'relevance'
     description = 'How appropriate the response is for the context'
@@ -133,14 +135,12 @@ const addMetricFromCriteria = (criteriaName: string, score: number, metrics: Qua
     metricType = 'accuracy'
     description = 'How well the response complies with requirements and guidelines'
     recommendation = 'Review and strengthen compliance checks and guidelines'
-    threshold = 0.8 // Higher threshold for compliance
   } else if (keyLower.includes('score') || keyLower.includes('quality')) {
     metricType = 'general'
     description = 'Overall quality assessment'
     recommendation = 'Review and optimize the evaluation criteria'
-    threshold = 0.8 // Higher threshold for overall quality
   }
-  
+
   const passed = score >= threshold
   
   metrics.push({
@@ -158,53 +158,60 @@ const addMetricFromCriteria = (criteriaName: string, score: number, metrics: Qua
 
 const extractQualityMetricsFromMetadata = (metadata: Record<string, unknown>): QualityMetric[] => {
   const metrics: QualityMetric[] = []
-  
+
+  // Extract the min_score_threshold from backend metadata
+  // This is the authoritative threshold that should be used for all criteria
+  const minScoreThreshold = metadata.min_score_threshold
+  const threshold = typeof minScoreThreshold === 'number' ? minScoreThreshold :
+    typeof minScoreThreshold === 'string' ? parseFloat(minScoreThreshold) : 0.7
+
   // Skip non-metric keys
   const skipKeys = [
-    'reasoning', 'model_base_url', 'model_used', 'query_name', 'query_namespace', 
+    'reasoning', 'model_base_url', 'model_used', 'query_name', 'query_namespace',
     'query_id', 'min_score_threshold'
   ]
-  
+
   // First, check if we have evaluation_scope to get the list of criteria
   const evaluationScope = metadata.evaluation_scope as string | undefined
   let criteriaList: string[] = []
-  
+
   if (evaluationScope && typeof evaluationScope === 'string') {
     criteriaList = evaluationScope.split(',').map(c => c.trim())
   }
-  
+
   // Debug logging
   if (process.env.NODE_ENV === 'development') {
     console.log('Debug - criteriaList:', criteriaList)
     console.log('Debug - metadata keys:', Object.keys(metadata))
+    console.log('Debug - using threshold:', threshold)
   }
-  
+
   // If we have criteria list, try to create metrics for each criteria with score 1.0 as default
   // This handles cases where the evaluation passed but individual scores aren't stored separately
   if (criteriaList.length > 0) {
     criteriaList.forEach(criterion => {
       // Look for the criterion as a direct key
-      const directKey = Object.keys(metadata).find(key => 
+      const directKey = Object.keys(metadata).find(key =>
         key.toLowerCase() === criterion.toLowerCase()
       )
-      
+
       if (directKey) {
         const value = metadata[directKey]
-        const score = typeof value === 'number' ? value : 
+        const score = typeof value === 'number' ? value :
           typeof value === 'string' ? parseFloat(value) : null
-        
+
         if (score !== null && !isNaN(score)) {
-          addMetricFromCriteria(criterion, score, metrics)
+          addMetricFromCriteria(criterion, score, metrics, threshold)
           return
         }
       }
-      
+
       // If no direct key found, create metric with perfect score (since overall assessment passed)
       // This is a fallback for when criteria are defined but individual scores aren't stored
       if (process.env.NODE_ENV === 'development') {
         console.log(`Debug - No score found for ${criterion}, using 1.0 as fallback`)
       }
-      addMetricFromCriteria(criterion, 1.0, metrics)
+      addMetricFromCriteria(criterion, 1.0, metrics, threshold)
     })
   }
   
@@ -224,13 +231,13 @@ const extractQualityMetricsFromMetadata = (metadata: Record<string, unknown>): Q
         const score = parseFloat(scoreStr)
         if (!isNaN(score) && score >= 0 && score <= 1) {
           // Remove existing metric for this criteria to avoid duplicates
-          const existingIndex = metrics.findIndex(m => 
+          const existingIndex = metrics.findIndex(m =>
             m.name.toLowerCase().replace(/\s+/g, '_') === criteriaName.toLowerCase()
           )
           if (existingIndex >= 0) {
             metrics.splice(existingIndex, 1)
           }
-          addMetricFromCriteria(criteriaName, score, metrics)
+          addMetricFromCriteria(criteriaName, score, metrics, threshold)
         }
       })
       return
@@ -247,23 +254,23 @@ const extractQualityMetricsFromMetadata = (metadata: Record<string, unknown>): Q
     if (numericValue !== null && !isNaN(numericValue) && numericValue >= 0 && numericValue <= 1) {
       // If we have a criteria list, only include metrics that are in the scope
       if (criteriaList.length > 0) {
-        const isInScope = criteriaList.some(criterion => 
+        const isInScope = criteriaList.some(criterion =>
           criterion.toLowerCase() === key.toLowerCase() ||
           key.toLowerCase().includes(criterion.toLowerCase())
         )
         if (isInScope) {
           // Remove existing metric for this criteria to avoid duplicates
-          const existingIndex = metrics.findIndex(m => 
+          const existingIndex = metrics.findIndex(m =>
             m.name.toLowerCase().replace(/\s+/g, '_') === key.toLowerCase()
           )
           if (existingIndex >= 0) {
             metrics.splice(existingIndex, 1)
           }
-          addMetricFromCriteria(key, numericValue, metrics)
+          addMetricFromCriteria(key, numericValue, metrics, threshold)
         }
       } else {
         // No specific criteria list, include any numeric metric
-        addMetricFromCriteria(key, numericValue, metrics)
+        addMetricFromCriteria(key, numericValue, metrics, threshold)
       }
     }
   })
@@ -319,7 +326,7 @@ function QualityMetricCard({ metric }: { metric: QualityMetric }) {
             </div>
             <span className="font-semibold text-sm">{metric.name}</span>
           </div>
-          {metric.confidence && (
+          {metric.confidence !== undefined && metric.confidence !== null && (
             <Badge variant="outline" className="text-xs">
               {(metric.confidence * 100).toFixed(0)}%
             </Badge>
@@ -386,7 +393,7 @@ function QualityAssessmentCard({ assessment }: { assessment: QualityAssessment }
             <span className="font-medium text-sm">{assessment.criterion}</span>
           </div>
           <Badge variant={assessment.passed ? "default" : "destructive"} className="text-xs">
-            {formatQualityValue(assessment.score)}
+            {(Number(assessment.score) * 100).toFixed(0)}%
           </Badge>
         </div>
       </CardHeader>

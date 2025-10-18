@@ -102,7 +102,7 @@ export function EvaluationStatusIndicator({
     e.stopPropagation()
     // Navigate to evaluations page with query filter
     const enhancedParam = enhanced ? '&enhanced=true' : ''
-    router.push(`/evaluations&query=${encodeURIComponent(queryName)}${enhancedParam}`)
+    router.push(`/evaluations?query=${encodeURIComponent(queryName)}${enhancedParam}`)
   }
 
   if (loading) {

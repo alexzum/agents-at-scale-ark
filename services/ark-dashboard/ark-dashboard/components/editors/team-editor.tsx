@@ -33,6 +33,7 @@ import { getKubernetesNameError } from "@/lib/utils/kubernetes-validation";
 import { Badge } from "@/components/ui/badge";
 import { DndProvider, useDrag, useDrop } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
+import { cn } from "@/lib/utils";
 
 type GraphEdge = components["schemas"]["GraphEdge"];
 
@@ -52,18 +53,14 @@ const ItemTypes = { CARD: "card" };
 function DraggableCard({
   index,
   moveCard,
-  canAdd,
   isSelected,
-  disabledReason,
   toggleMember,
   agent,
   agentIsExternal
 }: Readonly<{
   index: number;
   moveCard: (dragIndex: number, hoverIndex: number) => void;
-  canAdd: boolean;
   isSelected: boolean;
-  disabledReason: string;
   toggleMember: (agent: Agent) => void;
   agent: Agent;
   agentIsExternal: boolean;
@@ -101,18 +98,15 @@ function DraggableCard({
       style={{ opacity: isDragging ? 0.4 : 1 }}
     >
       <label
-        className={`flex items-center space-x-2 p-1 rounded ${
-          canAdd || isSelected
-            ? "cursor-pointer hover:bg-accent"
-            : "cursor-not-allowed opacity-50"
-        }`}
-        title={disabledReason}
+        className={cn(
+          "flex items-center space-x-2 p-1 rounded cursor-pointer",
+          isSelected ? "hover:bg-accent" : "opacity-50"
+        )}
       >
         <input
           type="checkbox"
           checked={isSelected}
           onChange={() => toggleMember(agent)}
-          disabled={!canAdd && !isSelected}
           className="h-4 w-4 rounded border-gray-300"
         />
         <span className="text-sm flex items-center gap-1">
@@ -226,71 +220,8 @@ export function TeamEditor({
   };
 
   const isExternalAgent = useCallback((agent: Agent): boolean => {
-    return agent.executionEngine?.name !== "a2a";
+    return agent.executionEngine?.name === "a2a";
   }, []);
-
-  const getTeamComposition = useCallback(() => {
-    const selectedAgentMembers = selectedMembers.filter(
-      (m) => m.type === "agent"
-    );
-    const existingAgents = selectedAgentMembers
-      .map((member) => agents.find((a) => a.name === member.name))
-      .filter(Boolean) as Agent[];
-
-    const hasExternalAgents = existingAgents.some(isExternalAgent);
-    const hasInternalAgents = existingAgents.some((a) => !isExternalAgent(a));
-
-    return {
-      selectedAgentMembers,
-      existingAgents,
-      hasExternalAgents,
-      hasInternalAgents,
-      isEmpty: selectedAgentMembers.length === 0
-    };
-  }, [selectedMembers, agents, isExternalAgent]);
-
-  const canAddAgent = useCallback(
-    (agent: Agent): boolean => {
-      const agentIsExternal = isExternalAgent(agent);
-      const { isEmpty, hasExternalAgents, hasInternalAgents } =
-        getTeamComposition();
-
-      if (isEmpty) {
-        return true;
-      }
-
-      if (agentIsExternal && hasInternalAgents) {
-        return false;
-      }
-      if (!agentIsExternal && hasExternalAgents) {
-        return false;
-      }
-
-      return true;
-    },
-    [isExternalAgent, getTeamComposition]
-  );
-
-  const getDisabledReason = useCallback(
-    (agent: Agent): string => {
-      const agentIsExternal = isExternalAgent(agent);
-      const { isEmpty, hasExternalAgents, hasInternalAgents } =
-        getTeamComposition();
-
-      if (isEmpty || canAddAgent(agent)) {
-        return "";
-      }
-
-      if (agentIsExternal && hasInternalAgents) {
-        return "Cannot mix external agents with internal agents in the same team";
-      } else if (!agentIsExternal && hasExternalAgents) {
-        return "Cannot mix internal agents with external agents in the same team";
-      }
-
-      return "";
-    },
-    [isExternalAgent, getTeamComposition, canAddAgent]
-  );
 
   const toggleMember = (agent: Agent) => {
     const member: TeamMember = {
@@ -426,10 +357,6 @@ export function TeamEditor({
           </div>
           <div className="grid gap-2">
             <Label>Members</Label>
-            <p className="text-xs text-muted-foreground">
-              Note: Teams cannot mix internal and external agents. External
-              agents are marked with an &quot;External&quot; badge.
-            </p>
             <div className="border rounded-md p-2 space-y-2 max-h-40 overflow-y-auto">
               {agents.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-2">
@@ -441,19 +368,14 @@ export function TeamEditor({
                     const isSelected = selectedMembers.some(
                       (m) => m.name === agent.name && m.type === "agent"
                     );
-                    const canAdd = canAddAgent(agent);
                     const agentIsExternal = isExternalAgent(agent);
-                    const disabledReason = !isSelected
-                      ? getDisabledReason(agent)
-                      : "";
+
                     return (
                       <DraggableCard
                         key={agent.name + `${index}`}
                         index={index}
                         moveCard={moveCard}
-                        canAdd={canAdd}
                         isSelected={isSelected}
-                        disabledReason={disabledReason}
                         toggleMember={toggleMember}
                         agent={agent}
                         agentIsExternal={agentIsExternal}

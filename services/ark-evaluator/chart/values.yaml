@@ -5,8 +5,9 @@ global:
     ark.mckinsey.com/service: ark-evaluator
 
 image:
-  repository: ghcr.io/mckinsey/agents-at-scale-ark/ark-evaluator
-  pullPolicy: IfNotPresent
+  repository: ark-evaluator
+  AppVersion: latest
+  pullPolicy: Never
   # tag defaults to .Chart.AppVersion if not specified
 
 imagePullSecrets: []
