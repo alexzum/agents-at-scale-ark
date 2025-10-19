@@ -4,6 +4,12 @@ metadata:
   # The 'default' model is used by agents if they do not have a model explicitly
   # set.
   name: default
+  annotations:
+    # Pricing for gpt-4o-mini (per 1M tokens in USD)
+    # Used for A/B testing cost calculations
+    ark.mckinsey.com/pricing.input-per-million: "0.15"
+    ark.mckinsey.com/pricing.output-per-million: "0.60"
+    ark.mckinsey.com/pricing.currency: "USD"
 spec:
   type: azure
   model:

@@ -261,133 +261,6 @@ export function EnhancedEvaluationDetailView({
         />
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
-        {/* Overview Card */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <BarChart3 className="h-5 w-5" />
-              Overview
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">
-                  Type
-                </p>
-                <Badge variant="outline" className="capitalize">
-                  {evaluationType}
-                </Badge>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">
-                  Score
-                </p>
-                <p className="text-2xl font-bold">
-                  {status?.score ? Number(status.score).toFixed(2) : "-"}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">
-                  Passed
-                </p>
-                <div className="flex items-center gap-1">
-                  {status?.passed === true ? (
-                    <CheckCircle className="h-4 w-4 text-green-600" />
-                  ) : status?.passed === false ? (
-                    <AlertCircle className="h-4 w-4 text-red-600" />
-                  ) : null}
-                  <span
-                    className={`font-medium ${status?.passed === true
-                        ? "text-green-600"
-                        : status?.passed === false
-                          ? "text-red-600"
-                          : "text-muted-foreground"
-                      }`}
-                  >
-                    {status?.passed === true
-                      ? "Yes"
-                      : status?.passed === false
-                        ? "No"
-                        : "Unknown"}
-                  </span>
-                </div>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">
-                  Phase
-                </p>
-                <p className="font-medium capitalize">
-                  {(status?.phase as string) || "unknown"}
-                </p>
-              </div>
-            </div>
-
-            {message && (
-              <>
-                <Separator />
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground mb-2">
-                    Message
-                  </p>
-                  <p className="text-sm">{message}</p>
-                </div>
-              </>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Configuration Card */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Settings className="h-5 w-5" />
-              Configuration
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">
-                Evaluator
-              </p>
-              <p className="font-medium">{evaluatorInfo?.name || "-"}</p>
-            </div>
-
-            {queryRef?.name && (
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">
-                  Query Reference
-                </p>
-                <p className="font-medium">{queryRef.name}</p>
-              </div>
-            )}
-
-            {evaluatorInfo?.parameters &&
-              evaluatorInfo.parameters.length > 0 && (
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground mb-2">
-                    Parameters
-                  </p>
-                  <div className="space-y-2">
-                    {evaluatorInfo.parameters.map((param, index) => (
-                      <div
-                        key={index}
-                        className="flex justify-between items-center text-sm"
-                      >
-                        <span className="font-medium">{param.name}:</span>
-                        <span className="text-muted-foreground font-mono">
-                          {param.value}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-          </CardContent>
-        </Card>
-      </div>
-
       {/* Enhanced Content Tabs */}
       <Tabs defaultValue="overview" className="space-y-6">
         <TabsList className="flex">
@@ -585,6 +458,133 @@ export function EnhancedEvaluationDetailView({
           />
         </TabsContent>
       </Tabs>
+
+      <div className="grid gap-6 md:grid-cols-2">
+        {/* Overview Card */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <BarChart3 className="h-5 w-5" />
+              Overview
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Type
+                </p>
+                <Badge variant="outline" className="capitalize">
+                  {evaluationType}
+                </Badge>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Score
+                </p>
+                <p className="text-2xl font-bold">
+                  {status?.score ? Number(status.score).toFixed(2) : "-"}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Passed
+                </p>
+                <div className="flex items-center gap-1">
+                  {status?.passed === true ? (
+                    <CheckCircle className="h-4 w-4 text-green-600" />
+                  ) : status?.passed === false ? (
+                    <AlertCircle className="h-4 w-4 text-red-600" />
+                  ) : null}
+                  <span
+                    className={`font-medium ${status?.passed === true
+                        ? "text-green-600"
+                        : status?.passed === false
+                          ? "text-red-600"
+                          : "text-muted-foreground"
+                      }`}
+                  >
+                    {status?.passed === true
+                      ? "Yes"
+                      : status?.passed === false
+                        ? "No"
+                        : "Unknown"}
+                  </span>
+                </div>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Phase
+                </p>
+                <p className="font-medium capitalize">
+                  {(status?.phase as string) || "unknown"}
+                </p>
+              </div>
+            </div>
+
+            {message && (
+              <>
+                <Separator />
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground mb-2">
+                    Message
+                  </p>
+                  <p className="text-sm">{message}</p>
+                </div>
+              </>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Configuration Card */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Settings className="h-5 w-5" />
+              Configuration
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">
+                Evaluator
+              </p>
+              <p className="font-medium">{evaluatorInfo?.name || "-"}</p>
+            </div>
+
+            {queryRef?.name && (
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Query Reference
+                </p>
+                <p className="font-medium">{queryRef.name}</p>
+              </div>
+            )}
+
+            {evaluatorInfo?.parameters &&
+              evaluatorInfo.parameters.length > 0 && (
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground mb-2">
+                    Parameters
+                  </p>
+                  <div className="space-y-2">
+                    {evaluatorInfo.parameters.map((param, index) => (
+                      <div
+                        key={index}
+                        className="flex justify-between items-center text-sm"
+                      >
+                        <span className="font-medium">{param.name}:</span>
+                        <span className="text-muted-foreground font-mono">
+                          {param.value}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

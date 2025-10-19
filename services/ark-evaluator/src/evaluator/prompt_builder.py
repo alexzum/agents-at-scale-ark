@@ -49,6 +49,7 @@ class EvaluationPromptBuilder:
         self._evaluator_role: Optional[str] = None
         self._evaluation_scope: Optional[str] = None
         self._min_score: float = 0.7
+        self._has_context: bool = False
 
     def set_evaluator_role(self, role: Optional[str]) -> 'EvaluationPromptBuilder':
         """Set the evaluator role/persona"""
@@ -117,25 +118,52 @@ class EvaluationPromptBuilder:
         return self
 
     def add_context(self, context: Optional[str]) -> 'EvaluationPromptBuilder':
-        """Add additional context for evaluation"""
+        """Add additional context for evaluation with strict grounding enforcement"""
         if not context:
             return self
 
+        self._has_context = True
+
         content = f"""
-            The following context should be considered when evaluating the response:
+            CRITICAL: GROUND TRUTH CONTEXT PROVIDED
+
+            The following context is the AUTHORITATIVE SOURCE for this evaluation:
 
             {context}
 
-            This context represents the reference material or retrieval results that should be used to assess accuracy, relevance, context precision, and context recall.
+            STRICT SCORING REQUIREMENTS when context is provided:
+
+            1. ACCURACY: Response MUST be verified against the provided context
+               - HIGH score (0.8-1.0): All facts from response are found in context
+               - MEDIUM score (0.4-0.7): Some facts verified, some unverifiable
+               - LOW score (0.0-0.3): Response contradicts context or adds unverified facts
+
+            2. FAITHFULNESS: Response MUST NOT hallucinate beyond the context
+               - HIGH score (0.8-1.0): Every claim is grounded in context
+               - MEDIUM score (0.4-0.7): Mostly grounded with minor inferences
+               - LOW score (0.0-0.3): Contains information not in context (hallucination)
+
+            3. CONTEXT_RECALL: Response MUST use relevant information from context
+               - HIGH score (0.8-1.0): Uses most/all relevant context information
+               - MEDIUM score (0.4-0.7): Uses some relevant context
+               - LOW score (0.0-0.3): Ignores most context despite relevance
+
+            4. CONTEXT_PRECISION: Retrieved context MUST be relevant to the query
+               - HIGH score (0.8-1.0): Context is highly relevant and useful
+               - MEDIUM score (0.4-0.7): Context is partially relevant
+               - LOW score (0.0-0.3): Context is mostly irrelevant or noisy
+
+            IMPORTANT: If response ignores context or contradicts it, scores for
+            accuracy, faithfulness, and context_recall MUST be LOW (< 0.3).
         """
 
         section = PromptSection(
-            title="ADDITIONAL CONTEXT:",
+            title="",
             content=content,
             order=40
         )
         self._sections.append(section)
-        logger.info(f"Adding additional context section, length: {len(context)} characters")
+        logger.info(f"Adding strict context enforcement section, length: {len(context)} characters")
         return self
 
     def add_golden_examples(self, golden_examples: Optional[List]) -> 'EvaluationPromptBuilder':
@@ -179,7 +207,13 @@ class EvaluationPromptBuilder:
         has_agent_instructions: bool = False
     ) -> 'EvaluationPromptBuilder':
         """Add evaluation criteria definitions and scope"""
-        self._evaluation_scope = ",".join(params.get_scope_list())
+        scope_list = params.get_scope_list()
+
+        if self._has_context and "faithfulness" not in scope_list:
+            scope_list.append("faithfulness")
+            logger.info("Adding faithfulness criterion due to context presence")
+
+        self._evaluation_scope = ",".join(scope_list)
         self._min_score = params.min_score
 
         base_criteria = """
@@ -191,14 +225,15 @@ class EvaluationPromptBuilder:
             6. Usefulness: How helpful are the responses to the user?
             7. Context_Precision: How precise is the retrieved context in relation to the query?
             8. Context_Recall: How well does the response recall relevant information from the provided context?
+            9. Faithfulness: Does the response stay grounded in the provided context without hallucinations?
         """
 
         scope_criteria = ""
         if has_agent_instructions:
             scope_criteria = """
-                9. Compliance: Does the response stay within the agent's intended scope and domain?
-                10. Appropriateness: Is the response appropriate given the input type and agent's specialty?
-                11. Refusal Handling: If input is outside scope, does the agent properly refuse with explanation?
+                10. Compliance: Does the response stay within the agent's intended scope and domain?
+                11. Appropriateness: Is the response appropriate given the input type and agent's specialty?
+                12. Refusal Handling: If input is outside scope, does the agent properly refuse with explanation?
             """
             logger.info("Scope instructions added to prompt")
 

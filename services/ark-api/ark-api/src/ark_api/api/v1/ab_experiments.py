@@ -56,6 +56,40 @@ async def get_variant_query_name(base_name: str, experiment_id: str) -> str:
     return f"{base_name}-exp-{experiment_id}"
 
 
+def parse_duration_to_seconds(duration_str: str) -> Optional[float]:
+    """Parse duration string like '15.032819046s' to float seconds."""
+    if not duration_str:
+        return None
+    try:
+        return float(duration_str.rstrip('s'))
+    except (ValueError, AttributeError):
+        return None
+
+
+def calculate_cost_from_query(query_dict: dict, model_annotations: dict) -> Optional[float]:
+    """Calculate cost based on token usage and model pricing annotations."""
+    token_usage = query_dict.get("status", {}).get("tokenUsage")
+    if not token_usage:
+        return None
+
+    input_price_per_m = model_annotations.get("ark.mckinsey.com/pricing.input-per-million")
+    output_price_per_m = model_annotations.get("ark.mckinsey.com/pricing.output-per-million")
+
+    if not input_price_per_m or not output_price_per_m:
+        return None
+
+    try:
+        prompt_tokens = int(token_usage.get("promptTokens", 0))
+        completion_tokens = int(token_usage.get("completionTokens", 0))
+
+        input_cost = (prompt_tokens / 1_000_000) * float(input_price_per_m)
+        output_cost = (completion_tokens / 1_000_000) * float(output_price_per_m)
+
+        return input_cost + output_cost
+    except (ValueError, TypeError):
+        return None
+
+
 @router.post("", response_model=ABExperiment)
 @handle_k8s_errors(operation="create", resource_type="ab-experiment")
 async def create_ab_experiment(
@@ -231,14 +265,50 @@ async def get_ab_experiment(
             else:
                 winner = "baseline"
 
+            baseline_query = await ark_client.queries.a_get(query_name)
+            baseline_query_dict = baseline_query.to_dict()
+            baseline_latency = parse_duration_to_seconds(
+                baseline_query_dict.get("status", {}).get("duration")
+            )
+
+            baseline_model_ref = base_spec.get("targets", [{}])[0].get("modelRef", {}).get("name")
+            baseline_cost = None
+            if baseline_model_ref:
+                try:
+                    baseline_model = await ark_client.models.a_get(baseline_model_ref)
+                    baseline_model_annotations = baseline_model.to_dict().get("metadata", {}).get("annotations", {})
+                    baseline_cost = calculate_cost_from_query(baseline_query_dict, baseline_model_annotations)
+                except Exception:
+                    pass
+
+            variant_query = await ark_client.queries.a_get(experiment.variantQuery)
+            variant_query_dict = variant_query.to_dict()
+            variant_latency = parse_duration_to_seconds(
+                variant_query_dict.get("status", {}).get("duration")
+            )
+
+            variant_model_ref = variant_query_dict.get("spec", {}).get("targets", [{}])[0].get("modelRef", {}).get("name")
+            variant_cost = None
+            if variant_model_ref:
+                try:
+                    variant_model = await ark_client.models.a_get(variant_model_ref)
+                    variant_model_annotations = variant_model.to_dict().get("metadata", {}).get("annotations", {})
+                    variant_cost = calculate_cost_from_query(variant_query_dict, variant_model_annotations)
+                except Exception:
+                    pass
+
             experiment.results = ABExperimentResults(
                 baseline=ABExperimentVariantResults(
                     overallScore=baseline_overall,
-                    criteria=baseline_scores
+                    criteria=baseline_scores,
+                    cost=baseline_cost,
+                    latency=baseline_latency
                 ),
                 experiment=ABExperimentVariantResults(
                     overallScore=variant_overall,
-                    criteria=variant_scores
+                    criteria=variant_scores,
+                    cost=variant_cost,
+                    latency=variant_latency
                 ),
                 improvement=improvement,
                 winner=winner
