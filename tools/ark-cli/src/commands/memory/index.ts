@@ -3,7 +3,7 @@ import type { ArkConfig } from '../../lib/config.js';
 import output from '../../lib/output.js';
 import { ArkApiProxy } from '../../lib/arkApiProxy.js';
 
-async function listSessions(options: { output?: string }) {
+export async function listSessions(options: { output?: string }) {
   try {
     const proxy = new ArkApiProxy();
     const arkApiClient = await proxy.start();
@@ -32,7 +32,7 @@ async function listSessions(options: { output?: string }) {
   }
 }
 
-async function resetSession(sessionId: string, options: { output?: string }) {
+export async function resetSession(sessionId: string, options: { output?: string }) {
   try {
     const proxy = new ArkApiProxy();
     const arkApiClient = await proxy.start();
@@ -53,7 +53,7 @@ async function resetSession(sessionId: string, options: { output?: string }) {
   }
 }
 
-async function resetQuery(sessionId: string, queryId: string, options: { output?: string }) {
+export async function resetQuery(sessionId: string, queryId: string, options: { output?: string }) {
   try {
     const proxy = new ArkApiProxy();
     const arkApiClient = await proxy.start();
@@ -74,7 +74,7 @@ async function resetQuery(sessionId: string, queryId: string, options: { output?
   }
 }
 
-async function resetAll(options: { output?: string }) {
+export async function resetAll(options: { output?: string }) {
   try {
     const proxy = new ArkApiProxy();
     const arkApiClient = await proxy.start();
