@@ -9,10 +9,9 @@ global:
 app:
   name: ark-dashboard
   image:
-    repository:  ark-dashboard #ghcr.io/mckinsey/agents-at-scale-ark/ark-dashboard
+    repository: ghcr.io/mckinsey/agents-at-scale-ark/ark-dashboard
     # tag defaults to .Chart.AppVersion if not specified
-    pullPolicy: Never
-    AppVersion: latest
+    pullPolicy: IfNotPresent
 
   # Well-known config variables, usually set as environment variables
   config:

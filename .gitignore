@@ -14,7 +14,7 @@ local.mk
 /local.mk
 .venv/
 help.mk
-
+.serena/
 .venv/
 
 # Coverage reports
