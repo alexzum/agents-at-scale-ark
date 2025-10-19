@@ -19,3 +19,19 @@ export const useGetAllEvaluationsWithDetails = ({ enhanced = false }: Props) => 
     }
   });
 };
+
+type GetEvaluationsProps = {
+  namespace?: string;
+  labelSelector?: string;
+}
+
+export const useGetEvaluations = ({ namespace, labelSelector }: GetEvaluationsProps) => {
+  return useQuery({
+    queryKey: ["get-evaluations", namespace, labelSelector],
+    queryFn: async () => {
+      return await evaluationsService.getAll(namespace, labelSelector);
+    },
+    refetchInterval: false,
+    enabled: !!namespace || !!labelSelector
+  });
+};

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, type ReactElement } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -24,11 +24,13 @@ import {
   CheckCircle,
   XCircle,
   Clock,
-  AlertTriangle
+  AlertTriangle,
+  FlaskConical
 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { evaluationsService, evaluatorsService, type QueryEvaluationSummary, type Evaluator } from "@/lib/services"
 import { EvaluationEditor } from "@/components/editors"
+import { ABTestWizard } from "@/components/ab-testing"
 import type { components } from "@/lib/api/generated/types"
 
 type EvaluationCreateRequest = components["schemas"]["EvaluationCreateRequest"]
@@ -36,6 +38,8 @@ type EvaluationUpdateRequest = components["schemas"]["EvaluationUpdateRequest"]
 
 interface QueryEvaluationActionsProps {
   queryName: string
+  queryNamespace?: string
+  baselineQuery?: unknown
 }
 
 const getStatusConfig = (status: QueryEvaluationSummary['status']) => {
@@ -53,12 +57,13 @@ const getStatusConfig = (status: QueryEvaluationSummary['status']) => {
   }
 }
 
-export function QueryEvaluationActions({ queryName }: QueryEvaluationActionsProps) {
+export function QueryEvaluationActions({ queryName, queryNamespace = "default", baselineQuery }: QueryEvaluationActionsProps): ReactElement {
   const [summary, setSummary] = useState<QueryEvaluationSummary | null>(null)
   const [evaluators, setEvaluators] = useState<Evaluator[]>([])
   const [loading, setLoading] = useState(true)
   const [editorOpen, setEditorOpen] = useState(false)
   const [selectedEvaluator, setSelectedEvaluator] = useState<string>("")
+  const [abTestOpen, setAbTestOpen] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -119,8 +124,8 @@ export function QueryEvaluationActions({ queryName }: QueryEvaluationActionsProp
   const StatusIcon = statusConfig.icon
 
   return (
+    <>
     <div className="flex items-center gap-2">
-      {/* Evaluation Summary Badge */}
       {summary && summary.total > 0 && (
         <TooltipProvider>
           <Tooltip>
@@ -167,6 +172,18 @@ export function QueryEvaluationActions({ queryName }: QueryEvaluationActionsProp
         </Button>
       )}
 
+      {/* A/B Test Button */}
+      <Button
+        variant="outline"
+        size="sm"
+        className="h-8 gap-2"
+        onClick={() => setAbTestOpen(true)}
+        disabled={!baselineQuery}
+      >
+        <FlaskConical className="w-4 h-4" />
+        A/B Test
+      </Button>
+
       {/* Create Evaluation Dropdown */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -181,7 +198,7 @@ export function QueryEvaluationActions({ queryName }: QueryEvaluationActionsProp
             <Plus className="w-4 h-4 mr-2" />
             Create Custom Evaluation
           </DropdownMenuItem>
-          
+
           {evaluators.length > 0 && (
             <>
               <DropdownMenuSeparator />
@@ -218,6 +235,18 @@ export function QueryEvaluationActions({ queryName }: QueryEvaluationActionsProp
         initialEvaluator={selectedEvaluator}
         initialQueryRef={queryName}
       />
+
+      {/* A/B Test Wizard */}
     </div>
+      {baselineQuery && (
+        <ABTestWizard
+          open={abTestOpen}
+          onOpenChange={setAbTestOpen}
+          queryNamespace={queryNamespace}
+          queryName={queryName}
+          baselineQuery={baselineQuery}
+        />
+      )}
+    </>
   )
 }

@@ -568,6 +568,8 @@ function QueryDetailContent() {
           {!isNew && (
             <QueryEvaluationActions
               queryName={queryId}
+              queryNamespace={query.namespace || "default"}
+              baselineQuery={query as unknown}
             />
           )}
           {isNew && (

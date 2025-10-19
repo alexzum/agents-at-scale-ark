@@ -9,9 +9,10 @@ global:
 app:
   name: ark-api
   image:
-    repository: ghcr.io/mckinsey/agents-at-scale-ark/ark-api
+    repository: ark-api #ghcr.io/mckinsey/agents-at-scale-ark/
     # tag defaults to .Chart.AppVersion if not specified
-    pullPolicy: IfNotPresent
+    pullPolicy: Never
+    AppVersion: latest
   
   # Resource configuration
   resources:

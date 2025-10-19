@@ -1093,6 +1093,95 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/namespaces/{namespace}/queries/{query_name}/ab-experiment": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create Ab Experiment
+         * @description Create a new AB experiment for a query.
+         *     Creates a variant query and stores experiment metadata in annotation.
+         */
+        post: operations["create_ab_experiment_v1_namespaces__namespace__queries__query_name__ab_experiment_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/namespaces/{namespace}/queries/{query_name}/ab-experiment/{experiment_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Ab Experiment
+         * @description Get AB experiment details and aggregate evaluation results.
+         */
+        get: operations["get_ab_experiment_v1_namespaces__namespace__queries__query_name__ab_experiment__experiment_id__get"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete Ab Experiment
+         * @description Delete AB experiment and its variant query.
+         */
+        delete: operations["delete_ab_experiment_v1_namespaces__namespace__queries__query_name__ab_experiment__experiment_id__delete"];
+        options?: never;
+        head?: never;
+        /**
+         * Update Ab Experiment
+         * @description Update AB experiment status and results.
+         */
+        patch: operations["update_ab_experiment_v1_namespaces__namespace__queries__query_name__ab_experiment__experiment_id__patch"];
+        trace?: never;
+    };
+    "/v1/namespaces/{namespace}/queries/{query_name}/ab-experiment/{experiment_id}/apply": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Apply Ab Experiment Winner
+         * @description Apply winning variant to baseline query.
+         */
+        post: operations["apply_ab_experiment_winner_v1_namespaces__namespace__queries__query_name__ab_experiment__experiment_id__apply_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/namespaces/{namespace}/queries/{query_name}/ab-experiment/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Experiment History
+         * @description Get AB experiment history for a query.
+         */
+        get: operations["get_experiment_history_v1_namespaces__namespace__queries__query_name__ab_experiment_history_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/openai/v1/chat/completions": {
         parameters: {
             query?: never;
@@ -1191,6 +1280,106 @@ export interface components {
             /** Status Message */
             status_message?: string | null;
         };
+        /**
+         * ABExperiment
+         * @description Complete AB experiment definition.
+         */
+        ABExperiment: {
+            /** Id */
+            id: string;
+            status: components["schemas"]["ABExperimentStatus"];
+            /** Createdat */
+            createdAt: string;
+            /** Createdby */
+            createdBy?: string | null;
+            /** Variantquery */
+            variantQuery: string;
+            /** Variantagent */
+            variantAgent?: string | null;
+            modifications: components["schemas"]["ABExperimentModifications"];
+            evaluations?: components["schemas"]["ABExperimentEvaluations"] | null;
+            results?: components["schemas"]["ABExperimentResults"] | null;
+            /** Appliedat */
+            appliedAt?: string | null;
+            appliedWinner?: components["schemas"]["ABExperimentWinner"] | null;
+        };
+        /**
+         * ABExperimentEvaluations
+         * @description Evaluation resource names for both variants.
+         */
+        ABExperimentEvaluations: {
+            /** Baseline */
+            baseline: string[];
+            /** Experiment */
+            experiment: string[];
+        };
+        /**
+         * ABExperimentModifications
+         * @description Modifications made in the experiment variant.
+         */
+        ABExperimentModifications: {
+            /** Input */
+            input?: string | null;
+            targetType?: components["schemas"]["ABExperimentTargetType"] | null;
+            /** Targetname */
+            targetName?: string | null;
+            targetChanges?: components["schemas"]["ABExperimentTargetChanges"] | null;
+        };
+        /**
+         * ABExperimentResults
+         * @description Aggregated results comparing baseline and experiment.
+         */
+        ABExperimentResults: {
+            baseline: components["schemas"]["ABExperimentVariantResults"];
+            experiment: components["schemas"]["ABExperimentVariantResults"];
+            winner: components["schemas"]["ABExperimentWinner"];
+            /** Improvement */
+            improvement: number;
+        };
+        /**
+         * ABExperimentStatus
+         * @description Status of an AB experiment.
+         * @enum {string}
+         */
+        ABExperimentStatus: "pending" | "running" | "completed" | "failed" | "applied";
+        /**
+         * ABExperimentTargetChanges
+         * @description Changes to apply to a target.
+         */
+        ABExperimentTargetChanges: {
+            /** Model */
+            model?: string | null;
+            /** Instructions */
+            instructions?: string | null;
+        };
+        /**
+         * ABExperimentTargetType
+         * @description Type of target being modified.
+         * @enum {string}
+         */
+        ABExperimentTargetType: "agent" | "team";
+        /**
+         * ABExperimentVariantResults
+         * @description Results for a single variant (baseline or experiment).
+         */
+        ABExperimentVariantResults: {
+            /** Overallscore */
+            overallScore: number;
+            /** Criteria */
+            criteria: {
+                [key: string]: number;
+            };
+            /** Cost */
+            cost?: number | null;
+            /** Latency */
+            latency?: number | null;
+        };
+        /**
+         * ABExperimentWinner
+         * @description Winner of the AB experiment.
+         * @enum {string}
+         */
+        ABExperimentWinner: "baseline" | "experiment" | "tie";
         /**
          * APIKeyCreateRequest
          * @description Request model for creating an API key.
@@ -1442,6 +1631,13 @@ export interface components {
             url: string;
         } & {
             [key: string]: unknown;
+        };
+        /**
+         * ApplyWinnerRequest
+         * @description Request to apply the winning variant.
+         */
+        ApplyWinnerRequest: {
+            winner: components["schemas"]["ABExperimentWinner"];
         };
         /**
          * ArkService
@@ -2014,6 +2210,15 @@ export interface components {
             namespace: string;
             /** Cluster */
             cluster: string | null;
+        };
+        /**
+         * CreateABExperimentRequest
+         * @description Request to create a new AB experiment.
+         */
+        CreateABExperimentRequest: {
+            modifications: components["schemas"]["ABExperimentModifications"];
+            /** Createdby */
+            createdBy?: string | null;
         };
         /** Custom */
         Custom: {
@@ -3480,6 +3685,14 @@ export interface components {
             custom_fields?: {
                 [key: string]: unknown;
             } | null;
+        };
+        /**
+         * UpdateABExperimentRequest
+         * @description Request to update an AB experiment.
+         */
+        UpdateABExperimentRequest: {
+            status?: components["schemas"]["ABExperimentStatus"] | null;
+            results?: components["schemas"]["ABExperimentResults"] | null;
         };
         /** ValidationError */
         ValidationError: {
@@ -5992,6 +6205,228 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_ab_experiment_v1_namespaces__namespace__queries__query_name__ab_experiment_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Namespace */
+                namespace: string;
+                /** @description Base query name */
+                query_name: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateABExperimentRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ABExperiment"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_ab_experiment_v1_namespaces__namespace__queries__query_name__ab_experiment__experiment_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Namespace */
+                namespace: string;
+                /** @description Base query name */
+                query_name: string;
+                /** @description Experiment ID */
+                experiment_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ABExperiment"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_ab_experiment_v1_namespaces__namespace__queries__query_name__ab_experiment__experiment_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Namespace */
+                namespace: string;
+                /** @description Base query name */
+                query_name: string;
+                /** @description Experiment ID */
+                experiment_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_ab_experiment_v1_namespaces__namespace__queries__query_name__ab_experiment__experiment_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Namespace */
+                namespace: string;
+                /** @description Base query name */
+                query_name: string;
+                /** @description Experiment ID */
+                experiment_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateABExperimentRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ABExperiment"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    apply_ab_experiment_winner_v1_namespaces__namespace__queries__query_name__ab_experiment__experiment_id__apply_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Namespace */
+                namespace: string;
+                /** @description Base query name */
+                query_name: string;
+                /** @description Experiment ID */
+                experiment_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ApplyWinnerRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QueryDetailResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_experiment_history_v1_namespaces__namespace__queries__query_name__ab_experiment_history_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Namespace */
+                namespace: string;
+                /** @description Base query name */
+                query_name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ABExperiment"][];
+                };
             };
             /** @description Validation Error */
             422: {
