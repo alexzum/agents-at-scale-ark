@@ -281,7 +281,7 @@ async def get_ab_experiment(
                 baseline_query_dict.get("status", {}).get("duration")
             )
 
-            baseline_model_ref = base_spec.get("targets", [{}])[0].get("modelRef", {}).get("name")
+            baseline_model_ref = baseline_query_dict.get("spec", {}).get("targets", [{}])[0].get("modelRef", {}).get("name")
             baseline_cost = None
             if baseline_model_ref:
                 try:
