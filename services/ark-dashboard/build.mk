@@ -52,7 +52,17 @@ $(ARK_DASHBOARD_STAMP_DEPS): $(ARK_DASHBOARD_SERVICE_SOURCE_DIR)/package.json $(
 # Test target
 $(ARK_DASHBOARD_SERVICE_NAME)-test: $(ARK_DASHBOARD_STAMP_TEST) # HELP: Run ARK Dashboard UI tests
 $(ARK_DASHBOARD_STAMP_TEST): $(ARK_DASHBOARD_STAMP_DEPS) # This command will fail if any critical vulnerabilities are identified
-	cd $(ARK_DASHBOARD_SERVICE_SOURCE_DIR) && npm audit --audit-level=critical && npm run test
+	cd $(ARK_DASHBOARD_SERVICE_SOURCE_DIR) && \
+		(npm audit --audit-level=critical 2>&1 | tee /tmp/audit.log; \
+		if [ $$? -ne 0 ]; then \
+			if grep -q "Service Unavailable\|ENOTFOUND\|ETIMEDOUT\|EAI_AGAIN" /tmp/audit.log; then \
+				echo "Warning: npm audit failed due to registry unavailability, continuing..."; \
+			else \
+				echo "Error: npm audit found critical vulnerabilities"; \
+				exit 1; \
+			fi; \
+		fi) && \
+		npm run test
 	@touch $@
 
 # Build target

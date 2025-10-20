@@ -21,6 +21,9 @@ func ResolveModelSpec(modelSpec any, defaultNamespace string) (string, string, e
 	}
 	switch spec := modelSpec.(type) {
 	case *arkv1alpha1.AgentModelRef:
+		if spec == nil {
+			return "", "", fmt.Errorf("AgentModelRef is nil")
+		}
 		modelName := spec.Name
 		namespace := spec.Namespace
 		if namespace == "" {
@@ -29,6 +32,9 @@ func ResolveModelSpec(modelSpec any, defaultNamespace string) (string, string, e
 		return modelName, namespace, nil
 
 	case *arkv1alpha1.TeamSelectorSpec:
+		if spec == nil {
+			return "", "", fmt.Errorf("TeamSelectorSpec is nil")
+		}
 		modelName := defaultModelName
 		if spec.Model != "" {
 			modelName = spec.Model

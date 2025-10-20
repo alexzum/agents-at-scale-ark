@@ -284,7 +284,11 @@ func MakeAgent(ctx context.Context, k8sClient client.Client, crd *arkv1alpha1.Ag
 	// A2A agents don't need models - they delegate to external A2A servers
 	if crd.Spec.ExecutionEngine == nil || crd.Spec.ExecutionEngine.Name != ExecutionEngineA2A {
 		var err error
-		resolvedModel, err = LoadModel(ctx, k8sClient, crd.Spec.ModelRef, crd.Namespace)
+		var modelSpec interface{} = crd.Spec.ModelRef
+		if modelSpec == nil {
+			modelSpec = ""
+		}
+		resolvedModel, err = LoadModel(ctx, k8sClient, modelSpec, crd.Namespace)
 		if err != nil {
 			return nil, fmt.Errorf("failed to load model for agent %s/%s: %w", crd.Namespace, crd.Name, err)
 		}
