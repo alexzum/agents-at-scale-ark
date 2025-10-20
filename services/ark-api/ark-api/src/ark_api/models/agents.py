@@ -65,6 +65,25 @@ class Tool(BaseModel):
     labelSelector: Optional[LabelSelector] = None
 
 
+class HeaderValue(BaseModel):
+    """Value configuration for a header."""
+    value: Optional[str] = None
+    valueFrom: Optional[ValueFrom] = None
+
+
+class Header(BaseModel):
+    """HTTP header configuration."""
+    name: str
+    value: HeaderValue
+
+
+class HeaderPropagation(BaseModel):
+    """Header propagation configuration for models and MCP servers."""
+    type: str
+    headers: List[Header]
+    mcpSelector: Optional[LabelSelector] = None
+
+
 class Skill(BaseModel):
     """Skill configuration for an A2A agent."""
     id: str
@@ -99,6 +118,7 @@ class AgentCreateRequest(BaseModel):
     parameters: Optional[List[Parameter]] = None
     prompt: Optional[str] = None
     tools: Optional[List[Tool]] = None
+    propagation: Optional[List[HeaderPropagation]] = None
 
 
 class AgentUpdateRequest(BaseModel):
@@ -109,6 +129,7 @@ class AgentUpdateRequest(BaseModel):
     parameters: Optional[List[Parameter]] = None
     prompt: Optional[str] = None
     tools: Optional[List[Tool]] = None
+    propagation: Optional[List[HeaderPropagation]] = None
 
 
 class AgentDetailResponse(BaseModel):
@@ -121,6 +142,7 @@ class AgentDetailResponse(BaseModel):
     parameters: Optional[List[Parameter]] = None
     prompt: Optional[str] = None
     tools: Optional[List[Tool]] = None
+    propagation: Optional[List[HeaderPropagation]] = None
     skills: Optional[List[Skill]] = None
     isA2A: bool = False
     available: Optional[AvailabilityStatus] = None
