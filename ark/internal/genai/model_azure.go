@@ -37,9 +37,6 @@ func loadAzureConfig(ctx context.Context, resolver *common.ValueSourceResolver, 
 	}
 
 	for k, v := range additionalHeaders {
-		if headers == nil {
-			headers = make(map[string]string)
-		}
 		headers[k] = v
 	}
 

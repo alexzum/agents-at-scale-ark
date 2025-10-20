@@ -95,7 +95,7 @@ func (v *AgentCustomValidator) validateAgent(ctx context.Context, agent *arkv1al
 		return warnings, err
 	}
 
-	if err := v.validateHeaders(agent.Spec.Headers); err != nil {
+	if err := v.validatePropagation(agent.Spec.Propagation); err != nil {
 		return warnings, err
 	}
 
@@ -165,58 +165,42 @@ func isValidBuiltInTool(name string) bool {
 	return validBuiltInTools[name]
 }
 
-func (v *AgentCustomValidator) validateHeaders(headers []arkv1alpha1.PropagatableHeader) error {
-	for i, header := range headers {
-		if err := v.validateHeader(header, i); err != nil {
+func (v *AgentCustomValidator) validatePropagation(propagations []arkv1alpha1.HeaderPropagation) error {
+	for i, propagation := range propagations {
+		if err := v.validatePropagationEntry(propagation, i); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func (v *AgentCustomValidator) validateHeader(header arkv1alpha1.PropagatableHeader, index int) error {
-	if header.Name == "" {
-		return fmt.Errorf("headers[%d]: name is required", index)
+func (v *AgentCustomValidator) validatePropagationEntry(propagation arkv1alpha1.HeaderPropagation, index int) error {
+	if propagation.Type != "model" && propagation.Type != "mcp" {
+		return fmt.Errorf("propagation[%d]: type must be either 'model' or 'mcp'", index)
 	}
 
-	if err := v.validateHeaderValue(header, index); err != nil {
-		return err
+	if propagation.Type == "mcp" && propagation.McpSelector == nil {
+		return fmt.Errorf("propagation[%d]: mcpSelector is required when type is 'mcp'", index)
 	}
 
-	if err := v.validateHeaderValueFrom(header, index); err != nil {
-		return err
+	if propagation.Type == "model" && propagation.McpSelector != nil {
+		return fmt.Errorf("propagation[%d]: mcpSelector should not be specified when type is 'model'", index)
+	}
+
+	if len(propagation.Headers) == 0 {
+		return fmt.Errorf("propagation[%d]: headers list cannot be empty", index)
+	}
+
+	for j, header := range propagation.Headers {
+		if err := v.validateHeader(header, index, j); err != nil {
+			return err
+		}
 	}
 
 	return nil
 }
 
-func (v *AgentCustomValidator) validateHeaderValue(header arkv1alpha1.PropagatableHeader, index int) error {
-	if header.Value == "" && header.ValueFrom == nil {
-		return fmt.Errorf("headers[%d]: must specify either value or valueFrom", index)
-	}
-
-	if header.Value != "" && header.ValueFrom != nil {
-		return fmt.Errorf("headers[%d]: cannot specify both value and valueFrom", index)
-	}
-
-	return nil
-}
-
-func (v *AgentCustomValidator) validateHeaderValueFrom(header arkv1alpha1.PropagatableHeader, index int) error {
-	if header.ValueFrom == nil {
-		return nil
-	}
-
-	hasSecret := header.ValueFrom.SecretKeyRef != nil
-	hasConfigMap := header.ValueFrom.ConfigMapKeyRef != nil
-
-	if !hasSecret && !hasConfigMap {
-		return fmt.Errorf("headers[%d]: valueFrom must specify either secretKeyRef or configMapKeyRef", index)
-	}
-
-	if hasSecret && hasConfigMap {
-		return fmt.Errorf("headers[%d]: valueFrom cannot specify both secretKeyRef and configMapKeyRef", index)
-	}
-
-	return nil
+func (v *AgentCustomValidator) validateHeader(header arkv1alpha1.Header, propagationIndex, headerIndex int) error {
+	contextPrefix := fmt.Sprintf("propagation[%d].headers[%d]", propagationIndex, headerIndex)
+	return ValidateHeader(header, contextPrefix)
 }

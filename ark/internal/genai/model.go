@@ -105,23 +105,15 @@ func loadModelCRD(ctx context.Context, k8sClient client.Client, name, namespace 
 	return &modelCRD, nil
 }
 
-// resolveModelHeaders resolves custom headers from Model configuration
 func resolveModelHeaders(ctx context.Context, k8sClient client.Client, headers []arkv1alpha1.Header, modelName, namespace, providerName string) (map[string]string, error) {
-	if len(headers) == 0 {
-		return nil, nil
+	resolvedHeaders, err := ResolveHeaders(ctx, k8sClient, headers, namespace)
+	if err != nil {
+		return nil, err
 	}
 
-	log := logf.FromContext(ctx)
-	resolvedHeaders := make(map[string]string)
-	log.Info("resolving custom headers for model", "provider", providerName, "model", modelName, "namespace", namespace, "header_count", len(headers))
-
-	for _, header := range headers {
-		value, err := ResolveHeaderValue(ctx, k8sClient, header, namespace)
-		if err != nil {
-			return nil, fmt.Errorf("failed to resolve %s header %s: %w", providerName, header.Name, err)
-		}
-		resolvedHeaders[header.Name] = value
-		log.Info("resolved custom header for model", "provider", providerName, "model", modelName, "header_name", header.Name)
+	if len(resolvedHeaders) > 0 {
+		log := logf.FromContext(ctx)
+		log.Info("resolved custom headers for model", "provider", providerName, "model", modelName, "namespace", namespace, "header_count", len(resolvedHeaders))
 	}
 
 	return resolvedHeaders, nil
@@ -141,24 +133,4 @@ func applyHeadersToOptions(ctx context.Context, headers map[string]string, optio
 	}
 
 	return options
-}
-
-func resolvePropagatableHeader(ctx context.Context, k8sClient client.Client, header arkv1alpha1.PropagatableHeader, namespace string) (string, error) {
-	if header.Value != "" {
-		return header.Value, nil
-	}
-
-	if header.ValueFrom == nil {
-		return "", fmt.Errorf("header value must specify either value or valueFrom")
-	}
-
-	if header.ValueFrom.SecretKeyRef != nil {
-		return resolveHeaderFromSecret(ctx, k8sClient, header.ValueFrom.SecretKeyRef, namespace)
-	}
-
-	if header.ValueFrom.ConfigMapKeyRef != nil {
-		return resolveHeaderFromConfigMap(ctx, k8sClient, header.ValueFrom.ConfigMapKeyRef, namespace)
-	}
-
-	return "", fmt.Errorf("header value must specify either value or valueFrom.secretKeyRef or valueFrom.configMapKeyRef")
 }

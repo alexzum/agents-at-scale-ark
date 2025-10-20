@@ -82,14 +82,12 @@ type Header struct {
 	Value HeaderValue `json:"value"`
 }
 
-type PropagatableHeader struct {
+type HeaderPropagation struct {
 	// +kubebuilder:validation:Required
-	// +kubebuilder:validation:MinLength=1
-	Name string `json:"name"`
-	// +kubebuilder:validation:Optional
-	Value string `json:"value,omitempty"`
-	// +kubebuilder:validation:Optional
-	ValueFrom *HeaderValueSource `json:"valueFrom,omitempty"`
+	// +kubebuilder:validation:Enum=model;mcp
+	Type string `json:"type"`
+	// +kubebuilder:validation:Required
+	Headers []Header `json:"headers"`
 	// +kubebuilder:validation:Optional
 	McpSelector *metav1.LabelSelector `json:"mcpSelector,omitempty"`
 }
