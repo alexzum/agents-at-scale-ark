@@ -38,9 +38,7 @@ export function ABPreviewStep({
   const metadata = query?.metadata as Record<string, unknown> | undefined;
   const labels = (metadata?.labels as Record<string, string>) || {};
   const evaluatorLabels = labels;
-  const willTriggerEvaluators = Object.keys(evaluatorLabels).filter(
-    (key) => key.startsWith("evaluation_") || key === "evaluation_required"
-  ).length > 0;
+  const willTriggerEvaluators = Object.keys(evaluatorLabels).length > 0;
 
   const handleConfirm = async () => {
     setIsCreating(true);
@@ -152,13 +150,11 @@ export function ABPreviewStep({
                     Both baseline and experiment queries will be evaluated based on labels
                   </div>
                   <div className="mt-2 flex flex-wrap gap-2">
-                    {Object.entries(evaluatorLabels)
-                      .filter(([key]) => key.startsWith("evaluation_") || key === "evaluation_required")
-                      .map(([key, value]) => (
-                        <Badge key={key} variant="secondary" className="text-xs">
-                          {key}={String(value)}
-                        </Badge>
-                      ))}
+                    {Object.entries(evaluatorLabels).map(([key, value]) => (
+                      <Badge key={key} variant="secondary" className="text-xs">
+                        {key}={String(value)}
+                      </Badge>
+                    ))}
                   </div>
                 </div>
               </div>
