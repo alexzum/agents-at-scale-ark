@@ -90,6 +90,14 @@ def calculate_cost_from_query(query_dict: dict, model_annotations: dict) -> Opti
         return None
 
 
+def filter_evals_by_query_ref(evals: list, query_name: str) -> list:
+    """Filter evaluations by queryRef.name to get only evaluations targeting a specific query."""
+    return [
+        e for e in evals
+        if e.get("spec", {}).get("config", {}).get("queryRef", {}).get("name") == query_name
+    ]
+
+
 @router.post("", response_model=ABExperiment)
 @handle_k8s_errors(operation="create", resource_type="ab-experiment")
 async def create_ab_experiment(
@@ -217,23 +225,25 @@ async def get_ab_experiment(
         baseline_evals_list = await ark_client.evaluations.a_list(
             label_selector=f"ark.mckinsey.com/query={query_name}"
         )
-        baseline_evals = [e.to_dict() for e in baseline_evals_list] if baseline_evals_list else []
+        all_baseline_evals = [e.to_dict() for e in baseline_evals_list] if baseline_evals_list else []
+        baseline_evals = filter_evals_by_query_ref(all_baseline_evals, query_name)
 
         variant_evals_list = await ark_client.evaluations.a_list(
             label_selector=f"ark.mckinsey.com/query={experiment.variantQuery}"
         )
-        variant_evals = [e.to_dict() for e in variant_evals_list] if variant_evals_list else []
+        all_variant_evals = [e.to_dict() for e in variant_evals_list] if variant_evals_list else []
+        variant_evals = filter_evals_by_query_ref(all_variant_evals, experiment.variantQuery)
 
-        baseline_completed = all(
-            e.get("status", {}).get("phase") == "done"
-            for e in baseline_evals
+        baseline_completed = (
+            len(baseline_evals) > 0 and
+            all(e.get("status", {}).get("phase") == "done" for e in baseline_evals)
         )
-        variant_completed = all(
-            e.get("status", {}).get("phase") == "done"
-            for e in variant_evals
+        variant_completed = (
+            len(variant_evals) > 0 and
+            all(e.get("status", {}).get("phase") == "done" for e in variant_evals)
         )
 
-        if baseline_evals and variant_evals and baseline_completed and variant_completed:
+        if baseline_completed and variant_completed:
             from ...models.ab_experiments import ABExperimentResults, ABExperimentVariantResults
 
             baseline_scores = {}
