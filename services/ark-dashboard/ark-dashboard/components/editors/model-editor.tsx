@@ -43,7 +43,10 @@ export function ModelEditor({ open, onOpenChange, model, onSave, namespace }: Mo
   
   // Azure-specific fields
   const [azureApiVersion, setAzureApiVersion] = useState("")
-  
+
+  // Headers (for OpenAI and Azure)
+  const [headers, setHeaders] = useState<Array<{ name: string; value: { value?: string; valueFrom?: Record<string, unknown> } }>>([])
+
   // Bedrock-specific fields
   const [bedrockRegion, setBedrockRegion] = useState("")
   const [bedrockModel, setBedrockModel] = useState("")
@@ -81,6 +84,11 @@ export function ModelEditor({ open, onOpenChange, model, onSave, namespace }: Mo
         if (baseUrl?.value) {
           setBaseUrl(String(baseUrl.value))
         }
+        // Extract headers
+        const headers = openaiConfig.headers as Array<{ name: string; value: { value?: string; valueFrom?: Record<string, unknown> } }> | undefined
+        if (headers) {
+          setHeaders(headers)
+        }
       } else if (model.type === "azure" && model.config?.azure) {
         const azureConfig = model.config.azure as Record<string, unknown>
         // Extract secretKeyRef from apiKey ValueSource
@@ -109,6 +117,11 @@ export function ModelEditor({ open, onOpenChange, model, onSave, namespace }: Mo
             // Handle case where apiVersion is a simple value
             setAzureApiVersion(String(apiVersion));
           }
+        }
+        // Extract headers
+        const headers = azureConfig.headers as Array<{ name: string; value: { value?: string; valueFrom?: Record<string, unknown> } }> | undefined
+        if (headers) {
+          setHeaders(headers)
         }
       } else if (model.type === "bedrock" && model.config?.bedrock) {
         const bedrockConfig = model.config.bedrock as Record<string, unknown>
@@ -140,6 +153,7 @@ export function ModelEditor({ open, onOpenChange, model, onSave, namespace }: Mo
       setApiKeySecretName("")
       setBaseUrl("")
       setAzureApiVersion("")
+      setHeaders([])
       setBedrockRegion("")
       setBedrockModel("")
       setBedrockAccessKeyIdSecretName("")
@@ -161,7 +175,8 @@ export function ModelEditor({ open, onOpenChange, model, onSave, namespace }: Mo
             }
           }
         },
-        baseUrl: baseUrl
+        baseUrl: baseUrl,
+        ...(headers.length > 0 && { headers })
       }
     } else if (type === "azure") {
       config.azure = {
@@ -174,7 +189,8 @@ export function ModelEditor({ open, onOpenChange, model, onSave, namespace }: Mo
           }
         },
         baseUrl: baseUrl,
-        ...(azureApiVersion && { apiVersion: azureApiVersion })
+        ...(azureApiVersion && { apiVersion: azureApiVersion }),
+        ...(headers.length > 0 && { headers })
       }
     } else if (type === "bedrock") {
       config.bedrock = {
