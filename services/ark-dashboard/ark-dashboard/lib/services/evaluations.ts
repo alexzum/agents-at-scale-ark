@@ -136,10 +136,11 @@ export const evaluationsService = {
   /**
    * Get all evaluations in a namespace with optional filtering
    */
-  async getAll(namespace?: string, labelSelector?: string): Promise<Evaluation[]> {
+  async getAll(namespace?: string, labelSelector?: string, queryRef?: string): Promise<Evaluation[]> {
     const params = new URLSearchParams();
     if (namespace) params.append('namespace', namespace);
     if (labelSelector) params.append('label_selector', labelSelector);
+    if (queryRef) params.append('query_ref', queryRef);
 
     const queryString = params.toString();
     const url = queryString ? `/api/v1/evaluations?${queryString}` : `/api/v1/evaluations`;

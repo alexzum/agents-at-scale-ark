@@ -42,12 +42,12 @@ export function ABResultsStep({
 
   const { data: baselineEvaluations, refetch: refetchBaseline } = useGetEvaluations({
     namespace,
-    labelSelector: `ark.mckinsey.com/query=${queryName}`
+    queryRef: queryName
   });
 
   const { data: variantEvaluations, refetch: refetchVariant } = useGetEvaluations({
     namespace,
-    labelSelector: `ark.mckinsey.com/query=${experiment.variantQuery}`
+    queryRef: experiment.variantQuery
   });
 
   useEffect(() => {

@@ -23,15 +23,16 @@ export const useGetAllEvaluationsWithDetails = ({ enhanced = false }: Props) => 
 type GetEvaluationsProps = {
   namespace?: string;
   labelSelector?: string;
+  queryRef?: string;
 }
 
-export const useGetEvaluations = ({ namespace, labelSelector }: GetEvaluationsProps) => {
+export const useGetEvaluations = ({ namespace, labelSelector, queryRef }: GetEvaluationsProps) => {
   return useQuery({
-    queryKey: ["get-evaluations", namespace, labelSelector],
+    queryKey: ["get-evaluations", namespace, labelSelector, queryRef],
     queryFn: async () => {
-      return await evaluationsService.getAll(namespace, labelSelector);
+      return await evaluationsService.getAll(namespace, labelSelector, queryRef);
     },
     refetchInterval: false,
-    enabled: !!namespace || !!labelSelector
+    enabled: !!namespace || !!labelSelector || !!queryRef
   });
 };
