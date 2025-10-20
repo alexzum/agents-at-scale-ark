@@ -20,7 +20,7 @@ spec:
     resourceType: "Query"
     apiGroup: "ark.mckinsey.com"
     matchLabels:
-      environment: "development"
+      agent-type: "java-modernizer"
   parameters:
     - name: maxTokens
       value: "10000"  # Higher for development/testing
