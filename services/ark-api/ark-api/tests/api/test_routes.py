@@ -184,12 +184,33 @@ class TestAPIKeyEndpoints(unittest.TestCase):
     @patch('ark_api.api.v1.api_keys.APIKeyService')
     def test_list_api_keys_success(self, mock_api_key_service):
         """Test successful API key listing."""
+        from datetime import datetime, timezone
+        
         # Setup mock
         mock_service_instance = AsyncMock()
-        mock_service_instance.list_api_keys.return_value = [
-            {"public_key": "pk_test_123", "name": "test-key-1", "is_active": True},
-            {"public_key": "pk_test_456", "name": "test-key-2", "is_active": False}
+        mock_result = Mock()
+        mock_result.count = 2
+        mock_result.items = [
+            {
+                "id": "test-id-1",
+                "public_key": "pk_test_123", 
+                "name": "test-key-1", 
+                "is_active": True,
+                "created_at": datetime.now(timezone.utc),
+                "last_used_at": None,
+                "expires_at": None
+            },
+            {
+                "id": "test-id-2",
+                "public_key": "pk_test_456", 
+                "name": "test-key-2", 
+                "is_active": False,
+                "created_at": datetime.now(timezone.utc),
+                "last_used_at": None,
+                "expires_at": None
+            }
         ]
+        mock_service_instance.list_api_keys.return_value = mock_result
         mock_api_key_service.return_value = mock_service_instance
         
         # Make the request
