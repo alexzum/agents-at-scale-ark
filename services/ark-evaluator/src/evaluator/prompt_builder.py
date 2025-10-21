@@ -268,14 +268,24 @@ class EvaluationPromptBuilder:
                         3. Only include criteria from {self._evaluation_scope} in your CRITERIA_SCORES
                         4. Ensure consistency between individual scores and the overall score
 
-                        Provide your evaluation in the following format:
-                        SCORE: [0-1] (must be the average of all criteria scores)
-                        PASSED: [true/false] (by default true if SCORE >= {self._min_score})
-                        REASONING: [Brief explanation of your evaluation focusing on scope compliance]
-                        CRITERIA_SCORES: only include criteria from {self._evaluation_scope}, formatted as criterion_name=[0-1], criterion_name=[0-1], ...
+                        YOU MUST provide your evaluation in EXACTLY this format (all fields are REQUIRED):
 
-                        Example format for CRITERIA_SCORES (only include criteria from {self._evaluation_scope}):
-                        CRITERIA_SCORES: accuracy=0.8, completeness=0.9, usefulness=0.7, compliance=0.3
+                        SCORE: [number between 0 and 1, must be average of criteria scores]
+                        PASSED: [true or false]
+                        REASONING: [brief explanation of your evaluation]
+                        CRITERIA_SCORES: [comma-separated criterion=score pairs from {self._evaluation_scope}]
+
+                        CRITICAL REQUIREMENTS:
+                        - The SCORE field is MANDATORY - you MUST provide a numeric score
+                        - Use exact decimal format (e.g., 0.75, not "75%" or "0.75/1.0")
+                        - SCORE must equal the average of all individual criterion scores
+                        - Only include the criteria from {self._evaluation_scope}
+
+                        Example with actual numbers:
+                        SCORE: 0.75
+                        PASSED: true
+                        REASONING: Response meets quality standards with good accuracy and completeness.
+                        CRITERIA_SCORES: accuracy=0.80, completeness=0.90, usefulness=0.70, compliance=0.60
 
                         Be objective and thorough in your assessment. PRIORITIZE scope compliance over other factors.
                     """

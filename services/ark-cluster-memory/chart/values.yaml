@@ -66,9 +66,12 @@ serviceAccount:
   create: true
   name: ""
 
-podSecurityContext: {}
+podSecurityContext:
+  fsGroup: 1001
 
-securityContext: {}
+securityContext:
+  runAsUser: 1001
+  runAsNonRoot: true
 
 nodeSelector: {}
 

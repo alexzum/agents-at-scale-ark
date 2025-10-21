@@ -183,21 +183,36 @@ class LLMEvaluator:
                 criteria_str = line.split(':', 1)[1].strip()
                 metadata['criteria_scores'] = criteria_str
 
-        criteria_avg = self._calculate_criteria_average(metadata.get('criteria_scores', ''))
-        if criteria_avg is not None:
-            overall_score = float(score)
-            diff = abs(overall_score - criteria_avg)
+                self._parse_individual_criteria_scores(criteria_str, metadata)
 
-            if diff > 0.15:
+        if score == "0.0" or score == "0":
+            criteria_avg = self._calculate_criteria_average(metadata.get('criteria_scores', ''))
+            if criteria_avg is not None and criteria_avg > 0:
                 logger.warning(
-                    f"Significant mismatch between overall score ({overall_score:.2f}) "
-                    f"and criteria average ({criteria_avg:.2f}), difference: {diff:.2f}"
+                    f"SCORE was {'0' if score else 'missing'}, using criteria average: {criteria_avg:.2f}"
                 )
-                logger.info(f"Using criteria average as the overall score")
                 score = f"{criteria_avg:.2f}"
                 passed = criteria_avg >= params.min_score
                 metadata['score_adjusted'] = 'true'
-                metadata['original_score'] = str(overall_score)
+                metadata['original_score'] = '0.0'
+                metadata['adjustment_reason'] = 'zero_score_fallback'
+        else:
+            criteria_avg = self._calculate_criteria_average(metadata.get('criteria_scores', ''))
+            if criteria_avg is not None:
+                overall_score = float(score)
+                diff = abs(overall_score - criteria_avg)
+
+                if diff > 0.15:
+                    logger.warning(
+                        f"Significant mismatch between overall score ({overall_score:.2f}) "
+                        f"and criteria average ({criteria_avg:.2f}), difference: {diff:.2f}"
+                    )
+                    logger.info(f"Using criteria average as the overall score")
+                    score = f"{criteria_avg:.2f}"
+                    passed = criteria_avg >= params.min_score
+                    metadata['score_adjusted'] = 'true'
+                    metadata['original_score'] = str(overall_score)
+                    metadata['adjustment_reason'] = 'mismatch_correction'
 
         return score, passed, metadata
 
@@ -229,3 +244,37 @@ class LLMEvaluator:
             logger.warning(f"Failed to calculate criteria average: {str(e)}")
 
         return None
+
+    def _parse_individual_criteria_scores(self, criteria_str: str, metadata: Dict[str, str]) -> None:
+        """
+        Parse CRITERIA_SCORES string and extract individual scores into metadata
+        Format: "accuracy=0.8, completeness=0.9, usefulness=0.7"
+        Results in: metadata['accuracy'] = '0.8', metadata['completeness'] = '0.9', etc.
+
+        Args:
+            criteria_str: Comma-separated criterion=score pairs
+            metadata: Dictionary to populate with individual scores
+        """
+        if not criteria_str:
+            return
+
+        try:
+            entries = criteria_str.split(',')
+            for entry in entries:
+                entry = entry.strip()
+                if '=' in entry:
+                    criterion_name, score_str = entry.split('=', 1)
+                    criterion_name = criterion_name.strip()
+                    score_str = score_str.strip()
+
+                    try:
+                        score_val = float(score_str)
+                        if 0 <= score_val <= 1:
+                            metadata[criterion_name] = score_str
+                            logger.debug(f"Extracted criterion score: {criterion_name}={score_str}")
+                        else:
+                            logger.warning(f"Score out of range for {criterion_name}: {score_val}")
+                    except ValueError:
+                        logger.warning(f"Invalid score value for {criterion_name}: {score_str}")
+        except Exception as e:
+            logger.error(f"Failed to parse individual criteria scores: {str(e)}")

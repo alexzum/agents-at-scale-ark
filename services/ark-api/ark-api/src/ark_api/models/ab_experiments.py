@@ -1,7 +1,7 @@
 """Pydantic models for AB Experiment resources."""
 
 from typing import Dict, List, Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from enum import Enum
 
 
@@ -27,6 +27,14 @@ class ABExperimentWinner(str, Enum):
     TIE = "tie"
 
 
+class MetricsData(BaseModel):
+    """Performance metrics data from metrics evaluator."""
+    evaluatorName: str = Field(alias="evaluatorName")
+    cost: float
+    executionTime: str = Field(alias="executionTime")
+    tokens: int
+
+
 class ABExperimentTargetChanges(BaseModel):
     """Changes to apply to a target."""
     model: Optional[str] = None
@@ -47,6 +55,7 @@ class ABExperimentVariantResults(BaseModel):
     criteria: Dict[str, float]
     cost: Optional[float] = None
     latency: Optional[float] = None
+    metrics: Optional[MetricsData] = None
 
 
 class ABExperimentResults(BaseModel):
@@ -55,6 +64,8 @@ class ABExperimentResults(BaseModel):
     experiment: ABExperimentVariantResults
     winner: ABExperimentWinner
     improvement: float
+    qualityWinner: Optional[ABExperimentWinner] = Field(alias="qualityWinner", default=None)
+    performanceWinner: Optional[ABExperimentWinner] = Field(alias="performanceWinner", default=None)
 
 
 class ABExperimentEvaluations(BaseModel):

@@ -20,11 +20,19 @@ export interface ABExperimentCriteriaScores {
   [criterion: string]: number
 }
 
+export interface MetricsData {
+  evaluatorName: string
+  cost: number
+  executionTime: string
+  tokens: number
+}
+
 export interface ABExperimentVariantResults {
   overallScore: number
   criteria: ABExperimentCriteriaScores
   cost?: number
   latency?: number
+  metrics?: MetricsData
 }
 
 export interface ABExperimentResults {
@@ -32,6 +40,8 @@ export interface ABExperimentResults {
   experiment: ABExperimentVariantResults
   winner: ABExperimentWinner
   improvement: number
+  qualityWinner?: ABExperimentWinner
+  performanceWinner?: ABExperimentWinner
 }
 
 export interface ABExperimentEvaluations {

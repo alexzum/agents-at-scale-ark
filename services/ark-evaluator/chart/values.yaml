@@ -6,7 +6,7 @@ global:
 
 image:
   repository: ghcr.io/mckinsey/agents-at-scale-ark/ark-evaluator
-  pullPolicy: IfNotPresent
+  pullPolicy: Never
   # tag defaults to .Chart.AppVersion if not specified
 
 imagePullSecrets: []

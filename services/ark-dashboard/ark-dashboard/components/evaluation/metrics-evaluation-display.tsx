@@ -249,27 +249,6 @@ const extractMetricsFromMetadata = (
     }
   }
 
-  // Quality metrics
-  if (metadata.quality_score !== undefined) {
-    const qualityScore =
-      typeof metadata.quality_score === "number"
-        ? metadata.quality_score
-        : parseFloat(String(metadata.quality_score));
-
-    if (!isNaN(qualityScore)) {
-      metrics.push({
-        name: "Quality Score",
-        value: qualityScore,
-        threshold: 0.7,
-        passed: qualityScore >= 0.7,
-        unit: "score",
-        type: "quality",
-        description: "Overall quality of the response",
-        recommendation: "Improve prompt clarity or use higher-quality models"
-      });
-    }
-  }
-
   return metrics;
 };
 

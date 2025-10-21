@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -10,9 +10,10 @@ import {
   DialogTitle
 } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Loader2, AlertCircle, CheckCircle2, Activity } from "lucide-react";
 import type { ABExperiment, ABExperimentModifications } from "@/lib/types/ab-experiment";
 import { abExperimentsService } from "@/lib/services/ab-experiments";
+import { evaluatorsService, type EvaluatorDetailResponse } from "@/lib/services";
 
 interface ABPreviewStepProps {
   namespace: string;
@@ -33,12 +34,71 @@ export function ABPreviewStep({
 }: ABPreviewStepProps) {
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [evaluators, setEvaluators] = useState<EvaluatorDetailResponse[]>([]);
+  const [loadingEvaluators, setLoadingEvaluators] = useState(true);
 
   const query = baselineQuery as Record<string, unknown>;
   const metadata = query?.metadata as Record<string, unknown> | undefined;
   const labels = (metadata?.labels as Record<string, string>) || {};
   const evaluatorLabels = labels;
   const willTriggerEvaluators = Object.keys(evaluatorLabels).length > 0;
+
+  useEffect(() => {
+    const loadEvaluators = async () => {
+      try {
+        const basicEvaluators = await evaluatorsService.getAll();
+        const detailedEvaluators = await Promise.all(
+          basicEvaluators.map(async (evaluator) => {
+            const details = await evaluatorsService.getDetailsByName(evaluator.name);
+            return details;
+          })
+        );
+        setEvaluators(detailedEvaluators.filter((e) => e !== null) as EvaluatorDetailResponse[]);
+      } catch (err) {
+        console.error("Failed to load evaluators:", err);
+      } finally {
+        setLoadingEvaluators(false);
+      }
+    };
+
+    loadEvaluators();
+  }, []);
+
+  const matchingQualityEvaluators = evaluators.filter((evaluator) => {
+    const address = evaluator.spec?.address as { valueFrom?: { serviceRef?: { path?: string } } } | undefined;
+    const serviceRefPath = address?.valueFrom?.serviceRef?.path;
+    const evaluatorLabels = evaluator.metadata?.labels as Record<string, string> | undefined;
+    const isMetricsEvaluator = serviceRefPath === "/evaluate-metrics" ||
+                               evaluatorLabels?.type?.includes("metrics");
+    if (isMetricsEvaluator) return false;
+
+    const selector = evaluator.spec?.selector as { matchLabels?: Record<string, string> } | undefined;
+    if (!selector || Object.keys(selector).length === 0) return false;
+
+    const matchLabels = selector.matchLabels || (selector as Record<string, string>);
+    return Object.entries(matchLabels).every(([key, value]) => {
+      return labels[key] === value;
+    });
+  });
+
+  const matchingMetricsEvaluators = evaluators.filter((evaluator) => {
+    const address = evaluator.spec?.address as { valueFrom?: { serviceRef?: { path?: string } } } | undefined;
+    const serviceRefPath = address?.valueFrom?.serviceRef?.path;
+    const evaluatorLabels = evaluator.metadata?.labels as Record<string, string> | undefined;
+    const isMetricsEvaluator = serviceRefPath === "/evaluate-metrics" ||
+                               evaluatorLabels?.type?.includes("metrics");
+    if (!isMetricsEvaluator) return false;
+
+    const selector = evaluator.spec?.selector as { matchLabels?: Record<string, string> } | undefined;
+    if (!selector || Object.keys(selector).length === 0) return false;
+
+    const matchLabels = selector.matchLabels || (selector as Record<string, string>);
+    return Object.entries(matchLabels).every(([key, value]) => {
+      return labels[key] === value;
+    });
+  });
+
+  const willTriggerMetrics = matchingMetricsEvaluators.length > 0;
 
   const handleConfirm = async () => {
     setIsCreating(true);
@@ -140,31 +200,74 @@ export function ABPreviewStep({
 
         <div>
           <h3 className="font-medium mb-3">Evaluation Status</h3>
-          <div className="rounded-lg border p-4">
-            {willTriggerEvaluators ? (
-              <div className="flex items-start gap-3">
-                <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5" />
-                <div className="flex-1">
-                  <div className="font-medium">Evaluators will be triggered</div>
-                  <div className="text-sm text-muted-foreground mt-1">
-                    Both baseline and experiment queries will be evaluated based on labels
-                  </div>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {Object.entries(evaluatorLabels).map(([key, value]) => (
-                      <Badge key={key} variant="secondary" className="text-xs">
-                        {key}={String(value)}
-                      </Badge>
-                    ))}
+          <div className="space-y-3">
+            <div className="rounded-lg border p-4">
+              {willTriggerEvaluators ? (
+                <div className="flex items-start gap-3">
+                  <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5" />
+                  <div className="flex-1">
+                    <div className="font-medium">Quality Evaluators</div>
+                    <div className="text-sm text-muted-foreground mt-1">
+                      {loadingEvaluators ? (
+                        "Loading evaluators..."
+                      ) : matchingQualityEvaluators.length > 0 ? (
+                        <>
+                          {matchingQualityEvaluators.length} evaluator(s) will assess quality
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            {matchingQualityEvaluators.map((evaluator) => (
+                              <Badge key={evaluator.name} variant="secondary" className="text-xs">
+                                {evaluator.name}
+                              </Badge>
+                            ))}
+                          </div>
+                        </>
+                      ) : (
+                        "No quality evaluators match the query labels"
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ) : (
-              <div className="flex items-start gap-3">
-                <AlertCircle className="h-5 w-5 text-amber-600 mt-0.5" />
-                <div className="flex-1">
-                  <div className="font-medium">No evaluators configured</div>
-                  <div className="text-sm text-muted-foreground mt-1">
-                    Add evaluation labels to the baseline query to enable automatic evaluation
+              ) : (
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="h-5 w-5 text-amber-600 mt-0.5" />
+                  <div className="flex-1">
+                    <div className="font-medium">No evaluators configured</div>
+                    <div className="text-sm text-muted-foreground mt-1">
+                      Add evaluation labels to the baseline query to enable automatic evaluation
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {willTriggerEvaluators && (
+              <div className={`rounded-lg border p-4 ${!willTriggerMetrics ? "opacity-50" : ""}`}>
+                <div className="flex items-start gap-3">
+                  {willTriggerMetrics ? (
+                    <Activity className="h-5 w-5 text-blue-600 mt-0.5" />
+                  ) : (
+                    <AlertCircle className="h-5 w-5 text-gray-400 mt-0.5" />
+                  )}
+                  <div className="flex-1">
+                    <div className="font-medium">Performance Metrics</div>
+                    <div className="text-sm text-muted-foreground mt-1">
+                      {loadingEvaluators ? (
+                        "Loading evaluators..."
+                      ) : willTriggerMetrics ? (
+                        <>
+                          {matchingMetricsEvaluators.length} metrics evaluator(s) will assess cost and execution time
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            {matchingMetricsEvaluators.map((evaluator) => (
+                              <Badge key={evaluator.name} variant="secondary" className="text-xs">
+                                {evaluator.name}
+                              </Badge>
+                            ))}
+                          </div>
+                        </>
+                      ) : (
+                        "No metrics evaluators match (performance comparison will be limited)"
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>

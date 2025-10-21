@@ -1298,7 +1298,7 @@ export interface components {
             variantAgent?: string | null;
             modifications: components["schemas"]["ABExperimentModifications"];
             evaluations?: components["schemas"]["ABExperimentEvaluations"] | null;
-            results?: components["schemas"]["ABExperimentResults"] | null;
+            results?: components["schemas"]["ABExperimentResults-Output"] | null;
             /** Appliedat */
             appliedAt?: string | null;
             appliedWinner?: components["schemas"]["ABExperimentWinner"] | null;
@@ -1329,12 +1329,27 @@ export interface components {
          * ABExperimentResults
          * @description Aggregated results comparing baseline and experiment.
          */
-        ABExperimentResults: {
+        "ABExperimentResults-Input": {
             baseline: components["schemas"]["ABExperimentVariantResults"];
             experiment: components["schemas"]["ABExperimentVariantResults"];
             winner: components["schemas"]["ABExperimentWinner"];
             /** Improvement */
             improvement: number;
+            qualityWinner?: components["schemas"]["ABExperimentWinner"] | null;
+            performanceWinner?: components["schemas"]["ABExperimentWinner"] | null;
+        };
+        /**
+         * ABExperimentResults
+         * @description Aggregated results comparing baseline and experiment.
+         */
+        "ABExperimentResults-Output": {
+            baseline: components["schemas"]["ABExperimentVariantResults"];
+            experiment: components["schemas"]["ABExperimentVariantResults"];
+            winner: components["schemas"]["ABExperimentWinner"];
+            /** Improvement */
+            improvement: number;
+            qualityWinner?: components["schemas"]["ABExperimentWinner"] | null;
+            performanceWinner?: components["schemas"]["ABExperimentWinner"] | null;
         };
         /**
          * ABExperimentStatus
@@ -1373,6 +1388,7 @@ export interface components {
             cost?: number | null;
             /** Latency */
             latency?: number | null;
+            metrics?: components["schemas"]["MetricsData"] | null;
         };
         /**
          * ABExperimentWinner
@@ -2968,6 +2984,20 @@ export interface components {
             } | null;
         };
         /**
+         * MetricsData
+         * @description Performance metrics data from metrics evaluator.
+         */
+        MetricsData: {
+            /** Evaluatorname */
+            evaluatorName: string;
+            /** Cost */
+            cost: number;
+            /** Executiontime */
+            executionTime: string;
+            /** Tokens */
+            tokens: number;
+        };
+        /**
          * ModelConfig
          * @description Model configuration container.
          */
@@ -3692,7 +3722,7 @@ export interface components {
          */
         UpdateABExperimentRequest: {
             status?: components["schemas"]["ABExperimentStatus"] | null;
-            results?: components["schemas"]["ABExperimentResults"] | null;
+            results?: components["schemas"]["ABExperimentResults-Input"] | null;
         };
         /** ValidationError */
         ValidationError: {

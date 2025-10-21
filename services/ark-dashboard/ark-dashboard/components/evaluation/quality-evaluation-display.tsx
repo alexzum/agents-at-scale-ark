@@ -206,12 +206,10 @@ const extractQualityMetricsFromMetadata = (metadata: Record<string, unknown>): Q
         }
       }
 
-      // If no direct key found, create metric with perfect score (since overall assessment passed)
-      // This is a fallback for when criteria are defined but individual scores aren't stored
+      // If no direct key found, skip this criterion - backend should always provide scores
       if (process.env.NODE_ENV === 'development') {
-        console.log(`Debug - No score found for ${criterion}, using 1.0 as fallback`)
+        console.warn(`No score found for ${criterion} in metadata - skipping`)
       }
-      addMetricFromCriteria(criterion, 1.0, metrics, threshold)
     })
   }
   

@@ -18,6 +18,7 @@ from ...models.ab_experiments import (
     CreateABExperimentRequest,
     UpdateABExperimentRequest,
     ApplyWinnerRequest,
+    MetricsData,
 )
 from ...models.queries import QueryDetailResponse
 from .queries import query_to_detail_response
@@ -96,6 +97,56 @@ def filter_evals_by_query_ref(evals: list, query_name: str) -> list:
         e for e in evals
         if e.get("spec", {}).get("config", {}).get("queryRef", {}).get("name") == query_name
     ]
+
+
+def extract_metrics_data(evals: list) -> Optional[MetricsData]:
+    """Extract metrics data from performance_metrics evaluations."""
+    metrics_evals = [
+        e for e in evals
+        if e.get("metadata", {}).get("annotations", {}).get("evaluation.metadata/evaluation_type") == "performance_metrics"
+    ]
+
+    if not metrics_evals or not metrics_evals[0].get("status", {}).get("phase") == "done":
+        return None
+
+    eval_annotations = metrics_evals[0].get("metadata", {}).get("annotations", {})
+    evaluator_name = metrics_evals[0].get("spec", {}).get("evaluator", {}).get("name", "unknown")
+
+    try:
+        cost = float(eval_annotations.get("evaluation.metadata/cost", 0))
+        execution_time = eval_annotations.get("evaluation.metadata/execution_time", "0s")
+        tokens = int(eval_annotations.get("evaluation.metadata/total_tokens", 0))
+
+        return MetricsData(
+            evaluatorName=evaluator_name,
+            cost=cost,
+            executionTime=execution_time,
+            tokens=tokens
+        )
+    except (ValueError, TypeError):
+        return None
+
+
+def calculate_performance_winner(baseline_metrics: Optional[MetricsData], variant_metrics: Optional[MetricsData]) -> Optional[str]:
+    """Calculate performance winner based on metrics (lower cost and execution time is better)."""
+    if not baseline_metrics or not variant_metrics:
+        return None
+
+    baseline_exec_time = parse_duration_to_seconds(baseline_metrics.executionTime)
+    variant_exec_time = parse_duration_to_seconds(variant_metrics.executionTime)
+
+    if baseline_exec_time is None or variant_exec_time is None:
+        return None
+
+    baseline_score = baseline_metrics.cost + baseline_exec_time
+    variant_score = variant_metrics.cost + variant_exec_time
+
+    if abs(baseline_score - variant_score) < 0.01:
+        return "tie"
+    elif variant_score < baseline_score:
+        return "experiment"
+    else:
+        return "baseline"
 
 
 @router.post("", response_model=ABExperiment)
@@ -246,34 +297,46 @@ async def get_ab_experiment(
         if baseline_completed and variant_completed:
             from ...models.ab_experiments import ABExperimentResults, ABExperimentVariantResults
 
+            baseline_quality_evals = [
+                e for e in baseline_evals
+                if e.get("metadata", {}).get("annotations", {}).get("evaluation.metadata/evaluation_type") != "performance_metrics"
+            ]
+            variant_quality_evals = [
+                e for e in variant_evals
+                if e.get("metadata", {}).get("annotations", {}).get("evaluation.metadata/evaluation_type") != "performance_metrics"
+            ]
+
             baseline_scores = {}
             baseline_overall = 0.0
-            for e in baseline_evals:
+            for e in baseline_quality_evals:
                 evaluator = e.get("spec", {}).get("evaluator", {}).get("name", "unknown")
                 score = float(e.get("status", {}).get("score", 0))
                 baseline_scores[evaluator] = score
                 baseline_overall += score
-            if baseline_evals:
-                baseline_overall /= len(baseline_evals)
+            if baseline_quality_evals:
+                baseline_overall /= len(baseline_quality_evals)
 
             variant_scores = {}
             variant_overall = 0.0
-            for e in variant_evals:
+            for e in variant_quality_evals:
                 evaluator = e.get("spec", {}).get("evaluator", {}).get("name", "unknown")
                 score = float(e.get("status", {}).get("score", 0))
                 variant_scores[evaluator] = score
                 variant_overall += score
-            if variant_evals:
-                variant_overall /= len(variant_evals)
+            if variant_quality_evals:
+                variant_overall /= len(variant_quality_evals)
 
             improvement = variant_overall - baseline_overall
 
+            quality_winner = "tie"
             if abs(improvement) < 0.01:
-                winner = "tie"
+                quality_winner = "tie"
             elif improvement > 0:
-                winner = "experiment"
+                quality_winner = "experiment"
             else:
-                winner = "baseline"
+                quality_winner = "baseline"
+
+            winner = quality_winner
 
             baseline_query = await ark_client.queries.a_get(query_name)
             baseline_query_dict = baseline_query.to_dict()
@@ -307,21 +370,29 @@ async def get_ab_experiment(
                 except Exception:
                     pass
 
+            baseline_metrics = extract_metrics_data(baseline_evals)
+            variant_metrics = extract_metrics_data(variant_evals)
+            performance_winner = calculate_performance_winner(baseline_metrics, variant_metrics)
+
             experiment.results = ABExperimentResults(
                 baseline=ABExperimentVariantResults(
                     overallScore=baseline_overall,
                     criteria=baseline_scores,
                     cost=baseline_cost,
-                    latency=baseline_latency
+                    latency=baseline_latency,
+                    metrics=baseline_metrics
                 ),
                 experiment=ABExperimentVariantResults(
                     overallScore=variant_overall,
                     criteria=variant_scores,
                     cost=variant_cost,
-                    latency=variant_latency
+                    latency=variant_latency,
+                    metrics=variant_metrics
                 ),
                 improvement=improvement,
-                winner=winner
+                winner=winner,
+                qualityWinner=quality_winner,
+                performanceWinner=performance_winner
             )
             experiment.status = ABExperimentStatus.COMPLETED
 

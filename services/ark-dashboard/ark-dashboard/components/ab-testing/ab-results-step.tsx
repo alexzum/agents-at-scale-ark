@@ -18,7 +18,7 @@ import {
   TableRow
 } from "@/components/ui/table";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, AlertCircle, Trophy, TrendingUp, TrendingDown, CheckCircle2, Clock } from "lucide-react";
+import { Loader2, AlertCircle, Trophy, TrendingUp, TrendingDown, CheckCircle2, Clock, Activity } from "lucide-react";
 import type { ABExperiment } from "@/lib/types/ab-experiment";
 import { abExperimentsService } from "@/lib/services/ab-experiments";
 import { useGetEvaluations } from "@/lib/services/evaluations-hooks";
@@ -242,14 +242,14 @@ export function ABResultsStep({
             </div>
 
             <div>
-              <h3 className="font-medium mb-4">Criteria Breakdown</h3>
+              <h3 className="font-medium mb-4">Quality Evaluation</h3>
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Criterion</TableHead>
                     <TableHead className="text-right">Baseline</TableHead>
                     <TableHead className="text-right">Experiment</TableHead>
-                    <TableHead className="text-right">Difference</TableHead>
+                    <TableHead className="text-right">Change</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -272,6 +272,90 @@ export function ABResultsStep({
                 </TableBody>
               </Table>
             </div>
+
+            {(results.baseline.metrics || results.experiment.metrics) && (
+              <div className={!results.baseline.metrics || !results.experiment.metrics ? "opacity-50" : ""}>
+                <div className="flex items-center gap-2 mb-4">
+                  <Activity className="h-5 w-5 text-blue-600" />
+                  <h3 className="font-medium">Performance Metrics</h3>
+                  {results.performanceWinner && (
+                    <Badge variant={
+                      results.performanceWinner === "baseline" ? "default" :
+                      results.performanceWinner === "experiment" ? "default" :
+                      "secondary"
+                    }>
+                      {results.performanceWinner === "baseline" ? "Baseline Wins" :
+                       results.performanceWinner === "experiment" ? "Experiment Wins" : "Tie"}
+                    </Badge>
+                  )}
+                </div>
+                {results.baseline.metrics && results.experiment.metrics ? (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Metric</TableHead>
+                        <TableHead className="text-right">Baseline</TableHead>
+                        <TableHead className="text-right">Experiment</TableHead>
+                        <TableHead className="text-right">Change</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      <TableRow>
+                        <TableCell className="font-medium">Cost</TableCell>
+                        <TableCell className="text-right">${results.baseline.metrics.cost.toFixed(4)}</TableCell>
+                        <TableCell className="text-right">${results.experiment.metrics.cost.toFixed(4)}</TableCell>
+                        <TableCell className={`text-right ${results.experiment.metrics.cost < results.baseline.metrics.cost ? "text-green-600" : results.experiment.metrics.cost > results.baseline.metrics.cost ? "text-red-600" : ""}`}>
+                          {results.experiment.metrics.cost !== results.baseline.metrics.cost && (
+                            <>
+                              {results.experiment.metrics.cost < results.baseline.metrics.cost ? "-" : "+"}
+                              {Math.abs(((results.experiment.metrics.cost - results.baseline.metrics.cost) / results.baseline.metrics.cost) * 100).toFixed(1)}%
+                            </>
+                          )}
+                          {results.experiment.metrics.cost === results.baseline.metrics.cost && "0%"}
+                        </TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell className="font-medium">Execution Time</TableCell>
+                        <TableCell className="text-right">{results.baseline.metrics.executionTime}</TableCell>
+                        <TableCell className="text-right">{results.experiment.metrics.executionTime}</TableCell>
+                        <TableCell className="text-right">
+                          {(() => {
+                            const baseTime = parseFloat(results.baseline.metrics.executionTime.replace('s', ''));
+                            const expTime = parseFloat(results.experiment.metrics.executionTime.replace('s', ''));
+                            const diff = ((expTime - baseTime) / baseTime) * 100;
+                            return (
+                              <span className={diff < 0 ? "text-green-600" : diff > 0 ? "text-red-600" : ""}>
+                                {diff !== 0 ? `${diff > 0 ? '+' : ''}${diff.toFixed(1)}%` : "0%"}
+                              </span>
+                            );
+                          })()}
+                        </TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell className="font-medium">Total Tokens</TableCell>
+                        <TableCell className="text-right">{results.baseline.metrics.tokens.toLocaleString()}</TableCell>
+                        <TableCell className="text-right">{results.experiment.metrics.tokens.toLocaleString()}</TableCell>
+                        <TableCell className={`text-right ${results.experiment.metrics.tokens < results.baseline.metrics.tokens ? "text-green-600" : results.experiment.metrics.tokens > results.baseline.metrics.tokens ? "text-red-600" : ""}`}>
+                          {results.experiment.metrics.tokens !== results.baseline.metrics.tokens && (
+                            <>
+                              {results.experiment.metrics.tokens < results.baseline.metrics.tokens ? "-" : "+"}
+                              {Math.abs(((results.experiment.metrics.tokens - results.baseline.metrics.tokens) / results.baseline.metrics.tokens) * 100).toFixed(1)}%
+                            </>
+                          )}
+                          {results.experiment.metrics.tokens === results.baseline.metrics.tokens && "0%"}
+                        </TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                ) : (
+                  <Alert>
+                    <AlertDescription>
+                      No metrics evaluators matched both queries. Performance comparison is not available.
+                    </AlertDescription>
+                  </Alert>
+                )}
+              </div>
+            )}
           </>
         )}
       </div>
