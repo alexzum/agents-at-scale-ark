@@ -40,6 +40,31 @@ type QueryRecorder interface {
 	RecordError(span Span, err error)
 }
 
+// AgentRecorder provides domain-specific telemetry for agent execution.
+// Encapsulates agent lifecycle, LLM calls, and tool execution tracing.
+type AgentRecorder interface {
+	// StartAgentExecution begins tracing an agent execution.
+	StartAgentExecution(ctx context.Context, agentName, namespace string) (context.Context, Span)
+
+	// StartLLMCall begins tracing a model call within agent execution.
+	StartLLMCall(ctx context.Context, modelName string) (context.Context, Span)
+
+	// StartToolCall begins tracing a tool execution.
+	StartToolCall(ctx context.Context, toolName, toolType, toolID, arguments string) (context.Context, Span)
+
+	// RecordToolResult records the tool execution result.
+	RecordToolResult(span Span, result string)
+
+	// RecordTokenUsage records token consumption for LLM calls.
+	RecordTokenUsage(span Span, promptTokens, completionTokens, totalTokens int64)
+
+	// RecordSuccess marks a span as successfully completed.
+	RecordSuccess(span Span)
+
+	// RecordError marks a span as failed with error details.
+	RecordError(span Span, err error)
+}
+
 // Standardized attribute keys for ARK telemetry.
 // Following OpenTelemetry semantic conventions where applicable.
 const (

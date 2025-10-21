@@ -59,3 +59,30 @@ func (r *noopQueryRecorder) RecordModelDetails(span telemetry.Span, modelName, p
 func (r *noopQueryRecorder) RecordSessionID(span telemetry.Span, sessionID string) {} //nolint:revive
 func (r *noopQueryRecorder) RecordSuccess(span telemetry.Span)                     {} //nolint:revive
 func (r *noopQueryRecorder) RecordError(span telemetry.Span, err error)            {} //nolint:revive
+
+// noopAgentRecorder is a zero-overhead agent recorder that does nothing.
+// All methods are intentionally empty for zero-overhead no-op behavior.
+type noopAgentRecorder struct{}
+
+// NewAgentRecorder creates a no-op agent recorder.
+func NewAgentRecorder() telemetry.AgentRecorder {
+	return &noopAgentRecorder{}
+}
+
+func (r *noopAgentRecorder) StartAgentExecution(ctx context.Context, agentName, namespace string) (context.Context, telemetry.Span) {
+	return ctx, &noopSpan{}
+}
+
+func (r *noopAgentRecorder) StartLLMCall(ctx context.Context, modelName string) (context.Context, telemetry.Span) {
+	return ctx, &noopSpan{}
+}
+
+func (r *noopAgentRecorder) StartToolCall(ctx context.Context, toolName, toolType, toolID, arguments string) (context.Context, telemetry.Span) {
+	return ctx, &noopSpan{}
+}
+
+func (r *noopAgentRecorder) RecordToolResult(span telemetry.Span, result string) {} //nolint:revive
+func (r *noopAgentRecorder) RecordTokenUsage(span telemetry.Span, promptTokens, completionTokens, totalTokens int64) {
+}                                                                       //nolint:revive
+func (r *noopAgentRecorder) RecordSuccess(span telemetry.Span)          {} //nolint:revive
+func (r *noopAgentRecorder) RecordError(span telemetry.Span, err error) {} //nolint:revive

@@ -261,3 +261,63 @@ func (r *MockQueryRecorder) RecordSuccess(span telemetry.Span) {
 func (r *MockQueryRecorder) RecordError(span telemetry.Span, err error) {
 	span.RecordError(err)
 }
+
+// MockAgentRecorder implements telemetry.AgentRecorder for testing.
+type MockAgentRecorder struct {
+	Tracer *MockTracer
+}
+
+// NewAgentRecorder creates a new mock agent recorder with an embedded mock tracer.
+func NewAgentRecorder() *MockAgentRecorder {
+	return &MockAgentRecorder{
+		Tracer: NewTracer(),
+	}
+}
+
+func (r *MockAgentRecorder) StartAgentExecution(ctx context.Context, agentName, namespace string) (context.Context, telemetry.Span) {
+	return r.Tracer.Start(ctx, "agent.execution",
+		telemetry.WithAttributes(
+			telemetry.String(telemetry.AttrAgentName, agentName),
+			telemetry.String(telemetry.AttrQueryNamespace, namespace),
+		),
+	)
+}
+
+func (r *MockAgentRecorder) StartLLMCall(ctx context.Context, modelName string) (context.Context, telemetry.Span) {
+	return r.Tracer.Start(ctx, "llm.call",
+		telemetry.WithAttributes(
+			telemetry.String(telemetry.AttrModelName, modelName),
+		),
+	)
+}
+
+func (r *MockAgentRecorder) StartToolCall(ctx context.Context, toolName, toolType, toolID, arguments string) (context.Context, telemetry.Span) {
+	return r.Tracer.Start(ctx, "tool.execution",
+		telemetry.WithAttributes(
+			telemetry.String(telemetry.AttrToolName, toolName),
+			telemetry.String(telemetry.AttrToolType, toolType),
+			telemetry.String("tool.id", toolID),
+			telemetry.String(telemetry.AttrToolInput, arguments),
+		),
+	)
+}
+
+func (r *MockAgentRecorder) RecordToolResult(span telemetry.Span, result string) {
+	span.SetAttributes(telemetry.String(telemetry.AttrToolOutput, result))
+}
+
+func (r *MockAgentRecorder) RecordTokenUsage(span telemetry.Span, promptTokens, completionTokens, totalTokens int64) {
+	span.SetAttributes(
+		telemetry.Int64(telemetry.AttrTokensPrompt, promptTokens),
+		telemetry.Int64(telemetry.AttrTokensCompletion, completionTokens),
+		telemetry.Int64(telemetry.AttrTokensTotal, totalTokens),
+	)
+}
+
+func (r *MockAgentRecorder) RecordSuccess(span telemetry.Span) {
+	span.SetStatus(telemetry.StatusOk, "success")
+}
+
+func (r *MockAgentRecorder) RecordError(span telemetry.Span, err error) {
+	span.RecordError(err)
+}
