@@ -167,20 +167,27 @@ func (r *QueryReconciler) executeQueryAsync(opCtx context.Context, obj arkv1alph
 		}
 	}()
 
-	// Start session-aware query tracing
+	// Start session-aware query tracing using new abstraction
 	sessionId := obj.Spec.SessionId
 	if sessionId == "" {
 		sessionId = string(obj.UID)
 	}
 
+	// Create query execution span with session tracking
+	opCtx, span := r.QueryRecorder.StartQuery(opCtx, obj.Name, obj.Namespace, "execute")
+	r.QueryRecorder.RecordSessionID(span, sessionId)
+	defer span.End()
+
 	impersonatedClient, memory, err := r.setupQueryExecution(opCtx, obj, queryTracker, tokenCollector, sessionId)
 	if err != nil {
+		r.QueryRecorder.RecordError(span, err)
 		return
 	}
 
 	responses, eventStream, err := r.reconcileQueue(opCtx, obj, impersonatedClient, memory, tokenCollector)
 	if err != nil {
 		queryTracker.Fail(err)
+		r.QueryRecorder.RecordError(span, err)
 		_ = r.updateStatus(opCtx, &obj, statusError)
 		return
 	}
@@ -195,11 +202,17 @@ func (r *QueryReconciler) executeQueryAsync(opCtx context.Context, obj arkv1alph
 		TotalTokens:      tokenSummary.TotalTokens,
 	}
 
+	// Record token usage in telemetry span
+	r.QueryRecorder.RecordTokenUsage(span, tokenSummary.PromptTokens, tokenSummary.CompletionTokens, tokenSummary.TotalTokens)
+
 	_ = r.updateStatus(opCtx, &obj, statusDone)
 
 	duration := &metav1.Duration{Duration: time.Since(startTime)}
 	r.finalizeEventStream(opCtx, eventStream)
 	_ = r.updateStatusWithDuration(opCtx, &obj, statusDone, duration)
+
+	// Mark span as successful
+	r.QueryRecorder.RecordSuccess(span)
 }
 
 // finalizeEventStream sends the completion message to the event stream and
