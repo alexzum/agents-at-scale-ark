@@ -11,6 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	arkv1alpha1 "mckinsey.com/ark/api/v1alpha1"
+	"mckinsey.com/ark/internal/telemetry/noop"
 )
 
 const defaultSelectorPrompt = `You are in a role play game. The following roles are available:
@@ -73,7 +74,8 @@ func (t *Team) loadSelectorAgent(ctx context.Context) (*Agent, error) {
 		return nil, fmt.Errorf("failed to get selector agent %s in namespace %s: %w", agentName, t.Namespace, err)
 	}
 
-	agent, err := MakeAgent(ctx, t.Client, &agentCRD, t.Recorder)
+	// TODO: Thread AgentRecorder through agent tools - for now use no-op
+	agent, err := MakeAgent(ctx, t.Client, &agentCRD, t.Recorder, noop.NewAgentRecorder())
 	if err != nil {
 		return nil, fmt.Errorf("failed to create selector agent: %w", err)
 	}
