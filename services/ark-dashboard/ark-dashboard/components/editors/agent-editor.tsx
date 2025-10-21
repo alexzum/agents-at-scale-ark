@@ -46,6 +46,8 @@ import {
   TooltipProvider,
   TooltipTrigger
 } from "@/components/ui/tooltip";
+import { useAtomValue } from "jotai";
+import { isExperimentalExecutionEngineEnabledAtom } from "@/atoms/experimental-features";
 
 interface AgentEditorProps {
   open: boolean;
@@ -80,6 +82,8 @@ export function AgentEditor({
   const [selectedTools, setSelectedTools] = useState<AgentTool[]>([]);
   const [toolsLoading, setToolsLoading] = useState(false);
   const [unavailableTools, setUnavailableTools] = useState<Tool[]>([]);
+  const isExperimentalExecutionEngineEnabled = useAtomValue(isExperimentalExecutionEngineEnabledAtom)
+
 
   useEffect(() => {
     if (open) {
@@ -123,7 +127,7 @@ export function AgentEditor({
       setSelectedTools([]);
       setIsPromptExpanded(false);
     }
-  }, [agent, agent?.tools]);
+  }, [open, agent, agent?.tools]);
 
   const handleSave = () => {
     if (agent) {
@@ -133,19 +137,19 @@ export function AgentEditor({
         // Only include model, execution engine, prompt, and tools for non-A2A agents
         modelRef:
           !agent.isA2A &&
-          selectedModelName &&
-          selectedModelName !== "" &&
-          selectedModelName !== "__none__"
+            selectedModelName &&
+            selectedModelName !== "" &&
+            selectedModelName !== "__none__"
             ? {
-                name: selectedModelName,
-                namespace: selectedModelNamespace || undefined
-              }
+              name: selectedModelName,
+              namespace: selectedModelNamespace || undefined
+            }
             : undefined,
         executionEngine:
           !agent.isA2A && executionEngineName
             ? {
-                name: executionEngineName
-              }
+              name: executionEngineName
+            }
             : undefined,
         prompt: !agent.isA2A ? prompt || undefined : undefined,
         tools: agent.isA2A ? undefined : selectedTools,
@@ -159,17 +163,17 @@ export function AgentEditor({
         description: description || undefined,
         modelRef:
           selectedModelName &&
-          selectedModelName !== "" &&
-          selectedModelName !== "__none__"
+            selectedModelName !== "" &&
+            selectedModelName !== "__none__"
             ? {
-                name: selectedModelName,
-                namespace: selectedModelNamespace || undefined
-              }
+              name: selectedModelName,
+              namespace: selectedModelNamespace || undefined
+            }
             : undefined,
         executionEngine: executionEngineName
           ? {
-              name: executionEngineName
-            }
+            name: executionEngineName
+          }
           : undefined,
         prompt: prompt || undefined,
         tools: selectedTools
@@ -273,15 +277,19 @@ export function AgentEditor({
                   </SelectContent>
                 </Select>
               </div>
-              <div className="grid gap-2">
-                <Label htmlFor="execution-engine">Execution Engine</Label>
-                <Input
-                  id="execution-engine"
-                  value={executionEngineName}
-                  onChange={(e) => setExecutionEngineName(e.target.value)}
-                  placeholder="e.g., langchain-executor"
-                />
-              </div>
+              {
+                isExperimentalExecutionEngineEnabled && (
+                  <div className="grid gap-2">
+                    <Label htmlFor="execution-engine">Execution Engine</Label>
+                    <Input
+                      id="execution-engine"
+                      value={executionEngineName}
+                      onChange={(e) => setExecutionEngineName(e.target.value)}
+                      placeholder="e.g., langchain-executor"
+                    />
+                  </div>
+                )
+              }
               <div className="grid gap-2">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="prompt">Prompt</Label>
@@ -317,14 +325,13 @@ export function AgentEditor({
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
                   placeholder="Enter the agent's prompt or instructions..."
-                  className={`transition-all duration-200 resize-none ${
-                    isPromptExpanded 
-                      ? "min-h-[400px] max-h-[500px] overflow-y-auto" 
-                      : "min-h-[100px] max-h-[150px]"
-                  }`}
-                  style={{ 
-                    whiteSpace: 'pre-wrap', 
-                    wordWrap: 'break-word' 
+                  className={`transition-all duration-200 resize-none ${isPromptExpanded
+                    ? "min-h-[400px] max-h-[500px] overflow-y-auto"
+                    : "min-h-[100px] max-h-[150px]"
+                    }`}
+                  style={{
+                    whiteSpace: 'pre-wrap',
+                    wordWrap: 'break-word'
                   }}
                 />
                 {isPromptExpanded && prompt.length > 0 && (
