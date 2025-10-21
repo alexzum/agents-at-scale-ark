@@ -41,9 +41,12 @@ func NewProvider() *Provider {
 		serviceName = "ark-controller"
 	}
 
-	log.Info("initializing OTEL telemetry", "endpoint", endpoint, "service", serviceName)
+	headers := os.Getenv("OTEL_EXPORTER_OTLP_HEADERS")
 
-	// Initialize OTEL exporter
+	log.Info("initializing OTEL telemetry", "endpoint", endpoint, "service", serviceName, "headers", headers)
+
+	// Auto-configure OTLP exporter from environment variables:
+	// OTEL_EXPORTER_OTLP_ENDPOINT, OTEL_EXPORTER_OTLP_HEADERS, OTEL_SERVICE_NAME
 	exporter, err := otlptracehttp.New(context.Background())
 	if err != nil {
 		log.Error(err, "failed to create OTLP exporter, falling back to no-op telemetry")
