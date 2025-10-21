@@ -23,7 +23,7 @@ import (
 
 	arkv1alpha1 "mckinsey.com/ark/api/v1alpha1"
 	"mckinsey.com/ark/internal/genai"
-	"mckinsey.com/ark/internal/telemetry"
+	telemetryconfig "mckinsey.com/ark/internal/telemetry/config"
 )
 
 type targetResult struct {
@@ -42,11 +42,10 @@ type targetResult struct {
 // - Never import OTEL packages directly - use the abstraction layer
 type QueryReconciler struct {
 	client.Client
-	Scheme        *runtime.Scheme
-	Recorder      record.EventRecorder
-	QueryRecorder telemetry.QueryRecorder
-	AgentRecorder telemetry.AgentRecorder
-	operations    sync.Map
+	Scheme     *runtime.Scheme
+	Recorder   record.EventRecorder
+	Telemetry  *telemetryconfig.Provider
+	operations sync.Map
 }
 
 // +kubebuilder:rbac:groups=ark.mckinsey.com,resources=queries,verbs=get;list;watch;create;update;patch;delete
@@ -185,20 +184,20 @@ func (r *QueryReconciler) executeQueryAsync(opCtx context.Context, obj arkv1alph
 	// This span represents the entire query lifecycle and includes:
 	// - Session correlation for multi-query conversations
 	// - Token usage aggregation across all targets
-	opCtx, span := r.QueryRecorder.StartQuery(opCtx, obj.Name, obj.Namespace, "execute")
-	r.QueryRecorder.RecordSessionID(span, sessionId)
+	opCtx, span := r.Telemetry.QueryRecorder().StartQuery(opCtx, obj.Name, obj.Namespace, "execute")
+	r.Telemetry.QueryRecorder().RecordSessionID(span, sessionId)
 	defer span.End()
 
 	impersonatedClient, memory, err := r.setupQueryExecution(opCtx, obj, queryTracker, tokenCollector, sessionId)
 	if err != nil {
-		r.QueryRecorder.RecordError(span, err)
+		r.Telemetry.QueryRecorder().RecordError(span, err)
 		return
 	}
 
 	responses, eventStream, err := r.reconcileQueue(opCtx, obj, impersonatedClient, memory, tokenCollector)
 	if err != nil {
 		queryTracker.Fail(err)
-		r.QueryRecorder.RecordError(span, err)
+		r.Telemetry.QueryRecorder().RecordError(span, err)
 		_ = r.updateStatus(opCtx, &obj, statusError)
 		return
 	}
@@ -214,7 +213,7 @@ func (r *QueryReconciler) executeQueryAsync(opCtx context.Context, obj arkv1alph
 	}
 
 	// Record token usage in telemetry span
-	r.QueryRecorder.RecordTokenUsage(span, tokenSummary.PromptTokens, tokenSummary.CompletionTokens, tokenSummary.TotalTokens)
+	r.Telemetry.QueryRecorder().RecordTokenUsage(span, tokenSummary.PromptTokens, tokenSummary.CompletionTokens, tokenSummary.TotalTokens)
 
 	_ = r.updateStatus(opCtx, &obj, statusDone)
 
@@ -223,7 +222,7 @@ func (r *QueryReconciler) executeQueryAsync(opCtx context.Context, obj arkv1alph
 	_ = r.updateStatusWithDuration(opCtx, &obj, statusDone, duration)
 
 	// Mark span as successful
-	r.QueryRecorder.RecordSuccess(span)
+	r.Telemetry.QueryRecorder().RecordSuccess(span)
 }
 
 // finalizeEventStream sends the completion message to the event stream and
@@ -484,7 +483,7 @@ func (r *QueryReconciler) executeTarget(ctx context.Context, query arkv1alpha1.Q
 	// - Target type and name as attributes
 	// - Input/output content for debugging
 	// - Execution time and outcome
-	ctx, span := r.QueryRecorder.StartTarget(ctx, target.Type, target.Name)
+	ctx, span := r.Telemetry.QueryRecorder().StartTarget(ctx, target.Type, target.Name)
 	defer span.End()
 
 	// Add query and session context for streaming metadata
@@ -504,7 +503,7 @@ func (r *QueryReconciler) executeTarget(ctx context.Context, query arkv1alpha1.Q
 	// Get input messages for processing and telemetry
 	inputMessages, err := genai.GetQueryInputMessages(ctx, query, impersonatedClient)
 	if err != nil {
-		r.QueryRecorder.RecordError(span, err)
+		r.Telemetry.QueryRecorder().RecordError(span, err)
 		// Add trace correlation to event metadata for observability linkage
 		metadata["traceId"] = span.TraceID()
 		metadata["spanId"] = span.SpanID()
@@ -518,7 +517,7 @@ func (r *QueryReconciler) executeTarget(ctx context.Context, query arkv1alpha1.Q
 
 	// Record input for telemetry
 	userContent := genai.ExtractUserMessageContent(inputMessages)
-	r.QueryRecorder.RecordInput(span, userContent)
+	r.Telemetry.QueryRecorder().RecordInput(span, userContent)
 
 	timeout := 5 * time.Minute
 	if query.Spec.Timeout != nil {
@@ -542,7 +541,7 @@ func (r *QueryReconciler) executeTarget(ctx context.Context, query arkv1alpha1.Q
 	}
 
 	if err != nil {
-		r.QueryRecorder.RecordError(span, err)
+		r.Telemetry.QueryRecorder().RecordError(span, err)
 		// Add trace correlation to event metadata for observability linkage
 		metadata["traceId"] = span.TraceID()
 		metadata["spanId"] = span.SpanID()
@@ -556,9 +555,9 @@ func (r *QueryReconciler) executeTarget(ctx context.Context, query arkv1alpha1.Q
 		if len(responseMessages) > 0 {
 			lastMessage := responseMessages[len(responseMessages)-1]
 			responseContent := messageToText(lastMessage)
-			r.QueryRecorder.RecordOutput(span, responseContent)
+			r.Telemetry.QueryRecorder().RecordOutput(span, responseContent)
 		}
-		r.QueryRecorder.RecordSuccess(span)
+		r.Telemetry.QueryRecorder().RecordSuccess(span)
 		// Add trace correlation to event metadata for observability linkage
 		metadata["traceId"] = span.TraceID()
 		metadata["spanId"] = span.SpanID()
@@ -586,7 +585,7 @@ func (r *QueryReconciler) executeAgent(ctx context.Context, query arkv1alpha1.Qu
 	})
 
 	// Regular agent execution
-	agent, err := genai.MakeAgent(ctx, impersonatedClient, &agentCRD, tokenCollector, r.AgentRecorder)
+	agent, err := genai.MakeAgent(ctx, impersonatedClient, &agentCRD, tokenCollector, r.Telemetry.AgentRecorder())
 	if err != nil {
 		return nil, fmt.Errorf("unable to make agent %v, error:%w", agentKey, err)
 	}
