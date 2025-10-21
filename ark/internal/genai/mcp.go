@@ -101,7 +101,7 @@ func createTransport(baseURL string, headers map[string]string, timeout time.Dur
 	}
 
 	return &mcp.StreamableClientTransport{
-		Endpoint:   baseURL + "/mcp",
+		Endpoint:   baseURL,
 		HTTPClient: httpClient,
 		MaxRetries: 5,
 	}
