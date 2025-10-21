@@ -1,0 +1,243 @@
+/* Copyright 2025. McKinsey & Company */
+
+package mock
+
+import (
+	"context"
+	"sync"
+
+	"mckinsey.com/ark/internal/telemetry"
+)
+
+// MockTracer captures all tracing operations for test assertions.
+type MockTracer struct {
+	mu    sync.Mutex
+	Spans []*MockSpan
+}
+
+// NewTracer creates a new mock tracer.
+func NewTracer() *MockTracer {
+	return &MockTracer{
+		Spans: make([]*MockSpan, 0),
+	}
+}
+
+func (t *MockTracer) Start(ctx context.Context, spanName string, opts ...telemetry.SpanOption) (context.Context, telemetry.Span) {
+	cfg := &telemetry.SpanConfig{}
+	for _, opt := range opts {
+		opt.ApplySpanOption(cfg)
+	}
+
+	span := &MockSpan{
+		Name:       spanName,
+		Attributes: make(map[string]interface{}),
+		Events:     make([]MockEvent, 0),
+		Config:     cfg,
+	}
+
+	t.mu.Lock()
+	t.Spans = append(t.Spans, span)
+	t.mu.Unlock()
+
+	return ctx, span
+}
+
+// Reset clears all captured spans.
+func (t *MockTracer) Reset() {
+	t.mu.Lock()
+	t.Spans = make([]*MockSpan, 0)
+	t.mu.Unlock()
+}
+
+// FindSpan returns the first span with the given name, or nil if not found.
+func (t *MockTracer) FindSpan(name string) *MockSpan {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+
+	for _, span := range t.Spans {
+		if span.Name == name {
+			return span
+		}
+	}
+	return nil
+}
+
+// MockSpan captures span operations for test assertions.
+type MockSpan struct {
+	mu         sync.Mutex
+	Name       string
+	Attributes map[string]interface{}
+	Events     []MockEvent
+	Errors     []error
+	Status     telemetry.Status
+	StatusDesc string
+	Ended      bool
+	Config     *telemetry.SpanConfig
+}
+
+// MockEvent represents a recorded event.
+type MockEvent struct {
+	Name       string
+	Attributes map[string]interface{}
+}
+
+func (s *MockSpan) End() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.Ended = true
+}
+
+func (s *MockSpan) SetAttributes(attributes ...telemetry.Attribute) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	for _, attr := range attributes {
+		s.Attributes[attr.Key] = attr.Value
+	}
+}
+
+func (s *MockSpan) RecordError(err error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.Errors = append(s.Errors, err)
+	s.Status = telemetry.StatusError
+	s.StatusDesc = err.Error()
+}
+
+func (s *MockSpan) SetStatus(status telemetry.Status, description string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.Status = status
+	s.StatusDesc = description
+}
+
+func (s *MockSpan) AddEvent(name string, attributes ...telemetry.Attribute) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	event := MockEvent{
+		Name:       name,
+		Attributes: make(map[string]interface{}),
+	}
+
+	for _, attr := range attributes {
+		event.Attributes[attr.Key] = attr.Value
+	}
+
+	s.Events = append(s.Events, event)
+}
+
+// GetAttribute returns the value of an attribute, or nil if not found.
+func (s *MockSpan) GetAttribute(key string) interface{} {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.Attributes[key]
+}
+
+// GetAttributeString returns the string value of an attribute.
+func (s *MockSpan) GetAttributeString(key string) string {
+	if val := s.GetAttribute(key); val != nil {
+		if str, ok := val.(string); ok {
+			return str
+		}
+	}
+	return ""
+}
+
+// GetAttributeInt64 returns the int64 value of an attribute.
+func (s *MockSpan) GetAttributeInt64(key string) int64 {
+	if val := s.GetAttribute(key); val != nil {
+		if i64, ok := val.(int64); ok {
+			return i64
+		}
+	}
+	return 0
+}
+
+// HasAttribute checks if an attribute with the given key exists.
+func (s *MockSpan) HasAttribute(key string) bool {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	_, ok := s.Attributes[key]
+	return ok
+}
+
+// MockQueryRecorder captures query recorder operations for test assertions.
+type MockQueryRecorder struct {
+	Tracer *MockTracer
+}
+
+// NewQueryRecorder creates a new mock query recorder.
+func NewQueryRecorder(tracer *MockTracer) *MockQueryRecorder {
+	if tracer == nil {
+		tracer = NewTracer()
+	}
+	return &MockQueryRecorder{
+		Tracer: tracer,
+	}
+}
+
+func (r *MockQueryRecorder) StartQuery(ctx context.Context, queryName, queryNamespace, phase string) (context.Context, telemetry.Span) {
+	return r.Tracer.Start(ctx, "query."+phase,
+		telemetry.WithAttributes(
+			telemetry.String(telemetry.AttrQueryName, queryName),
+			telemetry.String(telemetry.AttrQueryNamespace, queryNamespace),
+			telemetry.String(telemetry.AttrQueryPhase, phase),
+		),
+	)
+}
+
+func (r *MockQueryRecorder) StartTarget(ctx context.Context, targetType, targetName string) (context.Context, telemetry.Span) {
+	return r.Tracer.Start(ctx, "query."+targetType,
+		telemetry.WithAttributes(
+			telemetry.String(telemetry.AttrTargetType, targetType),
+			telemetry.String(telemetry.AttrTargetName, targetName),
+		),
+	)
+}
+
+func (r *MockQueryRecorder) RecordInput(span telemetry.Span, content string) {
+	span.SetAttributes(telemetry.String(telemetry.AttrQueryInput, content))
+}
+
+func (r *MockQueryRecorder) RecordOutput(span telemetry.Span, content string) {
+	span.SetAttributes(telemetry.String(telemetry.AttrQueryOutput, content))
+}
+
+func (r *MockQueryRecorder) RecordMessages(span telemetry.Span, messages []string) {
+	span.SetAttributes(
+		telemetry.Int(telemetry.AttrMessagesInputCount, len(messages)),
+	)
+}
+
+func (r *MockQueryRecorder) RecordTokenUsage(span telemetry.Span, promptTokens, completionTokens, totalTokens int64) {
+	span.SetAttributes(
+		telemetry.Int64(telemetry.AttrTokensPrompt, promptTokens),
+		telemetry.Int64(telemetry.AttrTokensCompletion, completionTokens),
+		telemetry.Int64(telemetry.AttrTokensTotal, totalTokens),
+	)
+}
+
+func (r *MockQueryRecorder) RecordModelDetails(span telemetry.Span, modelName, provider, modelType string) {
+	span.SetAttributes(
+		telemetry.String(telemetry.AttrModelName, modelName),
+		telemetry.String(telemetry.AttrModelProvider, provider),
+		telemetry.String(telemetry.AttrModelType, modelType),
+	)
+}
+
+func (r *MockQueryRecorder) RecordSessionID(span telemetry.Span, sessionID string) {
+	if sessionID != "" {
+		span.SetAttributes(telemetry.String(telemetry.AttrSessionID, sessionID))
+	}
+}
+
+func (r *MockQueryRecorder) RecordSuccess(span telemetry.Span) {
+	span.SetStatus(telemetry.StatusOk, "success")
+}
+
+func (r *MockQueryRecorder) RecordError(span telemetry.Span, err error) {
+	span.RecordError(err)
+}
