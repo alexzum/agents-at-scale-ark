@@ -10,6 +10,7 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
 	arkv1alpha1 "mckinsey.com/ark/api/v1alpha1"
+	"mckinsey.com/ark/internal/telemetry/noop"
 )
 
 // Add MCP client pool to ToolRegistry
@@ -270,7 +271,8 @@ func (a *AgentToolExecutor) Execute(ctx context.Context, call ToolCall, recorder
 	log.Info("calling agent directly", "agent", a.AgentName, "namespace", a.Namespace, "input", inputStr)
 
 	// Create the Agent object using the Agent CRD and recorder
-	agent, err := MakeAgent(ctx, a.k8sClient, a.AgentCRD, recorder)
+	// TODO: Thread AgentRecorder through agent tools - for now use no-op
+	agent, err := MakeAgent(ctx, a.k8sClient, a.AgentCRD, recorder, noop.NewAgentRecorder())
 	if err != nil {
 		return ToolResult{
 			ID:    call.ID,

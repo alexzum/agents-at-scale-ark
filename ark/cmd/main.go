@@ -241,6 +241,7 @@ func setupControllers(mgr ctrl.Manager, telemetryProvider *telemetryconfig.Provi
 			Scheme:        mgr.GetScheme(),
 			Recorder:      mgr.GetEventRecorderFor("query-controller"),
 			QueryRecorder: telemetryProvider.QueryRecorder(),
+			AgentRecorder: telemetryProvider.AgentRecorder(),
 		}},
 		{"Tool", &controller.ToolReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme()}},
 		{"Team", &controller.TeamReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme()}},

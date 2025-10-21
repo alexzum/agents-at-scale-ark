@@ -10,6 +10,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	arkv1alpha1 "mckinsey.com/ark/api/v1alpha1"
+	"mckinsey.com/ark/internal/telemetry/noop"
 )
 
 type Team struct {
@@ -280,7 +281,8 @@ func loadTeamMember(ctx context.Context, k8sClient client.Client, memberSpec ark
 		if err := k8sClient.Get(ctx, key, &agentCRD); err != nil {
 			return nil, fmt.Errorf("failed to get agent %s for team %s: %w", memberSpec.Name, teamName, err)
 		}
-		return MakeAgent(ctx, k8sClient, &agentCRD, recorder)
+		// TODO: Thread AgentRecorder through team members - for now use no-op
+		return MakeAgent(ctx, k8sClient, &agentCRD, recorder, noop.NewAgentRecorder())
 
 	case "team":
 		var nestedTeamCRD arkv1alpha1.Team

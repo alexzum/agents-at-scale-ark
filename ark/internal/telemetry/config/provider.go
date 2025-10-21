@@ -24,6 +24,7 @@ var log = logf.Log.WithName("telemetry.config")
 type Provider struct {
 	tracer        telemetry.Tracer
 	queryRecorder telemetry.QueryRecorder
+	agentRecorder telemetry.AgentRecorder
 	shutdown      func() error
 }
 
@@ -70,12 +71,14 @@ func NewProvider() *Provider {
 	// Create OTEL-backed implementations
 	tracer := otelimpl.NewTracer("ark/controller")
 	queryRecorder := otelimpl.NewQueryRecorder(tracer)
+	agentRecorder := otelimpl.NewAgentRecorder(tracer)
 
 	log.Info("OTEL telemetry initialized successfully")
 
 	return &Provider{
 		tracer:        tracer,
 		queryRecorder: queryRecorder,
+		agentRecorder: agentRecorder,
 		shutdown: func() error {
 			log.Info("shutting down telemetry")
 			return tp.Shutdown(context.Background())
@@ -87,10 +90,12 @@ func NewProvider() *Provider {
 func newNoopProvider() *Provider {
 	tracer := noop.NewTracer()
 	queryRecorder := noop.NewQueryRecorder()
+	agentRecorder := noop.NewAgentRecorder()
 
 	return &Provider{
 		tracer:        tracer,
 		queryRecorder: queryRecorder,
+		agentRecorder: agentRecorder,
 		shutdown:      func() error { return nil },
 	}
 }
@@ -103,6 +108,11 @@ func (p *Provider) Tracer() telemetry.Tracer {
 // QueryRecorder returns the query recorder instance.
 func (p *Provider) QueryRecorder() telemetry.QueryRecorder {
 	return p.queryRecorder
+}
+
+// AgentRecorder returns the agent recorder instance.
+func (p *Provider) AgentRecorder() telemetry.AgentRecorder {
+	return p.agentRecorder
 }
 
 // Shutdown gracefully shuts down the telemetry provider.

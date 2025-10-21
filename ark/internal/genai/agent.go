@@ -26,6 +26,7 @@ type Agent struct {
 	Model           *Model
 	Tools           *ToolRegistry
 	Recorder        EventEmitter
+	AgentRecorder   telemetry.AgentRecorder
 	ExecutionEngine *arkv1alpha1.ExecutionEngineRef
 	Annotations     map[string]string
 	OutputSchema    *runtime.RawExtension
@@ -284,7 +285,7 @@ func ValidateExecutionEngine(ctx context.Context, k8sClient client.Client, execu
 	return nil
 }
 
-func MakeAgent(ctx context.Context, k8sClient client.Client, crd *arkv1alpha1.Agent, eventRecorder EventEmitter) (*Agent, error) {
+func MakeAgent(ctx context.Context, k8sClient client.Client, crd *arkv1alpha1.Agent, eventRecorder EventEmitter, agentRecorder telemetry.AgentRecorder) (*Agent, error) {
 	// Load model with automatic resolution
 	resolvedModel, err := LoadModel(ctx, k8sClient, crd.Spec.ModelRef, crd.Namespace)
 	if err != nil {
@@ -323,6 +324,7 @@ func MakeAgent(ctx context.Context, k8sClient client.Client, crd *arkv1alpha1.Ag
 		Model:           resolvedModel,
 		Tools:           tools,
 		Recorder:        eventRecorder,
+		AgentRecorder:   agentRecorder,
 		ExecutionEngine: crd.Spec.ExecutionEngine,
 		Annotations:     crd.Annotations,
 		OutputSchema:    crd.Spec.OutputSchema,

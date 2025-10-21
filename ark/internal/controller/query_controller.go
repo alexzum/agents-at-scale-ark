@@ -45,6 +45,7 @@ type QueryReconciler struct {
 	Scheme        *runtime.Scheme
 	Recorder      record.EventRecorder
 	QueryRecorder telemetry.QueryRecorder
+	AgentRecorder telemetry.AgentRecorder
 	operations    sync.Map
 }
 
@@ -585,7 +586,7 @@ func (r *QueryReconciler) executeAgent(ctx context.Context, query arkv1alpha1.Qu
 	})
 
 	// Regular agent execution
-	agent, err := genai.MakeAgent(ctx, impersonatedClient, &agentCRD, tokenCollector)
+	agent, err := genai.MakeAgent(ctx, impersonatedClient, &agentCRD, tokenCollector, r.AgentRecorder)
 	if err != nil {
 		return nil, fmt.Errorf("unable to make agent %v, error:%w", agentKey, err)
 	}
