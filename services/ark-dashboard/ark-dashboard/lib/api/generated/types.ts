@@ -2129,6 +2129,10 @@ export interface components {
             type: string;
             /** Phase */
             phase?: string | null;
+            /** Conditions */
+            conditions?: {
+                [key: string]: unknown;
+            }[] | null;
             /** Score */
             score?: string | null;
             /** Passed */
@@ -2150,6 +2154,10 @@ export interface components {
             type: string;
             /** Phase */
             phase?: string | null;
+            /** Conditions */
+            conditions?: {
+                [key: string]: unknown;
+            }[] | null;
             /** Score */
             score?: string | null;
             /** Passed */
@@ -2256,6 +2264,10 @@ export interface components {
             type: string;
             /** Phase */
             phase?: string | null;
+            /** Conditions */
+            conditions?: {
+                [key: string]: unknown;
+            }[] | null;
             /** Score */
             score?: string | null;
             /** Passed */
@@ -3196,8 +3208,8 @@ export interface components {
          * @description Team selector configuration.
          */
         Selector: {
-            /** Model */
-            model?: string | null;
+            /** Agent */
+            agent?: string | null;
             /** Selectorprompt */
             selectorPrompt?: string | null;
         };

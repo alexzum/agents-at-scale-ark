@@ -204,33 +204,72 @@ func extractResponseFromMessageResult(ctx context.Context, k8sClient client.Clie
 		return text, nil
 	case *protocol.Task:
 		log.Info("A2A task response detected", "taskId", r.ID, "state", r.Status.State, "agent", agentName)
-		// Create A2ATask resource for task tracking
-		err := handleA2ATaskResponse(ctx, k8sClient, r, agentName, namespace, queryName, recorder, obj)
+
+		text, err := extractTextFromTask(r)
 		if err != nil {
-			log.Error(err, "failed to handle A2A task response", "taskId", r.ID, "agent", agentName)
+			log.Error(err, "failed to extract text from task", "taskId", r.ID, "state", r.Status.State)
+			return "", err
+		}
+
+		err = handleA2ATaskResponse(ctx, k8sClient, r, agentName, namespace, queryName, recorder, obj)
+		if err != nil {
+			log.Error(err, "failed to create A2ATask resource", "taskId", r.ID, "agent", agentName)
 			return "", fmt.Errorf("failed to handle A2A task response: %w", err)
 		}
-		log.Info("A2A task response handled successfully", "taskId", r.ID, "agent", agentName)
-		return fmt.Sprintf("A2A task %s is being tracked", r.ID), nil
+
+		log.Info("A2A task completed and tracked", "taskId", r.ID, "agent", agentName, "responseLength", len(text))
+		return text, nil
 	default:
 		log.Error(nil, "unexpected A2A result type", "type", fmt.Sprintf("%T", result.Result), "agent", agentName)
 		return "", fmt.Errorf("unexpected result type: %T", result.Result)
 	}
 }
 
+// extractTextFromTask extracts text from a completed or failed Task
+func extractTextFromTask(task *protocol.Task) (string, error) {
+	if task.Status.State == "" {
+		return "", fmt.Errorf("task has no status state")
+	}
+
+	switch task.Status.State {
+	case TaskStateCompleted:
+		// Extract all agent messages from history
+		var text strings.Builder
+		for _, msg := range task.History {
+			if msg.Role == protocol.MessageRoleAgent && len(msg.Parts) > 0 {
+				msgText := extractTextFromParts(msg.Parts)
+				if msgText != "" {
+					if text.Len() > 0 {
+						text.WriteString("\n")
+					}
+					text.WriteString(msgText)
+				}
+			}
+		}
+
+		return text.String(), nil
+
+	case TaskStateFailed:
+		// Extract error message from status.message
+		errorMsg := "task failed"
+		if task.Status.Message != nil && len(task.Status.Message.Parts) > 0 {
+			errorMsg = extractTextFromParts(task.Status.Message.Parts)
+		}
+		return "", fmt.Errorf("%s", errorMsg)
+
+	default:
+		return "", fmt.Errorf("task in state '%s' (expected %s or %s)", task.Status.State, TaskStateCompleted, TaskStateFailed)
+	}
+}
+
 // extractTextFromParts extracts text from message parts in a type-safe way
 func extractTextFromParts(parts []protocol.Part) string {
 	var text strings.Builder
-	for i, part := range parts {
-		logf.Log.Info("A2A part debug", "index", i, "part_type", fmt.Sprintf("%T", part))
+	for _, part := range parts {
 		if textPart, ok := part.(protocol.TextPart); ok {
-			logf.Log.Info("A2A text part found", "text", textPart.Text)
 			text.WriteString(textPart.Text)
 		} else if textPartPtr, ok := part.(*protocol.TextPart); ok {
-			logf.Log.Info("A2A text part pointer found", "text", textPartPtr.Text)
 			text.WriteString(textPartPtr.Text)
-		} else {
-			logf.Log.Info("A2A non-text part skipped", "part_type", fmt.Sprintf("%T", part))
 		}
 	}
 	return text.String()

@@ -12,6 +12,7 @@ import (
 	"github.com/openai/openai-go"
 	"go.opentelemetry.io/otel/attribute"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -73,6 +74,11 @@ func (r *QueryReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 		return *result, err
 	}
 
+	if len(obj.Status.Conditions) == 0 {
+		r.setConditionCompleted(&obj, metav1.ConditionFalse, "QueryNotStarted", "The query has not been started yet")
+		return ctrl.Result{}, r.Status().Update(ctx, &obj)
+	}
+
 	return r.handleQueryExecution(ctx, req, obj)
 }
 
@@ -114,7 +120,7 @@ func (r *QueryReconciler) handleQueryExecution(ctx context.Context, req ctrl.Req
 	}
 
 	switch obj.Status.Phase {
-	case statusDone, statusError:
+	case statusDone, statusError, statusCanceled:
 		return ctrl.Result{
 			RequeueAfter: time.Until(expiry),
 		}, nil
@@ -474,6 +480,17 @@ func serializeMessages(messages []genai.Message) (string, error) {
 	return string(rawBytes), nil
 }
 
+func (r *QueryReconciler) setConditionCompleted(query *arkv1alpha1.Query, status metav1.ConditionStatus, reason, message string) {
+	meta.SetStatusCondition(&query.Status.Conditions, metav1.Condition{
+		Type:               string(arkv1alpha1.QueryCompleted),
+		Status:             status,
+		Reason:             reason,
+		Message:            message,
+		LastTransitionTime: metav1.Now(),
+		ObservedGeneration: query.Generation,
+	})
+}
+
 func (r *QueryReconciler) updateStatus(ctx context.Context, query *arkv1alpha1.Query, status string) error {
 	return r.updateStatusWithDuration(ctx, query, status, nil)
 }
@@ -483,6 +500,16 @@ func (r *QueryReconciler) updateStatusWithDuration(ctx context.Context, query *a
 		return nil
 	}
 	query.Status.Phase = status
+	switch status {
+	case statusRunning:
+		r.setConditionCompleted(query, metav1.ConditionFalse, "QueryRunning", "Query is running")
+	case statusDone:
+		r.setConditionCompleted(query, metav1.ConditionTrue, "QuerySucceeded", "Query completed successfully")
+	case statusError:
+		r.setConditionCompleted(query, metav1.ConditionTrue, "QueryErrored", "Query completed with error")
+	case statusCanceled:
+		r.setConditionCompleted(query, metav1.ConditionTrue, "QueryCanceled", "Query canceled")
+	}
 	if duration != nil {
 		query.Status.Duration = duration
 	}
@@ -540,9 +567,8 @@ func (r *QueryReconciler) executeTarget(ctx context.Context, query arkv1alpha1.Q
 	// Create trace based on target type with input/output at trace level
 	tracer := telemetry.NewTraceContext()
 
-	ctx, span := tracer.StartSpan(ctx, fmt.Sprintf("query.%s", target.Type),
-		attribute.String("target.type", target.Type),
-		attribute.String("target.name", target.Name),
+	ctx, span := tracer.StartTargetSpan(ctx, target.Type, target.Name)
+	span.SetAttributes(
 		attribute.String("query.name", query.Name),
 		attribute.String("query.namespace", query.Namespace),
 	)
@@ -559,9 +585,6 @@ func (r *QueryReconciler) executeTarget(ctx context.Context, query arkv1alpha1.Q
 		"target": targetString,
 	})
 
-	// Get input messages and marshal to JSON for comprehensive telemetry
-	var inputValue string
-
 	var err error
 	metadata := map[string]string{"targetType": target.Type, "targetName": target.Name}
 
@@ -577,19 +600,9 @@ func (r *QueryReconciler) executeTarget(ctx context.Context, query arkv1alpha1.Q
 		return nil, err
 	}
 
-	// Convert messages to JSON for telemetry
-	if jsonBytes, err := json.Marshal(inputMessages); err != nil {
-		telemetry.RecordError(span, err)
-		event := genai.ExecutionEvent{
-			BaseEvent: genai.BaseEvent{Name: target.Name, Metadata: metadata},
-			Type:      target.Type,
-		}
-		tokenCollector.EmitEvent(ctx, corev1.EventTypeWarning, "QueryResolveError", event)
-		return nil, err
-	} else {
-		inputValue = string(jsonBytes)
-		span.SetAttributes(attribute.String("input.value", inputValue))
-	}
+	// Set query input for telemetry
+	userContent := genai.ExtractUserMessageContent(inputMessages)
+	telemetry.SetQueryInput(span, userContent)
 
 	timeout := 5 * time.Minute
 	if query.Spec.Timeout != nil {
