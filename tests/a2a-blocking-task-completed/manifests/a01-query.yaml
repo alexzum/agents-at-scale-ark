@@ -5,5 +5,5 @@ metadata:
 spec:
   input: countdown from 2
   targets:
-    - type: a2a
+    - type: agent
       name: mock-llm-countdown
