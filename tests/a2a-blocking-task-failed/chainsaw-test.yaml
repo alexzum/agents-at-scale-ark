@@ -55,7 +55,7 @@ spec:
           status:
             (length(responses)): 1
             (contains(responses[*].target.name, 'countdown-agent')): true
-            (contains(responses[0].error, 'Cannot countdown from negative number -5')): true
+            (contains(responses[0].content, 'Cannot countdown from negative number -5')): true
     catch:
     - events: {}
     - describe:
