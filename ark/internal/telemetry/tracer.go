@@ -27,14 +27,14 @@ type Span interface {
 
 // SpanOption configures span creation behavior.
 type SpanOption interface {
-	applySpanOption(*spanConfig)
+	ApplySpanOption(*SpanConfig)
 }
 
-// spanConfig holds span creation configuration.
-type spanConfig struct {
-	attributes []Attribute
-	spanKind   SpanKind
-	timestamp  time.Time
+// SpanConfig holds span creation configuration.
+type SpanConfig struct {
+	Attributes []Attribute
+	SpanKind   SpanKind
+	Timestamp  time.Time
 }
 
 // Attribute represents a key-value pair attached to spans or events.
@@ -67,8 +67,8 @@ type attributeOption struct {
 	attributes []Attribute
 }
 
-func (o attributeOption) applySpanOption(cfg *spanConfig) {
-	cfg.attributes = append(cfg.attributes, o.attributes...)
+func (o attributeOption) ApplySpanOption(cfg *SpanConfig) {
+	cfg.Attributes = append(cfg.Attributes, o.attributes...)
 }
 
 // WithAttributes adds attributes to a span at creation time.
@@ -80,8 +80,8 @@ type spanKindOption struct {
 	kind SpanKind
 }
 
-func (o spanKindOption) applySpanOption(cfg *spanConfig) {
-	cfg.spanKind = o.kind
+func (o spanKindOption) ApplySpanOption(cfg *SpanConfig) {
+	cfg.SpanKind = o.kind
 }
 
 func WithSpanKind(kind SpanKind) SpanOption {
@@ -92,8 +92,8 @@ type timestampOption struct {
 	timestamp time.Time
 }
 
-func (o timestampOption) applySpanOption(cfg *spanConfig) {
-	cfg.timestamp = o.timestamp
+func (o timestampOption) ApplySpanOption(cfg *SpanConfig) {
+	cfg.Timestamp = o.timestamp
 }
 
 // WithTimestamp sets the span start time. Defaults to current time if not provided.
