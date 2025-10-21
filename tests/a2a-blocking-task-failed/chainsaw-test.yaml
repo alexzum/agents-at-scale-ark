@@ -36,9 +36,7 @@ spec:
     # Apply Query targeting countdown agent with invalid input
     - apply:
         file: manifests/a01-query.yaml
-    # Wait for Query to fail
     - assert:
-        timeout: 20s
         resource:
           apiVersion: ark.mckinsey.com/v1alpha1
           kind: Query
