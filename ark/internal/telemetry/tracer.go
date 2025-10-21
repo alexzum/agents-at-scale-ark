@@ -23,6 +23,14 @@ type Span interface {
 	RecordError(err error)
 	SetStatus(status Status, description string)
 	AddEvent(name string, attributes ...Attribute)
+
+	// TraceID returns the trace ID for correlating with external systems.
+	// Returns empty string if not available.
+	TraceID() string
+
+	// SpanID returns the span ID for correlating with external systems.
+	// Returns empty string if not available.
+	SpanID() string
 }
 
 // SpanOption configures span creation behavior.

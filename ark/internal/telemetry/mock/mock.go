@@ -129,6 +129,26 @@ func (s *MockSpan) AddEvent(name string, attributes ...telemetry.Attribute) {
 	s.Events = append(s.Events, event)
 }
 
+func (s *MockSpan) TraceID() string {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	// Return mock trace ID for testing
+	if traceID, ok := s.Attributes["mock.traceId"].(string); ok {
+		return traceID
+	}
+	return "mock-trace-id-123"
+}
+
+func (s *MockSpan) SpanID() string {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	// Return mock span ID for testing
+	if spanID, ok := s.Attributes["mock.spanId"].(string); ok {
+		return spanID
+	}
+	return "mock-span-id-456"
+}
+
 // GetAttribute returns the value of an attribute, or nil if not found.
 func (s *MockSpan) GetAttribute(key string) interface{} {
 	s.mu.Lock()

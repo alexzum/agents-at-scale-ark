@@ -504,6 +504,9 @@ func (r *QueryReconciler) executeTarget(ctx context.Context, query arkv1alpha1.Q
 	inputMessages, err := genai.GetQueryInputMessages(ctx, query, impersonatedClient)
 	if err != nil {
 		r.QueryRecorder.RecordError(span, err)
+		// Add trace correlation to event metadata for observability linkage
+		metadata["traceId"] = span.TraceID()
+		metadata["spanId"] = span.SpanID()
 		event := genai.ExecutionEvent{
 			BaseEvent: genai.BaseEvent{Name: target.Name, Metadata: metadata},
 			Type:      target.Type,
@@ -539,6 +542,9 @@ func (r *QueryReconciler) executeTarget(ctx context.Context, query arkv1alpha1.Q
 
 	if err != nil {
 		r.QueryRecorder.RecordError(span, err)
+		// Add trace correlation to event metadata for observability linkage
+		metadata["traceId"] = span.TraceID()
+		metadata["spanId"] = span.SpanID()
 		event := genai.ExecutionEvent{
 			BaseEvent: genai.BaseEvent{Name: target.Name, Metadata: metadata},
 			Type:      target.Type,
@@ -552,6 +558,9 @@ func (r *QueryReconciler) executeTarget(ctx context.Context, query arkv1alpha1.Q
 			r.QueryRecorder.RecordOutput(span, responseContent)
 		}
 		r.QueryRecorder.RecordSuccess(span)
+		// Add trace correlation to event metadata for observability linkage
+		metadata["traceId"] = span.TraceID()
+		metadata["spanId"] = span.SpanID()
 		event := genai.ExecutionEvent{
 			BaseEvent: genai.BaseEvent{Name: target.Name, Metadata: metadata},
 			Type:      target.Type,

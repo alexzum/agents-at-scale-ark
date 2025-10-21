@@ -24,11 +24,13 @@ func (t *noopTracer) Start(ctx context.Context, spanName string, opts ...telemet
 // All methods are intentionally empty for zero-overhead no-op behavior.
 type noopSpan struct{}
 
-func (s *noopSpan) End()                                                    {} //nolint:revive
-func (s *noopSpan) SetAttributes(attributes ...telemetry.Attribute)         {} //nolint:revive
-func (s *noopSpan) RecordError(err error)                                   {} //nolint:revive
-func (s *noopSpan) SetStatus(status telemetry.Status, description string)   {} //nolint:revive
-func (s *noopSpan) AddEvent(name string, attributes ...telemetry.Attribute) {} //nolint:revive
+func (s *noopSpan) End()                                                    {}            //nolint:revive
+func (s *noopSpan) SetAttributes(attributes ...telemetry.Attribute)         {}            //nolint:revive
+func (s *noopSpan) RecordError(err error)                                   {}            //nolint:revive
+func (s *noopSpan) SetStatus(status telemetry.Status, description string)   {}            //nolint:revive
+func (s *noopSpan) AddEvent(name string, attributes ...telemetry.Attribute) {}            //nolint:revive
+func (s *noopSpan) TraceID() string                                         { return "" } //nolint:revive
+func (s *noopSpan) SpanID() string                                          { return "" } //nolint:revive
 
 // noopQueryRecorder is a zero-overhead query recorder that does nothing.
 // All methods are intentionally empty for zero-overhead no-op behavior.

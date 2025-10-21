@@ -112,6 +112,14 @@ func (s *span) AddEvent(name string, attributes ...telemetry.Attribute) {
 	s.otelSpan.AddEvent(name, trace.WithAttributes(otelAttrs...))
 }
 
+func (s *span) TraceID() string {
+	return s.otelSpan.SpanContext().TraceID().String()
+}
+
+func (s *span) SpanID() string {
+	return s.otelSpan.SpanContext().SpanID().String()
+}
+
 // Conversion helpers
 
 func convertAttribute(attr telemetry.Attribute) attribute.KeyValue {
