@@ -32,6 +32,14 @@ type targetResult struct {
 	target   arkv1alpha1.QueryTarget
 }
 
+// QueryReconciler reconciles a Query object with telemetry abstraction.
+//
+// Telemetry Pattern:
+// - QueryRecorder is injected at controller creation (see cmd/main.go)
+// - Use QueryRecorder.StartQuery() for session-level spans
+// - Use QueryRecorder.StartTarget() for target-specific spans
+// - Record inputs, outputs, errors, and token usage through QueryRecorder methods
+// - Never import OTEL packages directly - use the abstraction layer
 type QueryReconciler struct {
 	client.Client
 	Scheme        *runtime.Scheme
@@ -172,7 +180,10 @@ func (r *QueryReconciler) executeQueryAsync(opCtx context.Context, obj arkv1alph
 		sessionId = string(obj.UID)
 	}
 
-	// Create query execution span with session tracking
+	// Create query execution span with session tracking.
+	// This span represents the entire query lifecycle and includes:
+	// - Session correlation for multi-query conversations
+	// - Token usage aggregation across all targets
 	opCtx, span := r.QueryRecorder.StartQuery(opCtx, obj.Name, obj.Namespace, "execute")
 	r.QueryRecorder.RecordSessionID(span, sessionId)
 	defer span.End()
@@ -467,7 +478,11 @@ func (r *QueryReconciler) executeTarget(ctx context.Context, query arkv1alpha1.Q
 	// Store query in context for access in deeper call stacks
 	ctx = context.WithValue(ctx, genai.QueryContextKey, &query)
 
-	// Create target-specific span
+	// Create target-specific span for observability.
+	// This span tracks execution of a single target (agent/team/model/tool) and records:
+	// - Target type and name as attributes
+	// - Input/output content for debugging
+	// - Execution time and outcome
 	ctx, span := r.QueryRecorder.StartTarget(ctx, target.Type, target.Name)
 	defer span.End()
 
