@@ -1,0 +1,128 @@
+/* Copyright 2025. McKinsey & Company */
+
+package config
+
+import (
+	"context"
+	"os"
+
+	otelapi "go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
+	"go.opentelemetry.io/otel/sdk/resource"
+	"go.opentelemetry.io/otel/sdk/trace"
+	semconv "go.opentelemetry.io/otel/semconv/v1.24.0"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
+
+	"mckinsey.com/ark/internal/telemetry"
+	"mckinsey.com/ark/internal/telemetry/noop"
+	otelimpl "mckinsey.com/ark/internal/telemetry/otel"
+)
+
+var log = logf.Log.WithName("telemetry.config")
+
+// Provider manages telemetry lifecycle and provides tracers/recorders.
+type Provider struct {
+	tracer        telemetry.Tracer
+	queryRecorder telemetry.QueryRecorder
+	shutdown      func() error
+}
+
+// NewProvider creates a telemetry provider based on configuration.
+// If OTEL endpoint is not configured, returns a no-op provider.
+func NewProvider() *Provider {
+	endpoint := os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT")
+	if endpoint == "" {
+		log.Info("OTEL_EXPORTER_OTLP_ENDPOINT not set, using no-op telemetry")
+		return newNoopProvider()
+	}
+
+	serviceName := os.Getenv("OTEL_SERVICE_NAME")
+	if serviceName == "" {
+		serviceName = "ark-controller"
+	}
+
+	log.Info("initializing OTEL telemetry", "endpoint", endpoint, "service", serviceName)
+
+	// Initialize OTEL exporter
+	exporter, err := otlptracehttp.New(context.Background())
+	if err != nil {
+		log.Error(err, "failed to create OTLP exporter, falling back to no-op telemetry")
+		return newNoopProvider()
+	}
+
+	// Create trace provider
+	tp := trace.NewTracerProvider(
+		trace.WithBatcher(exporter),
+		trace.WithResource(resource.NewWithAttributes(
+			semconv.SchemaURL,
+			semconv.ServiceName(serviceName),
+		)),
+	)
+
+	otelapi.SetTracerProvider(tp)
+
+	// Send startup event
+	sendStartupEvent(serviceName)
+
+	// Create OTEL-backed implementations
+	tracer := otelimpl.NewTracer("ark/controller")
+	queryRecorder := otelimpl.NewQueryRecorder(tracer)
+
+	log.Info("OTEL telemetry initialized successfully")
+
+	return &Provider{
+		tracer:        tracer,
+		queryRecorder: queryRecorder,
+		shutdown: func() error {
+			log.Info("shutting down telemetry")
+			return tp.Shutdown(context.Background())
+		},
+	}
+}
+
+// newNoopProvider creates a no-op telemetry provider.
+func newNoopProvider() *Provider {
+	tracer := noop.NewTracer()
+	queryRecorder := noop.NewQueryRecorder()
+
+	return &Provider{
+		tracer:        tracer,
+		queryRecorder: queryRecorder,
+		shutdown:      func() error { return nil },
+	}
+}
+
+// Tracer returns the tracer instance.
+func (p *Provider) Tracer() telemetry.Tracer {
+	return p.tracer
+}
+
+// QueryRecorder returns the query recorder instance.
+func (p *Provider) QueryRecorder() telemetry.QueryRecorder {
+	return p.queryRecorder
+}
+
+// Shutdown gracefully shuts down the telemetry provider.
+// Should be called during application shutdown.
+func (p *Provider) Shutdown() error {
+	return p.shutdown()
+}
+
+// sendStartupEvent sends a basic startup event to validate telemetry.
+func sendStartupEvent(serviceName string) {
+	tracer := otelapi.Tracer("ark/controller-startup")
+	_, span := tracer.Start(context.Background(), "controller.startup")
+	defer span.End()
+
+	version := os.Getenv("VERSION")
+	if version == "" {
+		version = "dev"
+	}
+
+	span.SetAttributes(
+		semconv.ServiceName(serviceName),
+		semconv.ServiceVersion(version),
+	)
+
+	log.Info("sent controller startup telemetry event")
+}
