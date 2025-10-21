@@ -56,7 +56,7 @@ spec:
             name: countdown-test-query
           status:
             (length(responses)): 1
-            (contains(responses[*].target.name, 'mock-llm-countdown')): true
+            (contains(responses[*].target.name, 'countdown-agent')): true
             (contains(responses[0].content, 'Starting countdown from 2 seconds')): true
             (contains(responses[0].content, '1 seconds remaining')): true
             (contains(responses[0].content, '0 seconds remaining')): true
