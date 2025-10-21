@@ -35,9 +35,10 @@ type targetResult struct {
 
 type QueryReconciler struct {
 	client.Client
-	Scheme     *runtime.Scheme
-	Recorder   record.EventRecorder
-	operations sync.Map
+	Scheme        *runtime.Scheme
+	Recorder      record.EventRecorder
+	QueryRecorder telemetry.QueryRecorder
+	operations    sync.Map
 }
 
 // +kubebuilder:rbac:groups=ark.mckinsey.com,resources=queries,verbs=get;list;watch;create;update;patch;delete
