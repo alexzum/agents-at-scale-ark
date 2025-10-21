@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/openai/openai-go"
-	"go.opentelemetry.io/otel/attribute"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -467,14 +466,9 @@ func (r *QueryReconciler) finalize(ctx context.Context, query *arkv1alpha1.Query
 func (r *QueryReconciler) executeTarget(ctx context.Context, query arkv1alpha1.Query, target arkv1alpha1.QueryTarget, impersonatedClient client.Client, memory genai.MemoryInterface, eventStream genai.EventStreamInterface, tokenCollector *genai.TokenUsageCollector) ([]genai.Message, error) {
 	// Store query in context for access in deeper call stacks
 	ctx = context.WithValue(ctx, genai.QueryContextKey, &query)
-	// Create trace based on target type with input/output at trace level
-	tracer := telemetry.NewTraceContext()
 
-	ctx, span := tracer.StartTargetSpan(ctx, target.Type, target.Name)
-	span.SetAttributes(
-		attribute.String("query.name", query.Name),
-		attribute.String("query.namespace", query.Namespace),
-	)
+	// Create target-specific span
+	ctx, span := r.QueryRecorder.StartTarget(ctx, target.Type, target.Name)
 	defer span.End()
 
 	// Add query and session context for streaming metadata
@@ -494,7 +488,7 @@ func (r *QueryReconciler) executeTarget(ctx context.Context, query arkv1alpha1.Q
 	// Get input messages for processing and telemetry
 	inputMessages, err := genai.GetQueryInputMessages(ctx, query, impersonatedClient)
 	if err != nil {
-		telemetry.RecordError(span, err)
+		r.QueryRecorder.RecordError(span, err)
 		event := genai.ExecutionEvent{
 			BaseEvent: genai.BaseEvent{Name: target.Name, Metadata: metadata},
 			Type:      target.Type,
@@ -503,9 +497,9 @@ func (r *QueryReconciler) executeTarget(ctx context.Context, query arkv1alpha1.Q
 		return nil, err
 	}
 
-	// Set query input for telemetry
+	// Record input for telemetry
 	userContent := genai.ExtractUserMessageContent(inputMessages)
-	telemetry.SetQueryInput(span, userContent)
+	r.QueryRecorder.RecordInput(span, userContent)
 
 	timeout := 5 * time.Minute
 	if query.Spec.Timeout != nil {
@@ -529,7 +523,7 @@ func (r *QueryReconciler) executeTarget(ctx context.Context, query arkv1alpha1.Q
 	}
 
 	if err != nil {
-		telemetry.RecordError(span, err)
+		r.QueryRecorder.RecordError(span, err)
 		event := genai.ExecutionEvent{
 			BaseEvent: genai.BaseEvent{Name: target.Name, Metadata: metadata},
 			Type:      target.Type,
@@ -539,10 +533,10 @@ func (r *QueryReconciler) executeTarget(ctx context.Context, query arkv1alpha1.Q
 		// Set the final response as output at trace level
 		if len(responseMessages) > 0 {
 			lastMessage := responseMessages[len(responseMessages)-1]
-			responseContent := telemetry.ExtractMessageContentForTelemetry(openai.ChatCompletionMessageParamUnion(lastMessage))
-			span.SetAttributes(attribute.String("output.value", responseContent))
+			responseContent := messageToText(lastMessage)
+			r.QueryRecorder.RecordOutput(span, responseContent)
 		}
-		telemetry.RecordSuccess(span)
+		r.QueryRecorder.RecordSuccess(span)
 		event := genai.ExecutionEvent{
 			BaseEvent: genai.BaseEvent{Name: target.Name, Metadata: metadata},
 			Type:      target.Type,
