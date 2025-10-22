@@ -1,0 +1,19 @@
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Tool
+metadata:
+  name: get-city-info
+spec:
+  type: http
+  description: "Resolve a free-form city name to canonical info: country code, latitude, longitude, state (if US), and alternate names via Open-Meteo geocoding. Helps decide if location is in the US."
+  inputSchema:
+    type: object
+    properties:
+      city:
+        type: string
+        description: "Free-form city name provided by user"
+      count:
+        type: integer
+        description: "Number of top matches to return (default 5)"
+    required: ["city"]
+  http:
+    url: https://geocoding-api.open-meteo.com/v1/search?name={city}&count={count}

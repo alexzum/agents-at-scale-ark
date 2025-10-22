@@ -1,0 +1,20 @@
+apiVersion: ark.mckinsey.com/v1alpha1
+kind: Tool
+metadata:
+  name: get-nws-points
+spec:
+  type: http
+  description: "Resolve latitude/longitude to NWS metadata (gridId, gridX, gridY, and forecast URLs) via api.weather.gov/points."
+  inputSchema:
+    type: object
+    properties:
+      latitude:
+        type: number
+        description: "Latitude in decimal degrees (e.g., 42.3601)"
+      longitude:
+        type: number
+        description: "Longitude in decimal degrees (e.g., -71.0589)"
+    required: ["latitude", "longitude"]
+  http:
+    method: GET
+    url: https://api.weather.gov/points/{latitude},{longitude}
