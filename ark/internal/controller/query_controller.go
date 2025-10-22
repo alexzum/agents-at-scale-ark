@@ -193,11 +193,6 @@ func (r *QueryReconciler) executeQueryAsync(opCtx context.Context, obj arkv1alph
 	queryTracker.Complete("resolved")
 	obj.Status.Responses = responses
 
-	debugLog := logf.FromContext(opCtx)
-	for i, resp := range responses {
-		debugLog.Info("DEBUG_PHASE_CHECK: Response before status update", "index", i, "target", resp.Target.Name, "phase", resp.Phase, "hasContent", len(resp.Content) > 0)
-	}
-
 	tokenSummary := tokenCollector.GetTokenSummary()
 	obj.Status.TokenUsage = arkv1alpha1.TokenUsage{
 		PromptTokens:     tokenSummary.PromptTokens,
@@ -551,17 +546,12 @@ func (r *QueryReconciler) createErrorResponse(target arkv1alpha1.QueryTarget, er
 	}
 	errorRaw, _ := json.Marshal([]map[string]interface{}{errorMessage})
 
-	response := arkv1alpha1.Response{
+	return arkv1alpha1.Response{
 		Target:  target,
 		Content: err.Error(),
 		Raw:     string(errorRaw),
 		Phase:   statusError,
 	}
-
-	log := logf.Log.WithName("query-controller")
-	log.Info("DEBUG_PHASE_CHECK: Created error response", "target", target.Name, "phase", response.Phase, "statusError", statusError)
-
-	return response
 }
 
 func (r *QueryReconciler) finalize(ctx context.Context, query *arkv1alpha1.Query) {
