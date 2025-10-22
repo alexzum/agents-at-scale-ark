@@ -1,0 +1,114 @@
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: a2a-message-context
+spec:
+  description: Test A2A contextId annotation for stateful conversations
+  steps:
+  - name: step-1
+    try:
+    # Install mock-llm with A2A agents enabled
+    - script:
+        content: |
+          helm install mock-llm oci://ghcr.io/dwmkerr/charts/mock-llm \
+            --version 0.1.15 \
+            --namespace $NAMESPACE \
+            --values mock-llm-values.yaml
+        env:
+        - name: NAMESPACE
+          value: ($namespace)
+    # Install ark-tenant for RBAC
+    - script:
+        content: |
+          helm install ark-tenant ../../charts/ark-tenant --namespace $NAMESPACE --create-namespace --wait
+        env:
+        - name: NAMESPACE
+          value: ($namespace)
+    # Wait for message-counter A2AServer to be Ready
+    - assert:
+        resource:
+          apiVersion: ark.mckinsey.com/v1prealpha1
+          kind: A2AServer
+          metadata:
+            name: mock-llm-message-counter
+          status:
+            (contains(conditions[?type == 'Ready'].status, 'True')): true
+    # Send first query
+    - apply:
+        file: manifests/a01-query-first.yaml
+    # Wait for first query to complete
+    - assert:
+        resource:
+          apiVersion: ark.mckinsey.com/v1alpha1
+          kind: Query
+          metadata:
+            name: message-counter-first
+          status:
+            phase: done
+    # Verify first response shows 1 message
+    - assert:
+        resource:
+          apiVersion: ark.mckinsey.com/v1alpha1
+          kind: Query
+          metadata:
+            name: message-counter-first
+          status:
+            (length(responses)): 1
+            (contains(responses[0].content, '1 message(s) received')): true
+    # Extract contextId from annotation
+    - script:
+        content: |
+          kubectl get query message-counter-first -n $NAMESPACE -o jsonpath='{.metadata.annotations.ark\.mckinsey\.com/a2a-context-id}'
+        env:
+        - name: NAMESPACE
+          value: ($namespace)
+        outputs:
+        - name: contextId
+          value: ($stdout)
+    # Create second query with contextId annotation
+    - apply:
+        resource:
+          apiVersion: ark.mckinsey.com/v1alpha1
+          kind: Query
+          metadata:
+            name: message-counter-second
+            annotations:
+              ark.mckinsey.com/a2a-context-id: ($contextId)
+          spec:
+            input: Second message
+            targets:
+              - type: agent
+                name: message-counter-agent
+    # Wait for second query to complete
+    - assert:
+        resource:
+          apiVersion: ark.mckinsey.com/v1alpha1
+          kind: Query
+          metadata:
+            name: message-counter-second
+          status:
+            phase: done
+    # Verify second response shows 2 messages
+    - assert:
+        resource:
+          apiVersion: ark.mckinsey.com/v1alpha1
+          kind: Query
+          metadata:
+            name: message-counter-second
+          status:
+            (length(responses)): 1
+            (contains(responses[0].content, '2 message(s) received')): true
+    catch:
+    - events: {}
+    - describe:
+        apiVersion: ark.mckinsey.com/v1prealpha1
+        kind: A2AServer
+        name: mock-llm-message-counter
+    - describe:
+        apiVersion: ark.mckinsey.com/v1alpha1
+        kind: Query
+        name: message-counter-first
+    - describe:
+        apiVersion: ark.mckinsey.com/v1alpha1
+        kind: Query
+        name: message-counter-second

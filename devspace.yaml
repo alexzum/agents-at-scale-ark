@@ -3,8 +3,8 @@ version: v2beta1
 
 # Dependencies - include other DevSpace configurations
 dependencies:
-  localhost-gateway:
-    path: ./services/localhost-gateway
+  # localhost-gateway:
+  #   path: ./services/localhost-gateway
   ark:
     path: ./ark
   ark-cluster-memory:
