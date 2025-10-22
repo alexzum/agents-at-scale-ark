@@ -95,7 +95,7 @@ func (v *AgentCustomValidator) validateAgent(ctx context.Context, agent *arkv1al
 		return warnings, err
 	}
 
-	if err := v.validatePropagation(agent.Spec.Propagation); err != nil {
+	if err := v.validateOverrides(agent.Spec.Overrides); err != nil {
 		return warnings, err
 	}
 
@@ -165,33 +165,33 @@ func isValidBuiltInTool(name string) bool {
 	return validBuiltInTools[name]
 }
 
-func (v *AgentCustomValidator) validatePropagation(propagations []arkv1alpha1.HeaderPropagation) error {
-	for i, propagation := range propagations {
-		if err := v.validatePropagationEntry(propagation, i); err != nil {
+func (v *AgentCustomValidator) validateOverrides(overrides []arkv1alpha1.Override) error {
+	for i, override := range overrides {
+		if err := v.validateOverrideEntry(override, i); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func (v *AgentCustomValidator) validatePropagationEntry(propagation arkv1alpha1.HeaderPropagation, index int) error {
-	if propagation.Type != "model" && propagation.Type != "mcp" {
-		return fmt.Errorf("propagation[%d]: type must be either 'model' or 'mcp'", index)
+func (v *AgentCustomValidator) validateOverrideEntry(override arkv1alpha1.Override, index int) error {
+	if override.ResourceType != "model" && override.ResourceType != "mcpserver" {
+		return fmt.Errorf("overrides[%d]: resourceType must be either 'model' or 'mcpserver'", index)
 	}
 
-	if propagation.Type == "mcp" && propagation.McpSelector == nil {
-		return fmt.Errorf("propagation[%d]: mcpSelector is required when type is 'mcp'", index)
+	if override.ResourceType == "mcpserver" && override.LabelSelector == nil {
+		return fmt.Errorf("overrides[%d]: labelSelector is required when resourceType is 'mcpserver'", index)
 	}
 
-	if propagation.Type == "model" && propagation.McpSelector != nil {
-		return fmt.Errorf("propagation[%d]: mcpSelector should not be specified when type is 'model'", index)
+	if override.ResourceType == "model" && override.LabelSelector != nil {
+		return fmt.Errorf("overrides[%d]: labelSelector should not be specified when resourceType is 'model'", index)
 	}
 
-	if len(propagation.Headers) == 0 {
-		return fmt.Errorf("propagation[%d]: headers list cannot be empty", index)
+	if len(override.Headers) == 0 {
+		return fmt.Errorf("overrides[%d]: headers list cannot be empty", index)
 	}
 
-	for j, header := range propagation.Headers {
+	for j, header := range override.Headers {
 		if err := v.validateHeader(header, index, j); err != nil {
 			return err
 		}
@@ -200,7 +200,7 @@ func (v *AgentCustomValidator) validatePropagationEntry(propagation arkv1alpha1.
 	return nil
 }
 
-func (v *AgentCustomValidator) validateHeader(header arkv1alpha1.Header, propagationIndex, headerIndex int) error {
-	contextPrefix := fmt.Sprintf("propagation[%d].headers[%d]", propagationIndex, headerIndex)
+func (v *AgentCustomValidator) validateHeader(header arkv1alpha1.Header, overrideIndex, headerIndex int) error {
+	contextPrefix := fmt.Sprintf("overrides[%d].headers[%d]", overrideIndex, headerIndex)
 	return ValidateHeader(header, contextPrefix)
 }

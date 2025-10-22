@@ -82,14 +82,14 @@ type Header struct {
 	Value HeaderValue `json:"value"`
 }
 
-type HeaderPropagation struct {
-	// +kubebuilder:validation:Required
-	// +kubebuilder:validation:Enum=model;mcp
-	Type string `json:"type"`
+type Override struct {
 	// +kubebuilder:validation:Required
 	Headers []Header `json:"headers"`
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:Enum=model;mcpserver
+	ResourceType string `json:"resourceType"`
 	// +kubebuilder:validation:Optional
-	McpSelector *metav1.LabelSelector `json:"mcpSelector,omitempty"`
+	LabelSelector *metav1.LabelSelector `json:"labelSelector,omitempty"`
 }
 
 type ExpressionRule struct {

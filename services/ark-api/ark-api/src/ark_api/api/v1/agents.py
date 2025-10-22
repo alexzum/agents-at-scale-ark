@@ -92,7 +92,7 @@ def agent_to_detail_response(agent: dict) -> AgentDetailResponse:
         parameters=spec.get("parameters"),
         prompt=spec.get("prompt"),
         tools=spec.get("tools"),
-        propagation=spec.get("propagation"),
+        overrides=spec.get("overrides"),
         skills=skills,
         isA2A=is_a2a,
         available=availability,
@@ -162,8 +162,8 @@ async def create_agent(body: AgentCreateRequest, namespace: Optional[str] = Quer
         if body.tools is not None:
             agent_spec["tools"] = [tool.model_dump(exclude_none=True) for tool in body.tools]
 
-        if body.propagation is not None:
-            agent_spec["propagation"] = [prop.model_dump(exclude_none=True) for prop in body.propagation]
+        if body.overrides is not None:
+            agent_spec["overrides"] = [override.model_dump(exclude_none=True) for override in body.overrides]
 
         # Create the agent object
         agent = AgentV1alpha1(
@@ -233,8 +233,8 @@ async def update_agent(agent_name: str, body: AgentUpdateRequest, namespace: Opt
         if body.tools is not None:
             existing_spec["tools"] = [tool.model_dump(exclude_none=True) for tool in body.tools]
 
-        if body.propagation is not None:
-            existing_spec["propagation"] = [prop.model_dump(exclude_none=True) for prop in body.propagation]
+        if body.overrides is not None:
+            existing_spec["overrides"] = [override.model_dump(exclude_none=True) for override in body.overrides]
         
         # Update the agent
         # Get the full existing agent object and update its spec

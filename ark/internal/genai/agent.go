@@ -354,26 +354,26 @@ func resolveAgentHeaders(ctx context.Context, k8sClient client.Client, crd *arkv
 	modelHeaders := make(map[string]string)
 	mcpHeadersMap := make(map[string]map[string]string)
 
-	for _, propagation := range crd.Spec.Propagation {
-		resolvedHeaders, err := ResolveHeaders(ctx, k8sClient, propagation.Headers, crd.Namespace)
+	for _, override := range crd.Spec.Overrides {
+		resolvedHeaders, err := ResolveHeaders(ctx, k8sClient, override.Headers, crd.Namespace)
 		if err != nil {
 			return nil, nil, err
 		}
 
-		switch propagation.Type {
+		switch override.ResourceType {
 		case "model":
 			maps.Copy(modelHeaders, resolvedHeaders)
 			log.Info("resolved agent headers for model", "agent", crd.Name, "header_count", len(resolvedHeaders))
-		case "mcp":
-			if propagation.McpSelector == nil {
-				return nil, nil, fmt.Errorf("mcpSelector is required when type is 'mcp'")
+		case "mcpserver":
+			if override.LabelSelector == nil {
+				return nil, nil, fmt.Errorf("labelSelector is required when resourceType is 'mcpserver'")
 			}
-			if err := applyHeadersToMCPServers(ctx, k8sClient, crd.Namespace, propagation.McpSelector, resolvedHeaders, mcpHeadersMap); err != nil {
+			if err := applyHeadersToMCPServers(ctx, k8sClient, crd.Namespace, override.LabelSelector, resolvedHeaders, mcpHeadersMap); err != nil {
 				return nil, nil, fmt.Errorf("failed to apply headers to MCP servers: %w", err)
 			}
 			log.Info("applied headers to MCP servers", "agent", crd.Name, "header_count", len(resolvedHeaders))
 		default:
-			return nil, nil, fmt.Errorf("unknown propagation type: %s", propagation.Type)
+			return nil, nil, fmt.Errorf("unknown resourceType: %s", override.ResourceType)
 		}
 	}
 
@@ -384,7 +384,7 @@ func resolveAgentHeaders(ctx context.Context, k8sClient client.Client, crd *arkv
 func listMatchingMCPServers(ctx context.Context, k8sClient client.Client, namespace string, selector *metav1.LabelSelector) ([]arkv1alpha1.MCPServer, error) {
 	labelSelector, err := metav1.LabelSelectorAsSelector(selector)
 	if err != nil {
-		return nil, fmt.Errorf("invalid mcpSelector: %w", err)
+		return nil, fmt.Errorf("invalid labelSelector: %w", err)
 	}
 
 	var mcpServerList arkv1alpha1.MCPServerList

@@ -77,11 +77,11 @@ class Header(BaseModel):
     value: HeaderValue
 
 
-class HeaderPropagation(BaseModel):
-    """Header propagation configuration for models and MCP servers."""
-    type: str
+class Override(BaseModel):
+    """Header override configuration for models and MCP servers."""
     headers: List[Header]
-    mcpSelector: Optional[LabelSelector] = None
+    resourceType: str
+    labelSelector: Optional[LabelSelector] = None
 
 
 class Skill(BaseModel):
@@ -118,7 +118,7 @@ class AgentCreateRequest(BaseModel):
     parameters: Optional[List[Parameter]] = None
     prompt: Optional[str] = None
     tools: Optional[List[Tool]] = None
-    propagation: Optional[List[HeaderPropagation]] = None
+    overrides: Optional[List[Override]] = None
 
 
 class AgentUpdateRequest(BaseModel):
@@ -129,7 +129,7 @@ class AgentUpdateRequest(BaseModel):
     parameters: Optional[List[Parameter]] = None
     prompt: Optional[str] = None
     tools: Optional[List[Tool]] = None
-    propagation: Optional[List[HeaderPropagation]] = None
+    overrides: Optional[List[Override]] = None
 
 
 class AgentDetailResponse(BaseModel):
@@ -142,7 +142,7 @@ class AgentDetailResponse(BaseModel):
     parameters: Optional[List[Parameter]] = None
     prompt: Optional[str] = None
     tools: Optional[List[Tool]] = None
-    propagation: Optional[List[HeaderPropagation]] = None
+    overrides: Optional[List[Override]] = None
     skills: Optional[List[Skill]] = None
     isA2A: bool = False
     available: Optional[AvailabilityStatus] = None
