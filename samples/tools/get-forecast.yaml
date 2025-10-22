@@ -9,14 +9,14 @@ spec:
     properties:
       office:
         type: string
-        description: "Weather office identifier (e.g., TOP)"
+        description: "Weather office identifier (e.g., OKX, TOP)"
       gridX:
         type: integer
-        description: "Grid X coordinate"
+        description: "Grid X coordinate (non-negative integer)"
       gridY:
         type: integer
-        description: "Grid Y coordinate"
+        description: "Grid Y coordinate (non-negative integer)"
     required: ["office", "gridX", "gridY"]
-  description: "Get weather forecast for a specific location and time period"
+  description: "Get weather forecast for an NWS grid cell using the gridpoints endpoint"
   http:
     url: https://api.weather.gov/gridpoints/{office}/{gridX},{gridY}/forecast
