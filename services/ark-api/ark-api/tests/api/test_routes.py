@@ -159,13 +159,20 @@ class TestAPIKeyEndpoints(unittest.TestCase):
     @patch('ark_api.api.v1.api_keys.APIKeyService')
     def test_create_api_key_success(self, mock_api_key_service):
         """Test successful API key creation."""
+        from datetime import datetime, timezone
+        from ark_api.models.auth import APIKeyCreateResponse
+        
         # Setup mock
         mock_service_instance = AsyncMock()
-        mock_service_instance.create_api_key.return_value = {
-            "public_key": "pk_test_123",
-            "secret_key": "sk_test_456",
-            "name": "test-key"
-        }
+        mock_response = APIKeyCreateResponse(
+            id="test-id",
+            name="test-key",
+            public_key="pk_test_123",
+            secret_key="sk_test_456",
+            created_at=datetime.now(timezone.utc),
+            expires_at=None
+        )
+        mock_service_instance.create_api_key.return_value = mock_response
         mock_api_key_service.return_value = mock_service_instance
         
         # Make the request
@@ -273,7 +280,11 @@ class TestSessionEndpoints(unittest.TestCase):
         mock_with_ark_client.return_value.__aenter__.return_value = mock_client
         
         mock_get_memory_resources.return_value = [
-            {"metadata": {"name": "test-memory"}, "spec": {"service": {"name": "memory-service"}}}
+            {
+                "metadata": {"name": "test-memory"}, 
+                "spec": {"service": {"name": "memory-service"}},
+                "status": {"lastResolvedAddress": "http://memory-service:8080"}
+            }
         ]
         
         mock_http_response = Mock()
@@ -300,7 +311,11 @@ class TestSessionEndpoints(unittest.TestCase):
         mock_with_ark_client.return_value.__aenter__.return_value = mock_client
         
         mock_get_memory_resources.return_value = [
-            {"metadata": {"name": "test-memory"}, "spec": {"service": {"name": "memory-service"}}}
+            {
+                "metadata": {"name": "test-memory"}, 
+                "spec": {"service": {"name": "memory-service"}},
+                "status": {"lastResolvedAddress": "http://memory-service:8080"}
+            }
         ]
         
         mock_http_response = Mock()
@@ -327,7 +342,11 @@ class TestSessionEndpoints(unittest.TestCase):
         mock_with_ark_client.return_value.__aenter__.return_value = mock_client
         
         mock_get_memory_resources.return_value = [
-            {"metadata": {"name": "test-memory"}, "spec": {"service": {"name": "memory-service"}}}
+            {
+                "metadata": {"name": "test-memory"}, 
+                "spec": {"service": {"name": "memory-service"}},
+                "status": {"lastResolvedAddress": "http://memory-service:8080"}
+            }
         ]
         
         mock_http_response = Mock()
