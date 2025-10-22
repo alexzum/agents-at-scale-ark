@@ -3,13 +3,23 @@ package genai
 import (
 	"context"
 	"fmt"
+	"maps"
 
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
 	arkv1alpha1 "mckinsey.com/ark/api/v1alpha1"
 	arkv1prealpha1 "mckinsey.com/ark/api/v1prealpha1"
+)
+
+type OverrideType string
+
+const (
+	OverrideTypeModel     OverrideType = "model"
+	OverrideTypeMCPServer OverrideType = "mcpserver"
 )
 
 func ResolveHeaders(ctx context.Context, k8sClient client.Client, headers []arkv1alpha1.Header, namespace string) (map[string]string, error) {
@@ -89,4 +99,83 @@ func ResolveHeaderValueV1PreAlpha1(ctx context.Context, k8sClient client.Client,
 		Value: header.Value,
 	}
 	return ResolveHeaderValue(ctx, k8sClient, v1alpha1Header, namespace)
+}
+
+func listResourcesByLabels(ctx context.Context, k8sClient client.Client, namespace string, overrideType OverrideType, labelSelector *metav1.LabelSelector) ([]client.Object, error) {
+	if labelSelector == nil {
+		return nil, fmt.Errorf("labelSelector is required for overrideType %s", overrideType)
+	}
+
+	selector, err := metav1.LabelSelectorAsSelector(labelSelector)
+	if err != nil {
+		return nil, fmt.Errorf("invalid labelSelector: %w", err)
+	}
+
+	listOpts := &client.ListOptions{
+		Namespace:     namespace,
+		LabelSelector: selector,
+	}
+
+	var resources []client.Object
+
+	switch overrideType {
+	case OverrideTypeModel:
+		var modelList arkv1alpha1.ModelList
+		if err := k8sClient.List(ctx, &modelList, listOpts); err != nil {
+			return nil, fmt.Errorf("failed to list models: %w", err)
+		}
+		for i := range modelList.Items {
+			resources = append(resources, &modelList.Items[i])
+		}
+
+	case OverrideTypeMCPServer:
+		var mcpServerList arkv1alpha1.MCPServerList
+		if err := k8sClient.List(ctx, &mcpServerList, listOpts); err != nil {
+			return nil, fmt.Errorf("failed to list MCP servers: %w", err)
+		}
+		for i := range mcpServerList.Items {
+			resources = append(resources, &mcpServerList.Items[i])
+		}
+
+	default:
+		return nil, fmt.Errorf("unsupported overrideType: %s", overrideType)
+	}
+
+	return resources, nil
+}
+
+func ResolveHeadersFromOverrides(ctx context.Context, k8sClient client.Client, overrides []arkv1alpha1.Override, namespace string, overrideType OverrideType) (map[string]map[string]string, error) {
+	log := logf.FromContext(ctx)
+	resourceHeaders := make(map[string]map[string]string)
+
+	for _, override := range overrides {
+		if override.ResourceType != string(overrideType) {
+			continue
+		}
+
+		resolvedHeaders, err := ResolveHeaders(ctx, k8sClient, override.Headers, namespace)
+		if err != nil {
+			return nil, fmt.Errorf("failed to resolve headers for overrideType %s: %w", overrideType, err)
+		}
+
+		if len(resolvedHeaders) == 0 {
+			continue
+		}
+
+		resources, err := listResourcesByLabels(ctx, k8sClient, namespace, overrideType, override.LabelSelector)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, resource := range resources {
+			resourceName := resource.GetName()
+			if resourceHeaders[resourceName] == nil {
+				resourceHeaders[resourceName] = make(map[string]string)
+			}
+			maps.Copy(resourceHeaders[resourceName], resolvedHeaders)
+			log.V(1).Info("resolved headers for resource", "overrideType", overrideType, "resource", resourceName, "namespace", namespace, "header_count", len(resolvedHeaders))
+		}
+	}
+
+	return resourceHeaders, nil
 }

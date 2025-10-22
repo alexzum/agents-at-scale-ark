@@ -4,11 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"maps"
 
 	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/packages/param"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -283,9 +281,17 @@ func ValidateExecutionEngine(ctx context.Context, k8sClient client.Client, execu
 func MakeAgent(ctx context.Context, k8sClient client.Client, crd *arkv1alpha1.Agent, eventRecorder EventEmitter) (*Agent, error) {
 	log := logf.FromContext(ctx)
 
-	modelHeaders, mcpHeadersMap, err := resolveAgentHeaders(ctx, k8sClient, crd)
+	modelHeadersMap, err := ResolveHeadersFromOverrides(ctx, k8sClient, crd.Spec.Overrides, crd.Namespace, OverrideTypeModel)
 	if err != nil {
-		return nil, fmt.Errorf("failed to resolve headers for agent %s/%s: %w", crd.Namespace, crd.Name, err)
+		return nil, fmt.Errorf("failed to resolve model headers for agent %s/%s: %w", crd.Namespace, crd.Name, err)
+	}
+
+	var modelHeaders map[string]string
+	if crd.Spec.ModelRef != nil {
+		modelHeaders = modelHeadersMap[crd.Spec.ModelRef.Name]
+		if len(modelHeaders) > 0 {
+			log.Info("resolved model headers from agent overrides", "agent", crd.Name, "model", crd.Spec.ModelRef.Name, "header_count", len(modelHeaders))
+		}
 	}
 
 	var resolvedModel *Model
@@ -316,16 +322,15 @@ func MakeAgent(ctx context.Context, k8sClient client.Client, crd *arkv1alpha1.Ag
 		return nil, fmt.Errorf("failed to make query from context for agent %s/%s: %w", crd.Namespace, crd.Name, err)
 	}
 
-	mcpSettings := query.McpSettings
-	if mcpSettings == nil {
-		mcpSettings = make(map[string]MCPSettings)
+	mcpHeadersMap, err := ResolveHeadersFromOverrides(ctx, k8sClient, crd.Spec.Overrides, crd.Namespace, OverrideTypeMCPServer)
+	if err != nil {
+		return nil, fmt.Errorf("failed to resolve MCP headers for agent %s/%s: %w", crd.Namespace, crd.Name, err)
 	}
-	for mcpKey, headers := range mcpHeadersMap {
-		setting := mcpSettings[mcpKey]
-		setting.Headers = headers
-		mcpSettings[mcpKey] = setting
-		log.Info("configured MCP headers from agent", "agent", crd.Name, "mcpServer", mcpKey, "header_count", len(headers))
+	if len(mcpHeadersMap) > 0 {
+		log.Info("resolved MCP server headers from agent overrides", "agent", crd.Name, "mcpServers", len(mcpHeadersMap))
 	}
+
+	mcpSettings := MergeMCPSettingsWithHeaders(ctx, query.McpSettings, mcpHeadersMap)
 
 	tools := NewToolRegistry(mcpSettings)
 
@@ -347,78 +352,4 @@ func MakeAgent(ctx context.Context, k8sClient client.Client, crd *arkv1alpha1.Ag
 		OutputSchema:    crd.Spec.OutputSchema,
 		client:          k8sClient,
 	}, nil
-}
-
-func resolveAgentHeaders(ctx context.Context, k8sClient client.Client, crd *arkv1alpha1.Agent) (map[string]string, map[string]map[string]string, error) {
-	log := logf.FromContext(ctx)
-	modelHeaders := make(map[string]string)
-	mcpHeadersMap := make(map[string]map[string]string)
-
-	for _, override := range crd.Spec.Overrides {
-		resolvedHeaders, err := ResolveHeaders(ctx, k8sClient, override.Headers, crd.Namespace)
-		if err != nil {
-			return nil, nil, err
-		}
-
-		switch override.ResourceType {
-		case "model":
-			maps.Copy(modelHeaders, resolvedHeaders)
-			log.Info("resolved agent headers for model", "agent", crd.Name, "header_count", len(resolvedHeaders))
-		case "mcpserver":
-			if override.LabelSelector == nil {
-				return nil, nil, fmt.Errorf("labelSelector is required when resourceType is 'mcpserver'")
-			}
-			if err := applyHeadersToMCPServers(ctx, k8sClient, crd.Namespace, override.LabelSelector, resolvedHeaders, mcpHeadersMap); err != nil {
-				return nil, nil, fmt.Errorf("failed to apply headers to MCP servers: %w", err)
-			}
-			log.Info("applied headers to MCP servers", "agent", crd.Name, "header_count", len(resolvedHeaders))
-		default:
-			return nil, nil, fmt.Errorf("unknown resourceType: %s", override.ResourceType)
-		}
-	}
-
-	log.Info("resolved agent headers", "agent", crd.Name, "modelHeaders", len(modelHeaders), "mcpServers", len(mcpHeadersMap))
-	return modelHeaders, mcpHeadersMap, nil
-}
-
-func listMatchingMCPServers(ctx context.Context, k8sClient client.Client, namespace string, selector *metav1.LabelSelector) ([]arkv1alpha1.MCPServer, error) {
-	labelSelector, err := metav1.LabelSelectorAsSelector(selector)
-	if err != nil {
-		return nil, fmt.Errorf("invalid labelSelector: %w", err)
-	}
-
-	var mcpServerList arkv1alpha1.MCPServerList
-	listOpts := &client.ListOptions{
-		Namespace:     namespace,
-		LabelSelector: labelSelector,
-	}
-
-	if err := k8sClient.List(ctx, &mcpServerList, listOpts); err != nil {
-		return nil, fmt.Errorf("failed to list MCP servers: %w", err)
-	}
-
-	return mcpServerList.Items, nil
-}
-
-func applyHeadersToMCPServers(ctx context.Context, k8sClient client.Client, namespace string, selector *metav1.LabelSelector, headers map[string]string, mcpHeadersMap map[string]map[string]string) error {
-	if len(headers) == 0 {
-		return nil
-	}
-
-	mcpServers, err := listMatchingMCPServers(ctx, k8sClient, namespace, selector)
-	if err != nil {
-		return err
-	}
-
-	log := logf.FromContext(ctx)
-	for _, mcpServer := range mcpServers {
-		mcpKey := fmt.Sprintf("%s/%s", namespace, mcpServer.Name)
-		if mcpHeadersMap[mcpKey] == nil {
-			mcpHeadersMap[mcpKey] = make(map[string]string)
-		}
-		maps.Copy(mcpHeadersMap[mcpKey], headers)
-		log.V(1).Info("applied headers to MCP server", "mcpServer", mcpKey, "header_count", len(headers))
-	}
-
-	return nil
 }
