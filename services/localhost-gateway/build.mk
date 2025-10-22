@@ -17,7 +17,7 @@ LOCALHOST_GATEWAY_STAMP_TEST := $(LOCALHOST_GATEWAY_OUT)/stamp-test
 CLEAN_TARGETS += $(LOCALHOST_GATEWAY_OUT)
 
 # Define phony targets
-.PHONY: $(LOCALHOST_GATEWAY_SERVICE_NAME)-build $(LOCALHOST_GATEWAY_SERVICE_NAME)-install $(LOCALHOST_GATEWAY_SERVICE_NAME)-uninstall $(LOCALHOST_GATEWAY_SERVICE_NAME)-test
+.PHONY: $(LOCALHOST_GATEWAY_SERVICE_NAME)-build $(LOCALHOST_GATEWAY_SERVICE_NAME)-install $(LOCALHOST_GATEWAY_SERVICE_NAME)-uninstall $(LOCALHOST_GATEWAY_SERVICE_NAME)-reload $(LOCALHOST_GATEWAY_SERVICE_NAME)-test
 
 # Build target (no build needed for Helm chart)
 $(LOCALHOST_GATEWAY_SERVICE_NAME)-build: $(LOCALHOST_GATEWAY_STAMP_BUILD) # HELP: Build localhost-gateway (pre-built images)
@@ -45,6 +45,14 @@ $(LOCALHOST_GATEWAY_SERVICE_NAME)-uninstall: # HELP: Remove localhost-gateway fr
 	helm uninstall $(LOCALHOST_GATEWAY_SERVICE_NAME) --namespace $(LOCALHOST_GATEWAY_NAMESPACE) --ignore-not-found
 	@echo "localhost-gateway uninstalled successfully"
 	rm -f $(LOCALHOST_GATEWAY_STAMP_INSTALL)
+
+# Reload target - forces nginx gateway to refresh endpoint configuration
+$(LOCALHOST_GATEWAY_SERVICE_NAME)-reload: # HELP: Reload nginx gateway to pick up endpoint changes
+	@echo "Reloading nginx gateway to refresh endpoint configuration..."
+	@kubectl delete pod -n $(LOCALHOST_GATEWAY_NAMESPACE) -l app.kubernetes.io/name=nginx-gateway 2>/dev/null || true
+	@echo "Waiting for nginx gateway pod to restart..."
+	@kubectl wait --for=condition=ready pod -n $(LOCALHOST_GATEWAY_NAMESPACE) -l app.kubernetes.io/instance=$(LOCALHOST_GATEWAY_SERVICE_NAME) --timeout=60s
+	@echo "Nginx gateway reloaded successfully"
 
 # Test target
 $(LOCALHOST_GATEWAY_SERVICE_NAME)-test: $(LOCALHOST_GATEWAY_STAMP_TEST) # HELP: Run tests for localhost-gateway service

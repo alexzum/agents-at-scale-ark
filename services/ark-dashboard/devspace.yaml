@@ -39,7 +39,8 @@ deployments:
 
 dev:
   ark-dashboard:
-    imageSelector: ark-dashboard
+    labelSelector:
+      app: ark-dashboard
     devImage: node:24-alpine
     env:
       - name: NODE_ENV

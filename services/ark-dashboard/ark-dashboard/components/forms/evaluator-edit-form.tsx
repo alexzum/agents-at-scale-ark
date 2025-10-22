@@ -317,7 +317,7 @@ export function EvaluatorEditForm({
       </div>
 
       {/* Parameters Detail Panel - Right Side */}
-      <div className="w-96 border-l bg-muted/30 max-h-screen overflow-hidden">
+      <div className="w-[480px] border-l bg-muted/30 max-h-screen overflow-hidden">
         <ParameterDetailPanel
           parameters={parameters}
           onParametersChange={setParameters}

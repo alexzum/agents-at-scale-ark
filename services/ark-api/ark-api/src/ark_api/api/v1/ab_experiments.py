@@ -1,5 +1,6 @@
 """API routes for AB Experiment management."""
 
+import asyncio
 import json
 import uuid
 from datetime import datetime
@@ -204,6 +205,18 @@ async def create_ab_experiment(
                 )
 
                 await ark_client.agents.a_create(variant_agent)
+
+                max_retries = 5
+                retry_delays = [0.5, 1.0, 2.0, 2.0, 2.0]
+                for attempt in range(max_retries):
+                    try:
+                        await ark_client.agents.a_get(variant_agent_name)
+                        break
+                    except Exception as e:
+                        if attempt < max_retries - 1:
+                            await asyncio.sleep(retry_delays[attempt])
+                        else:
+                            raise Exception(f"Agent '{variant_agent_name}' was created but not visible after {max_retries} retries: {e}")
 
                 variant_spec["targets"] = [{
                     "type": "agent",

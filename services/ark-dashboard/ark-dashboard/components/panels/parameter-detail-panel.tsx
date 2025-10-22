@@ -202,8 +202,8 @@ export function ParameterDetailPanel({
                               updateParameter(index, "value", e.target.value)
                             }
                             placeholder="Parameter value..."
-                            className="min-h-[100px] text-sm resize-none whitespace-pre-wrap"
-                            rows={6}
+                            className="min-h-[200px] text-sm resize-y whitespace-pre-wrap"
+                            rows={12}
                             style={{
                               whiteSpace: "pre-wrap",
                               wordWrap: "break-word"

@@ -47,7 +47,8 @@ deployments:
 
 dev:
   ark-api:
-    imageSelector: ark-api
+    labelSelector:
+      app: ark-api
     devImage: python:3.12-slim
     # Install dependencies and start API server with hot reload
     command:
