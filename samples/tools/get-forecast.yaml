@@ -7,16 +7,16 @@ spec:
   inputSchema:
     type: object
     properties:
-      office:
+      gridId:
         type: string
-        description: "Weather office identifier (e.g., TOP)"
+        description: "NWS forecast office/grid ID (e.g., BOX, OKX, TOP)"
       gridX:
         type: integer
-        description: "Grid X coordinate"
+        description: "Grid X coordinate (non-negative integer)"
       gridY:
         type: integer
-        description: "Grid Y coordinate"
-    required: ["office", "gridX", "gridY"]
-  description: "Get weather forecast for a specific location and time period"
+        description: "Grid Y coordinate (non-negative integer)"
+    required: ["gridId", "gridX", "gridY"]
+  description: "Get weather forecast for an NWS grid cell using the gridpoints endpoint"
   http:
-    url: https://api.weather.gov/gridpoints/{office}/{gridX},{gridY}/forecast
+    url: https://api.weather.gov/gridpoints/{gridId}/{gridX},{gridY}/forecast
