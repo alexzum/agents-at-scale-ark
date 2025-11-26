@@ -49,6 +49,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/a2a/agents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Agents
+         * @description List all available agents for A2A communication.
+         */
+        get: operations["list_agents_a2a_agents_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/namespaces": {
         parameters: {
             query?: never;
@@ -352,6 +372,12 @@ export interface paths {
         /**
          * Create Team
          * @description Create a new Team CR.
+         *
+         *     Supports various execution strategies:
+         *     - sequential: Members execute in order
+         *     - round-robin: Members take turns
+         *     - graph: Custom workflow defined by graph edges
+         *     - selector: AI-powered member selection (can be combined with graph constraints)
          *
          *     Args:
          *         namespace: The namespace to create the team in
@@ -669,6 +695,67 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/a2a-tasks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List A2A Tasks
+         * @description List all A2ATask CRs in a namespace.
+         *
+         *     Args:
+         *         namespace: The namespace to list A2A tasks from
+         *
+         *     Returns:
+         *         A2ATaskListResponse: List of all A2A tasks in the namespace
+         */
+        get: operations["list_a2a_tasks_v1_a2a_tasks_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/a2a-tasks/{task_name}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get A2A Task
+         * @description Get a specific A2ATask CR by name.
+         *
+         *     Args:
+         *         namespace: The namespace to get the A2A task from
+         *         task_name: The name of the A2A task
+         *
+         *     Returns:
+         *         A2ATaskDetailResponse: The A2A task details
+         */
+        get: operations["get_a2a_task_v1_a2a_tasks__task_name__get"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete A2A Task
+         * @description Delete an A2ATask CR by name.
+         *
+         *     Args:
+         *         namespace: The namespace containing the A2A task
+         *         task_name: The name of the A2A task
+         */
+        delete: operations["delete_a2a_task_v1_a2a_tasks__task_name__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/memories": {
         parameters: {
             query?: never;
@@ -775,7 +862,51 @@ export interface paths {
         get: operations["list_sessions_v1_sessions_get"];
         put?: never;
         post?: never;
-        delete?: never;
+        /**
+         * Delete All Sessions
+         * @description Delete all sessions and their messages.
+         */
+        delete: operations["delete_all_sessions_v1_sessions_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/sessions/{session_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete Session
+         * @description Delete a specific session and all its messages.
+         */
+        delete: operations["delete_session_v1_sessions__session_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/sessions/{session_id}/queries/{query_id}/messages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete Query Messages
+         * @description Delete messages for a specific query within a session.
+         */
+        delete: operations["delete_query_messages_v1_sessions__session_id__queries__query_id__messages_delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1166,6 +1297,16 @@ export interface components {
             /** Total */
             total: number;
         };
+        /**
+         * A2AServerRef
+         * @description Reference to an A2AServer.
+         */
+        A2AServerRef: {
+            /** Name */
+            name: string;
+            /** Namespace */
+            namespace?: string | null;
+        };
         /** A2AServerResponse */
         A2AServerResponse: {
             /** Name */
@@ -1190,6 +1331,163 @@ export interface components {
             discovering?: boolean | null;
             /** Status Message */
             status_message?: string | null;
+        };
+        /**
+         * A2ATaskArtifact
+         * @description Artifact produced during task execution.
+         */
+        A2ATaskArtifact: {
+            /** Artifactid */
+            artifactId: string;
+            /** Name */
+            name?: string | null;
+            /** Description */
+            description?: string | null;
+            /** Parts */
+            parts: components["schemas"]["A2ATaskPart"][];
+            /** Metadata */
+            metadata?: {
+                [key: string]: string;
+            } | null;
+        };
+        /**
+         * A2ATaskDetailResponse
+         * @description Detailed A2ATask response model.
+         */
+        A2ATaskDetailResponse: {
+            /** Name */
+            name: string;
+            /** Namespace */
+            namespace: string;
+            /** Taskid */
+            taskId: string;
+            a2aServerRef: components["schemas"]["A2AServerRef"];
+            agentRef: components["schemas"]["AgentRef"];
+            queryRef: components["schemas"]["ark_api__models__a2a_tasks__QueryRef"];
+            /** Contextid */
+            contextId?: string | null;
+            /** Input */
+            input?: string | null;
+            /** Parameters */
+            parameters?: {
+                [key: string]: string;
+            } | null;
+            /** Pollinterval */
+            pollInterval?: string | null;
+            /** Priority */
+            priority?: number | null;
+            /** Timeout */
+            timeout?: string | null;
+            /** Ttl */
+            ttl?: string | null;
+            status?: components["schemas"]["A2ATaskStatus"] | null;
+            /** Metadata */
+            metadata?: {
+                [key: string]: unknown;
+            } | null;
+        };
+        /**
+         * A2ATaskListResponse
+         * @description List of A2ATasks response model.
+         */
+        A2ATaskListResponse: {
+            /** Items */
+            items: components["schemas"]["A2ATaskResponse"][];
+            /** Count */
+            count: number;
+        };
+        /**
+         * A2ATaskMessage
+         * @description Message in the conversation history.
+         */
+        A2ATaskMessage: {
+            /** Messageid */
+            messageId?: string | null;
+            /**
+             * Role
+             * @enum {string}
+             */
+            role: "user" | "agent" | "system";
+            /** Parts */
+            parts: components["schemas"]["A2ATaskPart"][];
+            /** Metadata */
+            metadata?: {
+                [key: string]: string;
+            } | null;
+        };
+        /**
+         * A2ATaskPart
+         * @description Content part of an artifact or message.
+         */
+        A2ATaskPart: {
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "text" | "file" | "data";
+            /** Text */
+            text?: string | null;
+            /** Data */
+            data?: string | null;
+            /** Uri */
+            uri?: string | null;
+            /** Mimetype */
+            mimeType?: string | null;
+            /** Metadata */
+            metadata?: {
+                [key: string]: string;
+            } | null;
+        };
+        /**
+         * A2ATaskResponse
+         * @description A2ATask resource response model.
+         */
+        A2ATaskResponse: {
+            /** Name */
+            name: string;
+            /** Namespace */
+            namespace: string;
+            /** Taskid */
+            taskId: string;
+            /** Phase */
+            phase?: string | null;
+            agentRef?: components["schemas"]["AgentRef"] | null;
+            queryRef?: components["schemas"]["ark_api__models__a2a_tasks__QueryRef"] | null;
+            /** Creationtimestamp */
+            creationTimestamp?: string | null;
+        };
+        /**
+         * A2ATaskStatus
+         * @description Status of the A2ATask.
+         */
+        A2ATaskStatus: {
+            /** Phase */
+            phase?: string | null;
+            /** Protocolstate */
+            protocolState?: string | null;
+            /** Protocolmetadata */
+            protocolMetadata?: {
+                [key: string]: string;
+            } | null;
+            /** Starttime */
+            startTime?: string | null;
+            /** Completiontime */
+            completionTime?: string | null;
+            /** Laststatustimestamp */
+            lastStatusTimestamp?: string | null;
+            /** Error */
+            error?: string | null;
+            /** Contextid */
+            contextId?: string | null;
+            /** Artifacts */
+            artifacts?: components["schemas"]["A2ATaskArtifact"][] | null;
+            /** History */
+            history?: components["schemas"]["A2ATaskMessage"][] | null;
+            lastStatusMessage?: components["schemas"]["A2ATaskMessage"] | null;
+            /** Conditions */
+            conditions?: {
+                [key: string]: unknown;
+            }[] | null;
         };
         /**
          * APIKeyCreateRequest
@@ -1335,6 +1633,8 @@ export interface components {
             prompt?: string | null;
             /** Tools */
             tools?: components["schemas"]["Tool-Input"][] | null;
+            /** Overrides */
+            overrides?: components["schemas"]["Override-Input"][] | null;
         };
         /**
          * AgentDetailResponse
@@ -1355,6 +1655,8 @@ export interface components {
             prompt?: string | null;
             /** Tools */
             tools?: components["schemas"]["Tool-Output"][] | null;
+            /** Overrides */
+            overrides?: components["schemas"]["Override-Output"][] | null;
             /** Skills */
             skills?: components["schemas"]["Skill"][] | null;
             /**
@@ -1381,6 +1683,16 @@ export interface components {
             items: components["schemas"]["AgentResponse"][];
             /** Count */
             count: number;
+        };
+        /**
+         * AgentRef
+         * @description Reference to an Agent.
+         */
+        AgentRef: {
+            /** Name */
+            name?: string | null;
+            /** Namespace */
+            namespace?: string | null;
         };
         /**
          * AgentResponse
@@ -1418,6 +1730,8 @@ export interface components {
             prompt?: string | null;
             /** Tools */
             tools?: components["schemas"]["Tool-Input"][] | null;
+            /** Overrides */
+            overrides?: components["schemas"]["Override-Input"][] | null;
         };
         /** Annotation */
         Annotation: {
@@ -1514,6 +1828,8 @@ export interface components {
             baseUrl: string | components["schemas"]["ark_api__models__models__ValueSource"];
             /** Apiversion */
             apiVersion?: string | components["schemas"]["ark_api__models__models__ValueSource"] | null;
+            /** Headers */
+            headers?: components["schemas"]["Header-Input"][] | null;
         };
         /**
          * BaselineEvaluationMetadata
@@ -1622,7 +1938,7 @@ export interface components {
             /** Id */
             id: string;
             /** Choices */
-            choices: components["schemas"]["Choice-Output"][];
+            choices: components["schemas"]["Choice"][];
             /** Created */
             created: number;
             /** Model */
@@ -1650,13 +1966,13 @@ export interface components {
             audio?: components["schemas"]["Audio"] | null;
             /** Content */
             content?: string | (components["schemas"]["ChatCompletionContentPartTextParam"] | components["schemas"]["ChatCompletionContentPartRefusalParam"])[] | null;
-            function_call?: components["schemas"]["openai__types__chat__chat_completion_assistant_message_param__FunctionCall"] | null;
+            function_call?: components["schemas"]["FunctionCall-Input"] | null;
             /** Name */
             name?: string;
             /** Refusal */
             refusal?: string | null;
             /** Tool Calls */
-            tool_calls?: (components["schemas"]["ChatCompletionMessageFunctionToolCallParam"] | components["schemas"]["ChatCompletionMessageCustomToolCallParam"])[];
+            tool_calls?: (components["schemas"]["ChatCompletionMessageFunctionToolCallParam-Input"] | components["schemas"]["ChatCompletionMessageCustomToolCallParam-Input"])[];
         };
         /** ChatCompletionAssistantMessageParam */
         "ChatCompletionAssistantMessageParam-Output": {
@@ -1674,7 +1990,7 @@ export interface components {
             /** Refusal */
             refusal?: string | null;
             /** Tool Calls */
-            tool_calls?: (components["schemas"]["ChatCompletionMessageFunctionToolCallParam"] | components["schemas"]["ChatCompletionMessageCustomToolCallParam"])[];
+            tool_calls?: (components["schemas"]["ChatCompletionMessageFunctionToolCallParam-Output"] | components["schemas"]["ChatCompletionMessageCustomToolCallParam-Output"])[];
         };
         /** ChatCompletionAudio */
         ChatCompletionAudio: {
@@ -1752,27 +2068,7 @@ export interface components {
             role: "function";
         };
         /** ChatCompletionMessage */
-        "ChatCompletionMessage-Input": {
-            /** Content */
-            content?: string | null;
-            /** Refusal */
-            refusal?: string | null;
-            /**
-             * Role
-             * @constant
-             */
-            role: "assistant";
-            /** Annotations */
-            annotations?: components["schemas"]["Annotation"][] | null;
-            audio?: components["schemas"]["ChatCompletionAudio"] | null;
-            function_call?: components["schemas"]["FunctionCall"] | null;
-            /** Tool Calls */
-            tool_calls?: (components["schemas"]["ChatCompletionMessageFunctionToolCall"] | components["schemas"]["ChatCompletionMessageCustomToolCall"])[] | null;
-        } & {
-            [key: string]: unknown;
-        };
-        /** ChatCompletionMessage */
-        "ChatCompletionMessage-Output": {
+        ChatCompletionMessage: {
             /** Content */
             content?: string | null;
             /** Refusal */
@@ -1805,7 +2101,18 @@ export interface components {
             [key: string]: unknown;
         };
         /** ChatCompletionMessageCustomToolCallParam */
-        ChatCompletionMessageCustomToolCallParam: {
+        "ChatCompletionMessageCustomToolCallParam-Input": {
+            /** Id */
+            id: string;
+            custom: components["schemas"]["Custom-Input"];
+            /**
+             * Type
+             * @constant
+             */
+            type: "custom";
+        };
+        /** ChatCompletionMessageCustomToolCallParam */
+        "ChatCompletionMessageCustomToolCallParam-Output": {
             /** Id */
             id: string;
             custom: components["schemas"]["openai__types__chat__chat_completion_message_custom_tool_call_param__Custom"];
@@ -1829,7 +2136,18 @@ export interface components {
             [key: string]: unknown;
         };
         /** ChatCompletionMessageFunctionToolCallParam */
-        ChatCompletionMessageFunctionToolCallParam: {
+        "ChatCompletionMessageFunctionToolCallParam-Input": {
+            /** Id */
+            id: string;
+            function: components["schemas"]["Function-Input"];
+            /**
+             * Type
+             * @constant
+             */
+            type: "function";
+        };
+        /** ChatCompletionMessageFunctionToolCallParam */
+        "ChatCompletionMessageFunctionToolCallParam-Output": {
             /** Id */
             id: string;
             function: components["schemas"]["openai__types__chat__chat_completion_message_function_tool_call_param__Function"];
@@ -1857,6 +2175,10 @@ export interface components {
              * @default false
              */
             stream: boolean;
+            /** Metadata */
+            metadata?: {
+                [key: string]: unknown;
+            } | null;
         };
         /** ChatCompletionSystemMessageParam */
         ChatCompletionSystemMessageParam: {
@@ -1934,7 +2256,7 @@ export interface components {
             pending: number;
         };
         /** Choice */
-        "Choice-Input": {
+        Choice: {
             /**
              * Finish Reason
              * @enum {string}
@@ -1942,36 +2264,13 @@ export interface components {
             finish_reason: "stop" | "length" | "tool_calls" | "content_filter" | "function_call";
             /** Index */
             index: number;
-            logprobs?: components["schemas"]["ChoiceLogprobs-Input"] | null;
-            message: components["schemas"]["ChatCompletionMessage-Input"];
-        } & {
-            [key: string]: unknown;
-        };
-        /** Choice */
-        "Choice-Output": {
-            /**
-             * Finish Reason
-             * @enum {string}
-             */
-            finish_reason: "stop" | "length" | "tool_calls" | "content_filter" | "function_call";
-            /** Index */
-            index: number;
-            logprobs?: components["schemas"]["ChoiceLogprobs-Output"] | null;
-            message: components["schemas"]["ChatCompletionMessage-Output"];
+            logprobs?: components["schemas"]["ChoiceLogprobs"] | null;
+            message: components["schemas"]["ChatCompletionMessage"];
         } & {
             [key: string]: unknown;
         };
         /** ChoiceLogprobs */
-        "ChoiceLogprobs-Input": {
-            /** Content */
-            content?: components["schemas"]["ChatCompletionTokenLogprob"][] | null;
-            /** Refusal */
-            refusal?: components["schemas"]["ChatCompletionTokenLogprob"][] | null;
-        } & {
-            [key: string]: unknown;
-        };
-        /** ChoiceLogprobs */
-        "ChoiceLogprobs-Output": {
+        ChoiceLogprobs: {
             /** Content */
             content?: components["schemas"]["ChatCompletionTokenLogprob"][] | null;
             /** Refusal */
@@ -2024,6 +2323,13 @@ export interface components {
         } & {
             [key: string]: unknown;
         };
+        /** Custom */
+        "Custom-Input": {
+            /** Input */
+            input: string;
+            /** Name */
+            name: string;
+        };
         /**
          * DirectEvaluationMetadata
          * @description Enhanced metadata for direct evaluations.
@@ -2046,34 +2352,7 @@ export interface components {
          * EnhancedEvaluationDetailResponse
          * @description Enhanced detailed evaluation response with metadata.
          */
-        "EnhancedEvaluationDetailResponse-Input": {
-            /** Name */
-            name: string;
-            /** Namespace */
-            namespace: string;
-            /** Spec */
-            spec: {
-                [key: string]: unknown;
-            };
-            /** Status */
-            status?: {
-                [key: string]: unknown;
-            } | null;
-            /** Metadata */
-            metadata: {
-                [key: string]: unknown;
-            };
-            tokenUsage?: components["schemas"]["TokenUsage"] | null;
-            /** Batchresults */
-            batchResults?: components["schemas"]["BatchResult"][] | null;
-            childEvaluationStatus?: components["schemas"]["ChildEvaluationStatus"] | null;
-            enhanced_metadata?: components["schemas"]["UnifiedEvaluationMetadata"] | null;
-        };
-        /**
-         * EnhancedEvaluationDetailResponse
-         * @description Enhanced detailed evaluation response with metadata.
-         */
-        "EnhancedEvaluationDetailResponse-Output": {
+        EnhancedEvaluationDetailResponse: {
             /** Name */
             name: string;
             /** Namespace */
@@ -2100,19 +2379,9 @@ export interface components {
          * EnhancedEvaluationListResponse
          * @description Enhanced response for listing evaluations with metadata.
          */
-        "EnhancedEvaluationListResponse-Input": {
+        EnhancedEvaluationListResponse: {
             /** Items */
-            items: components["schemas"]["EnhancedEvaluationResponse-Input"][];
-            /** Count */
-            count: number;
-        };
-        /**
-         * EnhancedEvaluationListResponse
-         * @description Enhanced response for listing evaluations with metadata.
-         */
-        "EnhancedEvaluationListResponse-Output": {
-            /** Items */
-            items: components["schemas"]["EnhancedEvaluationResponse-Output"][];
+            items: components["schemas"]["EnhancedEvaluationResponse"][];
             /** Count */
             count: number;
         };
@@ -2120,32 +2389,7 @@ export interface components {
          * EnhancedEvaluationResponse
          * @description Enhanced evaluation response with metadata for list operations.
          */
-        "EnhancedEvaluationResponse-Input": {
-            /** Name */
-            name: string;
-            /** Namespace */
-            namespace: string;
-            /** Type */
-            type: string;
-            /** Phase */
-            phase?: string | null;
-            /** Conditions */
-            conditions?: {
-                [key: string]: unknown;
-            }[] | null;
-            /** Score */
-            score?: string | null;
-            /** Passed */
-            passed?: boolean | null;
-            /** Message */
-            message?: string | null;
-            enhanced_metadata?: components["schemas"]["UnifiedEvaluationMetadata"] | null;
-        };
-        /**
-         * EnhancedEvaluationResponse
-         * @description Enhanced evaluation response with metadata for list operations.
-         */
-        "EnhancedEvaluationResponse-Output": {
+        EnhancedEvaluationResponse: {
             /** Name */
             name: string;
             /** Namespace */
@@ -2175,7 +2419,7 @@ export interface components {
             input?: string | null;
             /** Output */
             output?: string | null;
-            queryRef?: components["schemas"]["QueryRef"] | null;
+            queryRef?: components["schemas"]["ark_api__models__evaluations__QueryRef"] | null;
             /** Evaluations */
             evaluations?: components["schemas"]["EvaluationRef"][] | null;
             /** Rules */
@@ -2503,6 +2747,13 @@ export interface components {
         } & {
             [key: string]: unknown;
         };
+        /** Function */
+        "Function-Input": {
+            /** Arguments */
+            arguments: string;
+            /** Name */
+            name: string;
+        };
         /** FunctionCall */
         FunctionCall: {
             /** Arguments */
@@ -2511,6 +2762,13 @@ export interface components {
             name: string;
         } & {
             [key: string]: unknown;
+        };
+        /** FunctionCall */
+        "FunctionCall-Input": {
+            /** Arguments */
+            arguments: string;
+            /** Name */
+            name: string;
         };
         /**
          * Graph
@@ -2548,6 +2806,42 @@ export interface components {
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
+        };
+        /**
+         * Header
+         * @description HTTP header configuration.
+         */
+        "Header-Input": {
+            /** Name */
+            name: string;
+            value: components["schemas"]["HeaderValue-Input"];
+        };
+        /**
+         * Header
+         * @description HTTP header configuration.
+         */
+        "Header-Output": {
+            /** Name */
+            name: string;
+            value: components["schemas"]["HeaderValue-Output"];
+        };
+        /**
+         * HeaderValue
+         * @description Value configuration for a header.
+         */
+        "HeaderValue-Input": {
+            /** Value */
+            value?: string | null;
+            valueFrom?: components["schemas"]["ark_api__models__agents__ValueFrom"] | null;
+        };
+        /**
+         * HeaderValue
+         * @description Value configuration for a header.
+         */
+        "HeaderValue-Output": {
+            /** Value */
+            value?: string | null;
+            valueFrom?: components["schemas"]["ark_api__models__agents__ValueFrom"] | null;
         };
         /**
          * HealthResponse
@@ -2808,7 +3102,7 @@ export interface components {
                 [key: string]: {
                     [key: string]: string | {
                         [key: string]: unknown;
-                    };
+                    } | unknown[];
                 };
             };
             available?: components["schemas"]["AvailabilityStatus"] | null;
@@ -2905,6 +3199,30 @@ export interface components {
             apiKey: string | components["schemas"]["ark_api__models__models__ValueSource"];
             /** Baseurl */
             baseUrl: string | components["schemas"]["ark_api__models__models__ValueSource"];
+            /** Headers */
+            headers?: components["schemas"]["Header-Input"][] | null;
+        };
+        /**
+         * Override
+         * @description Header override configuration for models and MCP servers.
+         */
+        "Override-Input": {
+            /** Headers */
+            headers: components["schemas"]["Header-Input"][];
+            /** Resourcetype */
+            resourceType: string;
+            labelSelector?: components["schemas"]["ark_api__models__agents__LabelSelector"] | null;
+        };
+        /**
+         * Override
+         * @description Header override configuration for models and MCP servers.
+         */
+        "Override-Output": {
+            /** Headers */
+            headers: components["schemas"]["Header-Output"][];
+            /** Resourcetype */
+            resourceType: string;
+            labelSelector?: components["schemas"]["ark_api__models__agents__LabelSelector"] | null;
         };
         /** PromptTokensDetails */
         PromptTokensDetails: {
@@ -2942,6 +3260,8 @@ export interface components {
             ttl?: string | null;
             /** Cancel */
             cancel?: boolean | null;
+            /** Overrides */
+            overrides?: components["schemas"]["Override-Input"][] | null;
             /** Evaluators */
             evaluators?: components["schemas"]["Memory"][] | null;
             evaluatorSelector?: components["schemas"]["ark_api__models__queries__LabelSelector"] | null;
@@ -2979,6 +3299,8 @@ export interface components {
             ttl?: string | null;
             /** Cancel */
             cancel?: boolean | null;
+            /** Overrides */
+            overrides?: components["schemas"]["Override-Output"][] | null;
             /** Metadata */
             metadata?: {
                 [key: string]: unknown;
@@ -3014,50 +3336,15 @@ export interface components {
          */
         QueryListResponse: {
             /** Items */
-            items: components["schemas"]["QueryResponse-Output"][];
+            items: components["schemas"]["QueryResponse"][];
             /** Count */
             count: number;
         };
         /**
-         * QueryRef
-         * @description Reference to a query for evaluation.
-         */
-        QueryRef: {
-            /** Name */
-            name: string;
-            /** Namespace */
-            namespace?: string | null;
-            /** Responsetarget */
-            responseTarget?: string | null;
-        };
-        /**
          * QueryResponse
          * @description Basic query response for list operations.
          */
-        "QueryResponse-Input": {
-            /** Name */
-            name: string;
-            /** Namespace */
-            namespace: string;
-            /** @default user */
-            type: components["schemas"]["InputType"] | null;
-            /** Input */
-            input: string | (components["schemas"]["ChatCompletionDeveloperMessageParam"] | components["schemas"]["ChatCompletionSystemMessageParam"] | components["schemas"]["ChatCompletionUserMessageParam-Input"] | components["schemas"]["ChatCompletionAssistantMessageParam-Input"] | components["schemas"]["ChatCompletionToolMessageParam"] | components["schemas"]["ChatCompletionFunctionMessageParam"])[];
-            memory?: components["schemas"]["Memory"] | null;
-            /** Sessionid */
-            sessionId?: string | null;
-            /** Status */
-            status?: {
-                [key: string]: unknown;
-            } | null;
-            /** Creationtimestamp */
-            creationTimestamp?: string | null;
-        };
-        /**
-         * QueryResponse
-         * @description Basic query response for list operations.
-         */
-        "QueryResponse-Output": {
+        QueryResponse: {
             /** Name */
             name: string;
             /** Namespace */
@@ -3100,6 +3387,8 @@ export interface components {
             ttl?: string | null;
             /** Cancel */
             cancel?: boolean | null;
+            /** Overrides */
+            overrides?: components["schemas"]["Override-Input"][] | null;
         };
         /**
          * ReadinessResponse
@@ -3491,6 +3780,18 @@ export interface components {
             type: string;
         };
         /**
+         * QueryRef
+         * @description Reference to a Query.
+         */
+        ark_api__models__a2a_tasks__QueryRef: {
+            /** Name */
+            name: string;
+            /** Namespace */
+            namespace?: string | null;
+            /** Responsetarget */
+            responseTarget?: string | null;
+        };
+        /**
          * ConfigMapKeyRef
          * @description Reference to a key in a ConfigMap.
          */
@@ -3567,6 +3868,18 @@ export interface components {
         ark_api__models__agents__ValueFrom: {
             configMapKeyRef?: components["schemas"]["ark_api__models__agents__ConfigMapKeyRef"] | null;
             secretKeyRef?: components["schemas"]["ark_api__models__agents__SecretKeyRef"] | null;
+        };
+        /**
+         * QueryRef
+         * @description Reference to a query for evaluation.
+         */
+        ark_api__models__evaluations__QueryRef: {
+            /** Name */
+            name: string;
+            /** Namespace */
+            namespace?: string | null;
+            /** Responsetarget */
+            responseTarget?: string | null;
         };
         /**
          * ConfigMapKeyRef
@@ -3814,6 +4127,28 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ReadinessResponse"];
+                };
+            };
+        };
+    };
+    list_agents_a2a_agents_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    }[];
                 };
             };
         };
@@ -5081,6 +5416,104 @@ export interface operations {
             };
         };
     };
+    list_a2a_tasks_v1_a2a_tasks_get: {
+        parameters: {
+            query?: {
+                /** @description Namespace for this request (defaults to current context) */
+                namespace?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["A2ATaskListResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_a2a_task_v1_a2a_tasks__task_name__get: {
+        parameters: {
+            query?: {
+                /** @description Namespace for this request (defaults to current context) */
+                namespace?: string | null;
+            };
+            header?: never;
+            path: {
+                task_name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["A2ATaskDetailResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_a2a_task_v1_a2a_tasks__task_name__delete: {
+        parameters: {
+            query?: {
+                /** @description Namespace for this request (defaults to current context) */
+                namespace?: string | null;
+            };
+            header?: never;
+            path: {
+                task_name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_memories_v1_memories_get: {
         parameters: {
             query?: {
@@ -5366,6 +5799,113 @@ export interface operations {
             };
         };
     };
+    delete_all_sessions_v1_sessions_delete: {
+        parameters: {
+            query?: {
+                /** @description Namespace for this request (defaults to current context) */
+                namespace?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_session_v1_sessions__session_id__delete: {
+        parameters: {
+            query?: {
+                /** @description Namespace for this request (defaults to current context) */
+                namespace?: string | null;
+            };
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_query_messages_v1_sessions__session_id__queries__query_id__messages_delete: {
+        parameters: {
+            query?: {
+                /** @description Namespace for this request (defaults to current context) */
+                namespace?: string | null;
+            };
+            header?: never;
+            path: {
+                session_id: string;
+                query_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_system_info_v1_system_info_get: {
         parameters: {
             query?: never;
@@ -5552,7 +6092,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["EvaluationListResponse"] | components["schemas"]["EnhancedEvaluationListResponse-Output"];
+                    "application/json": components["schemas"]["EvaluationListResponse"] | components["schemas"]["EnhancedEvaluationListResponse"];
                 };
             };
             /** @description Validation Error */
@@ -5624,7 +6164,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["EvaluationDetailResponse"] | components["schemas"]["EnhancedEvaluationDetailResponse-Output"];
+                    "application/json": components["schemas"]["EvaluationDetailResponse"] | components["schemas"]["EnhancedEvaluationDetailResponse"];
                 };
             };
             /** @description Validation Error */

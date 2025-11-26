@@ -131,16 +131,6 @@ const defaultArkServices: ServiceCollection = {
     k8sPortForwardLocalPort: 3274,
   },
 
-  'ark-api-a2a': {
-    name: 'ark-api-a2a',
-    helmReleaseName: 'ark-api-a2a',
-    description: 'Ark API agent-to-agent communication service',
-    enabled: false, // Disabled - not currently used
-    category: 'service',
-    // namespace: undefined - uses current context namespace
-    // Note: This service might be installed as part of ark-api or separately
-  },
-
   'ark-mcp': {
     name: 'ark-mcp',
     helmReleaseName: 'ark-mcp',
@@ -154,14 +144,30 @@ const defaultArkServices: ServiceCollection = {
     k8sDevDeploymentName: 'ark-mcp-devspace',
   },
 
-  'agents-at-scale': {
-    name: 'agents-at-scale',
-    helmReleaseName: 'agents-at-scale',
-    description: 'Agents @ Scale Platform',
+  'ark-cluster-memory': {
+    name: 'ark-cluster-memory',
+    helmReleaseName: 'ark-cluster-memory',
+    description: 'In-memory storage service with streaming support for Ark queries',
+    enabled: true,
+    category: 'service',
+    // namespace: undefined - uses current context namespace
+    chartPath: `${REGISTRY_BASE}/ark-cluster-memory`,
+    installArgs: [],
+    k8sDeploymentName: 'ark-cluster-memory',
+    k8sDevDeploymentName: 'ark-cluster-memory-devspace',
+  },
+
+  'mcp-filesystem': {
+    name: 'mcp-filesystem',
+    helmReleaseName: 'mcp-filesystem',
+    description: 'Stateful filesystem MCP server with workspace isolation',
     enabled: false,
     category: 'service',
-    chartPath: 'oci://ghcr.io/mck-private/qb-fm-labs-legacyx/charts/legacyx',
+    // namespace: undefined - uses current context namespace
+    chartPath: `${REGISTRY_BASE}/mcp-filesystem`,
     installArgs: [],
+    k8sDeploymentName: 'mcp-filesystem',
+    k8sDevDeploymentName: 'mcp-filesystem-devspace',
   },
 
   'localhost-gateway': {

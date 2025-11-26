@@ -48,9 +48,9 @@ quickstart() {
 
     if [ "${FORCE:-false}" != true ]; then
         echo -e "Using quickstart is deprecated."
-        echo -e "  Install   : ${yellow}devspace deploy${nc} (or ${yellow}ark install${nc})"
+        echo -e "  Install   : ${yellow}ark install${nc} (recommended)"
         echo -e "  Local dev : ${yellow}devspace dev${nc}"
-        echo -e "If you'd like to continue with quickstart, use ${yellow}make quickstart-force${nc} to continue."
+        echo -e "If you'd like to continue with legacy quickstart, use ${yellow}make quickstart-force${nc} to continue."
         exit 0
     fi
 
@@ -191,9 +191,14 @@ quickstart() {
             api_key=$(echo -n "$api_key" | base64 | tr -d '\n' | tr -d ' ')
             
             if [ -n "$api_key" ] && [ -n "$base_url" ]; then
+                if [[ "$model_type" = "azure" ]]; then
+                  yaml_file="default-model"
+                else
+                  yaml_file="openai-model"
+                fi
                 # Use envsubst to apply the configuration
-                API_KEY="$api_key" BASE_URL="$base_url" MODEL_TYPE="$model_type" MODEL_VERSION="$model_version" API_VERSION="$API_VERSION" envsubst < samples/quickstart/default-model.yaml | kubectl apply -f -
-                
+                API_KEY="$api_key" BASE_URL="$base_url" MODEL_TYPE="$model_type" MODEL_VERSION="$model_version" API_VERSION="$API_VERSION" envsubst < samples/quickstart/${yaml_file}.yaml | kubectl apply -f -
+
                 echo -e "${green}✔${nc} default model configured"
             else
                 echo -e "${yellow}warning${nc}: skipping default model setup"
@@ -258,7 +263,7 @@ EOF
                 echo "    ARK_QUICKSTART_API_KEY=your_actual_api_key"
                 echo "    ARK_QUICKSTART_BASE_URL=your_actual_base_url"
                 echo ""
-                echo -e "Run ${red}make quickstart-reconfigure-default-model${nc} to reconfigure the default model. Then run the ${red}make quickstart${nc} script again."
+                echo -e "Run ${red}make quickstart-reconfigure-default-model${nc} to reconfigure the default model, or use ${red}ark install${nc} for fresh deployment."
                 echo ""
                 echo -e "${red}Exiting due to authentication failure.${nc}"
                 exit 1

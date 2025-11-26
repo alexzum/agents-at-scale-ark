@@ -11,7 +11,7 @@
   - Custom Resource Definitions (CRDs) for AI workloads
   - Webhooks for validation and admission control
 
-- **`services/`** - Supporting services for ARK (Go, Python, TypeScript)
+- **`services/`** - Supporting services for Ark (Go, Python, TypeScript)
   - `postgres-memory/` - Memory persistence service (Go)
   - **Execution Engines (Python):**
     - `executor-langchain/` - LangChain agent execution and tool integration engine
@@ -22,7 +22,7 @@
 
 - **`mcp/`** - Model Context Protocol servers
   - `atlassian/` - Jira and Confluence integration
-  - `filesys/` - File system operations
+  - `filesystem-mcp/` - File system operations
   - `git/` - Git repository operations
   - `github/` - GitHub API integration
   - `pyodide-python/` - Python execution in browser
@@ -49,7 +49,7 @@
 # Build Instructions
 
 ## Root Commands
-- `make quickstart` - Get everything up and running
+- `devspace dev` - Deploy ARK to your cluster 
 - `make docs` - Run documentation site with live-reload
 - `make services` - Install and configure additional service capabilities
 
@@ -99,6 +99,23 @@ cd services/vnext-ui/    # UI service
 make build         # Build Docker image
 ```
 
+# Marketplace
+
+Ark has a separate marketplace repository for community-contributed services and components:
+
+**Repository**: https://github.com/mckinsey/agents-at-scale-marketplace
+
+The marketplace includes observability platforms (Phoenix, Langfuse) and other optional services. Services can be deployed using DevSpace or Helm as dependencies of your Ark installation.
+
+Example usage in `devspace.yaml`:
+```yaml
+dependencies:
+  phoenix:
+    git: https://github.com/mckinsey/agents-at-scale-marketplace
+    tag: v0.1.1
+    subPath: services/phoenix
+```
+
 ## CLI Tools
 ```bash
 cd tools/ark-cli/  # Ark CLI (Node.js)
@@ -120,6 +137,7 @@ make install       # Install to ~/.local/bin
 - **Keep descriptions brief** - 1-2 sentences maximum for each item
 - **Use active voice** - "Creates agent" not "Agent is created"
 - **Avoid extra adjectives**
+- **Ark capitalization** - Always write "Ark" (capital A, lowercase rk), never "ARK" in documentation
 
 ## Makefile Guidelines
 

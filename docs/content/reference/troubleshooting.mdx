@@ -30,21 +30,9 @@ Verify your cluster context:
 kubectl config get-contexts
 ```
 
-### Issues with Docker Desktop
+### Common Installation Issues
 
-If you are using Docker Desktop to launch your kubernetes cluster, you may encounter an issue where pods fail to start. When describing said pods, you may see an error like this.
-
-```logs
-Warning    Failed    pod/ark-controller-xxxxxxxxx-xxxx Error: container has runAsNonRoot and image will run as root
-```
-
-This is due to an the Docker Desktop Kubernetes cluster trying to run containers as root, when they shouldn't be.
-
-To fix this, within your Docker Desktop Kubernetes set up:
- - Stop the Kubernetes cluster
- - Start the Kubernetes cluster again, but change the cluster type from Kubeadm to kind
-
-### Installing Ark on Windows
+#### Installing Ark on Windows
 
 Ark requires a Kubernetes cluster to run. There are a number of potential issues that can arise from permissions, organizational policies and so on, particularly around running Hypervisors (which is needed to run services like Docker and local Kubernetes clusters).
 
@@ -132,6 +120,130 @@ Failed downloads, network errors, disconnects and so on for packages or installa
 **Avoiding Kubernetes on Windows**
 
 If Kubernetes or Docker cannot be run in your environment, the best solution would be to run a remote Kubernetes cluster, on AWS/GCP or similar. Check the [Operations Guide](../../operations-guide/deploying-ark) on how to do this.
+
+#### Docker Desktop Issues
+
+If you are using Docker Desktop to launch your kubernetes cluster, you may encounter an issue where pods fail to start. When describing said pods, you may see an error like this.
+
+```logs
+Warning    Failed    pod/ark-controller-xxxxxxxxx-xxxx Error: container has runAsNonRoot and image will run as root
+```
+
+This is due to an the Docker Desktop Kubernetes cluster trying to run containers as root, when they shouldn't be.
+
+To fix this, within your Docker Desktop Kubernetes set up:
+ - Stop the Kubernetes cluster
+ - Start the Kubernetes cluster again, but change the cluster type from Kubeadm to kind
+
+#### Webhook Call Fails on Kind Cluster
+
+See [issue #393](https://github.com/mckinsey/agents-at-scale-ark/issues/393) for tracking this bug.
+
+**Error Message**
+
+When running Ark locally on a Kind cluster (especially multi-node clusters), model creation or installation fails with a timeout error when attempting to reach the validating webhook.
+The same setup works without issues on Minikube.
+
+```bash
+ark-api dev:ark-api logs
+HTTP response body: {"kind":"Status","apiVersion":"v1","metadata":{},"status":"Failure","message":"Internal error occurred: failed calling webhook \"vmodel-v1.kb.io\": failed to call webhook: Post \"https://ark-webhook-service.ark-system.svc:443/validate-ark-mckinsey-com-v1alpha1-model?timeout=10s\": context deadline exceeded","reason":"InternalError","details":{"causes":[{"message":"failed calling webhook \"vmodel-v1.kb.io\": failed to call webhook: Post \"https://ark-webhook-service.ark-system.svc:443/validate-ark-mckinsey-com-v1alpha1-model?timeout=10s\": context deadline exceeded"}]},"code":500}
+```
+
+**Cause**
+
+This failure occurs because the webhook service (ark-webhook-service) cannot be reached within the Kind cluster within the default 10-second timeout.
+This is more common in multi-node Kind clusters due to networking differences and potential delays in service discovery.
+
+**Fix**
+
+The issue can be resolved by increasing the webhook timeout and changing the failure policy. Update your Helm values:
+
+**Option 1: Increase Timeout (Recommended)**
+
+Create or update a `values.yaml` file with:
+
+```yaml
+webhook:
+  enable: true
+  timeoutSeconds: 30  # Increase from default 10s to 30s
+  failurePolicy: Fail
+```
+
+Then upgrade your installation:
+
+```bash
+helm upgrade ark-controller ./ark/dist/chart -f values.yaml -n ark-system
+```
+
+**Option 2: Use Ignore Policy (Workaround - But its not advised and just for local development. In the codebase we should maintain `Fail` only)**
+
+If increasing the timeout doesn't work, you can temporarily set the failure policy to `Ignore`:
+
+```yaml
+webhook:
+  enable: true
+  timeoutSeconds: 30
+  failurePolicy: Ignore  # Allows resources to be created even if webhook fails
+```
+
+**Note:** Using `Ignore` means webhook validation will be bypassed, which is not recommended for production but can be used as a temporary workaround for local development.
+
+#### Access Denied When Installing agents-at-scale
+
+**Error Message**
+
+```bash
+Release "agents-at-scale" does not exist. Installing it now.
+Error: GET "https://ghcr.io/v2/mck-private/qb-fm-labs-legacyx/charts/legacyx/tags/list": response status code 403: denied: permission_denied: read_package
+```
+
+**Cause**
+
+The issue occurs when ark install attempts to pull the agents-at-scale Helm chart from the GitHub Container Registry (ghcr.io) under the private mck-private organization.
+If your GitHub token is missing the read:packages scope or is not authorized for SSO access to that organization, the registry request fails with a 403 Permission Denied error.
+
+**Workaround**
+
+Work in progress to fix the issue. Until it is fixed, you can install agents-at-scale manually by following the setup steps in its repository 'agent-at-scale-user'
+
+This ensures the required charts are locally available for Ark to reference.
+
+#### 'Field is immutable' errors on install or upgrade
+
+When installing or upgrading Ark, if a previous installation exists that was _not_ installed with the expected installation name, or has only been partly uninstalled then you may encounter errors like:
+
+```
+# Example 1:
+Error: rendered manifests contain a resource that already exists. Unable to continue with install: Deployment
+  "ark-controller-manager" in namespace "ark-system" exists and cannot be imported into the current release
+
+# Example 2:
+The CustomResourceDefinition "agents.ark.ai" is invalid:
+  spec.versions[0].schema.openAPIV3Schema.properties[spec].properties[model].properties[name]: Invalid value: "string":
+   field is immutable
+
+# Example 3:
+Error: UPGRADE FAILED: cannot patch "ark-controller-manager" with kind Deployment: Deployment.apps "ark-controller-manager" is invalid: spec.selector: Invalid value:
+  v1.LabelSelector{MatchLabels:map[string]string{"app.kubernetes.io/name":"ark", "app.kubernetes.io/instance":"ark"}, MatchExpressions:[]v1.LabelSelectorRequirement(nil)}: field is immutable
+```
+
+The fastest way to deal with this is to re-install on a clean cluster (e.g. for local development by doing `minikube delete && minikube start`).
+
+To manually clean up, you must find and delete all `ark` resources:
+
+```bash
+# Search for any ark installation then uninstall it.
+helm list --all-namespaces | grep ark
+# for each namespace/install found:
+# helm uninstall -n <namespace found> -n <installation_found>
+
+# Go through each ark resources (agent, query etc)...
+ kubectl get crds | grep ark | awk '{print $1}' | while read crd; do
+   # Delete all the resources and its definition.
+   kubectl delete $crd --all --all-namespaces --force --grace-period=0 --timeout=10s || true
+   kubectl delete crd $crd --force --grace-period=0
+done
+```
 
 ## Agents
 

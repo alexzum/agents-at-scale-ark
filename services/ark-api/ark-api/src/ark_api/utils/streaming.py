@@ -1,7 +1,22 @@
 """Streaming utilities for converting responses to SSE format."""
 
+from typing import TypedDict
+
 from openai.types.chat import ChatCompletion, ChatCompletionChunk
 from openai.types.chat.chat_completion_chunk import Choice as ChunkChoice, ChoiceDelta
+
+
+class StreamingErrorDetail(TypedDict, total=False):
+    """Error detail structure for streaming error responses."""
+    status: int
+    message: str
+    type: str
+    code: str
+
+
+class StreamingErrorResponse(TypedDict):
+    """OpenAI-compatible error response format for streaming."""
+    error: StreamingErrorDetail
 
 
 def create_single_chunk_sse_response(completion: ChatCompletion) -> list[str]:
@@ -16,13 +31,12 @@ def create_single_chunk_sse_response(completion: ChatCompletion) -> list[str]:
     Returns:
         List of SSE-formatted strings
     """
-    # Create a single chunk with the full content
-    chunk = ChatCompletionChunk(
-        id=completion.id,
-        object="chat.completion.chunk",
-        created=completion.created,
-        model=completion.model,
-        choices=[
+    chunk_data = {
+        "id": completion.id,
+        "object": "chat.completion.chunk",
+        "created": completion.created,
+        "model": completion.model,
+        "choices": [
             ChunkChoice(
                 index=0,
                 delta=ChoiceDelta(
@@ -33,8 +47,14 @@ def create_single_chunk_sse_response(completion: ChatCompletion) -> list[str]:
             )
         ],
         # Include usage data in the final chunk (OpenAI does this too)
-        usage=completion.usage
-    )
+        "usage": completion.usage
+    }
+
+    # Add Ark metadata if present in completion
+    if hasattr(completion, 'ark'):
+        chunk_data["ark"] = completion.ark
+
+    chunk = ChatCompletionChunk(**chunk_data)
 
     # Return SSE format strings
     return [

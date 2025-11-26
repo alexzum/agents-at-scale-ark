@@ -83,6 +83,8 @@ metrics:
 # the edit command with the '--force' flag
 webhook:
   enable: true
+  timeoutSeconds: 30
+  failurePolicy: Fail
 
 # [PROMETHEUS]: To enable a ServiceMonitor to export metrics to Prometheus set true
 prometheus:
@@ -103,3 +105,10 @@ containerRegistry:
   username: ""
   password: ""
   email: ""
+
+# Custom CA certificate configuration
+# When set, mounts a CA certificate from a Kubernetes secret to trust custom certificate authorities
+customCACert:
+  enabled: false
+  secretName: "custom-ca-cert"
+  key: "ca.crt"

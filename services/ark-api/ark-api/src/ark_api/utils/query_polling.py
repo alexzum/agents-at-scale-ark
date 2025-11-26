@@ -11,7 +11,7 @@ from openai.types.completion_usage import CompletionUsage
 logger = logging.getLogger(__name__)
 
 
-def _create_chat_completion_response(query_name: str, model: str, content: str, messages: list) -> ChatCompletion:
+def _create_chat_completion_response(query_name: str, model: str, content: str, messages: list, query_status: dict = None) -> ChatCompletion:
     """Create OpenAI-compatible chat completion response."""
     # Count tokens from messages array
     prompt_text = " ".join([
@@ -20,8 +20,8 @@ def _create_chat_completion_response(query_name: str, model: str, content: str, 
     ])
     prompt_tokens = len(prompt_text.split())
     completion_tokens = len(content.split())
-    
-    return ChatCompletion(
+
+    response = ChatCompletion(
         id=query_name,
         object="chat.completion",
         created=int(time.time()),
@@ -39,6 +39,11 @@ def _create_chat_completion_response(query_name: str, model: str, content: str, 
             total_tokens=prompt_tokens + completion_tokens,
         ),
     )
+
+    if query_status:
+        response.ark = {"queryStatus": query_status}
+
+    return response
 
 
 def _get_error_detail(status: dict) -> dict:
@@ -102,7 +107,7 @@ async def poll_query_completion(ark_client, query_name: str, model: str, message
                 raise HTTPException(status_code=500, detail="No response received")
 
             content = responses[0].get("content", "")
-            return _create_chat_completion_response(query_name, model, content, messages)
+            return _create_chat_completion_response(query_name, model, content, messages, status)
 
         elif phase == "error":
             error_detail = _get_error_detail(status)

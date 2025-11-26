@@ -26,6 +26,7 @@ type Agent struct {
 	Model           *Model
 	Tools           *ToolRegistry
 	Recorder        EventEmitter
+	AgentRecorder   telemetry.AgentRecorder
 	ExecutionEngine *arkv1alpha1.ExecutionEngineRef
 	Annotations     map[string]string
 	OutputSchema    *runtime.RawExtension
@@ -38,7 +39,7 @@ func (a *Agent) FullName() string {
 }
 
 // Execute executes the agent with optional event emission for tool calls
-func (a *Agent) Execute(ctx context.Context, userInput Message, history []Message, memory MemoryInterface, eventStream EventStreamInterface) ([]Message, error) {
+func (a *Agent) Execute(ctx context.Context, userInput Message, history []Message, memory MemoryInterface, eventStream EventStreamInterface) (*ExecutionResult, error) {
 	modelName := ""
 	if a.Model != nil {
 		modelName = a.Model.Model
@@ -53,20 +54,45 @@ func (a *Agent) Execute(ctx context.Context, userInput Message, history []Messag
 	})
 	defer agentTracker.Complete("")
 
-	if a.ExecutionEngine != nil {
-		// Check if this is the reserved 'a2a' execution engine
-		if a.ExecutionEngine.Name == ExecutionEngineA2A {
-			return a.executeWithA2AExecutionEngine(ctx, userInput, eventStream)
-		}
-		return a.executeWithExecutionEngine(ctx, userInput, history)
+	ctx, span := a.AgentRecorder.StartAgentExecution(ctx, a.Name, a.Namespace)
+	defer span.End()
+
+	result, err := a.executeAgent(ctx, userInput, history, memory, eventStream)
+	if err != nil {
+		a.AgentRecorder.RecordError(span, err)
+		return nil, err
 	}
 
-	// Regular agents require a model
+	a.AgentRecorder.RecordSuccess(span)
+	return result, nil
+}
+
+func (a *Agent) executeAgent(ctx context.Context, userInput Message, history []Message, memory MemoryInterface, eventStream EventStreamInterface) (*ExecutionResult, error) {
+	if a.ExecutionEngine != nil {
+		return a.executeWithExecutionEngineRouter(ctx, userInput, history, eventStream)
+	}
+
 	if a.Model == nil {
 		return nil, fmt.Errorf("agent %s has no model configured", a.FullName())
 	}
 
-	return a.executeLocally(ctx, userInput, history, memory, eventStream)
+	messages, err := a.executeLocally(ctx, userInput, history, memory, eventStream)
+	if err != nil {
+		return nil, err
+	}
+	return &ExecutionResult{Messages: messages}, nil
+}
+
+func (a *Agent) executeWithExecutionEngineRouter(ctx context.Context, userInput Message, history []Message, eventStream EventStreamInterface) (*ExecutionResult, error) {
+	if a.ExecutionEngine.Name == ExecutionEngineA2A {
+		return a.executeWithA2AExecutionEngine(ctx, userInput, eventStream)
+	}
+
+	messages, err := a.executeWithExecutionEngine(ctx, userInput, history)
+	if err != nil {
+		return nil, err
+	}
+	return &ExecutionResult{Messages: messages}, nil
 }
 
 func (a *Agent) executeWithExecutionEngine(ctx context.Context, userInput Message, history []Message) ([]Message, error) {
@@ -88,9 +114,10 @@ func (a *Agent) executeWithExecutionEngine(ctx context.Context, userInput Messag
 	return engineClient.Execute(ctx, a.ExecutionEngine, agentConfig, userInput, history, toolDefinitions, a.Recorder)
 }
 
-func (a *Agent) executeWithA2AExecutionEngine(ctx context.Context, userInput Message, eventStream EventStreamInterface) ([]Message, error) {
+func (a *Agent) executeWithA2AExecutionEngine(ctx context.Context, userInput Message, eventStream EventStreamInterface) (*ExecutionResult, error) {
 	a2aEngine := NewA2AExecutionEngine(a.client, a.Recorder)
-	return a2aEngine.Execute(ctx, a.Name, a.Namespace, a.Annotations, userInput, eventStream)
+	contextID := GetA2AContextID(ctx)
+	return a2aEngine.Execute(ctx, a.Name, a.Namespace, a.Annotations, contextID, userInput, eventStream)
 }
 
 func (a *Agent) prepareMessages(ctx context.Context, userInput Message, history []Message) ([]Message, error) {
@@ -164,15 +191,10 @@ func (a *Agent) executeToolCall(ctx context.Context, toolCall openai.ChatComplet
 		"toolType":   a.Tools.GetToolType(toolCall.Function.Name),
 	})
 
-	toolType := a.Tools.GetToolType(toolCall.Function.Name)
-	ctx, toolSpan := telemetry.StartToolExecution(ctx, toolCall.Function.Name, toolType, toolCall.ID, toolCall.Function.Arguments)
-	defer toolSpan.End()
-
 	result, err := a.Tools.ExecuteTool(ctx, ToolCall(toolCall), a.Recorder)
 	toolMessage := ToolMessage(result.Content, result.ID)
 
 	if err != nil {
-		telemetry.RecordToolError(toolSpan, err)
 		if IsTerminateTeam(err) {
 			toolTracker.CompleteWithTermination(err.Error())
 		} else {
@@ -181,7 +203,6 @@ func (a *Agent) executeToolCall(ctx context.Context, toolCall openai.ChatComplet
 		return toolMessage, err
 	}
 
-	telemetry.RecordToolSuccess(toolSpan, result.Content)
 	toolTracker.CompleteWithMetadata(result.Content, map[string]string{
 		"resultLength": fmt.Sprintf("%d", len(result.Content)),
 		"hasError":     "false",
@@ -254,7 +275,7 @@ func (a *Agent) GetName() string {
 }
 
 func (a *Agent) GetType() string {
-	return "agent"
+	return MemberTypeAgent
 }
 
 func (a *Agent) GetDescription() string {
@@ -285,19 +306,96 @@ func ValidateExecutionEngine(ctx context.Context, k8sClient client.Client, execu
 	return nil
 }
 
-func MakeAgent(ctx context.Context, k8sClient client.Client, crd *arkv1alpha1.Agent, eventRecorder EventEmitter) (*Agent, error) {
+func resolveModelHeadersForAgent(ctx context.Context, k8sClient client.Client, agentCRD *arkv1alpha1.Agent, queryCRD *arkv1alpha1.Query) (map[string]string, error) {
+	agentHeadersMap, err := ResolveHeadersFromOverrides(ctx, k8sClient, agentCRD.Spec.Overrides, agentCRD.Namespace, OverrideTypeModel)
+	if err != nil {
+		return nil, fmt.Errorf("failed to resolve model headers for agent %s/%s: %w", agentCRD.Namespace, agentCRD.Name, err)
+	}
+
+	queryHeadersMap, err := ResolveHeadersFromOverrides(ctx, k8sClient, queryCRD.Spec.Overrides, queryCRD.Namespace, OverrideTypeModel)
+	if err != nil {
+		return nil, fmt.Errorf("failed to resolve model headers from query %s/%s: %w", queryCRD.Namespace, queryCRD.Name, err)
+	}
+
+	var modelHeaders map[string]string
+	if agentCRD.Spec.ModelRef != nil {
+		agentHeaders := agentHeadersMap[agentCRD.Spec.ModelRef.Name]
+		queryHeaders := queryHeadersMap[agentCRD.Spec.ModelRef.Name]
+
+		modelHeaders = make(map[string]string)
+		for k, v := range agentHeaders {
+			modelHeaders[k] = v
+		}
+		for k, v := range queryHeaders {
+			modelHeaders[k] = v
+		}
+	}
+
+	return modelHeaders, nil
+}
+
+func resolveMCPSettingsForAgent(ctx context.Context, k8sClient client.Client, agentCRD *arkv1alpha1.Agent, queryCRD *arkv1alpha1.Query, queryMCPSettings map[string]MCPSettings) (map[string]MCPSettings, error) {
+	agentHeadersMap, err := ResolveHeadersFromOverrides(ctx, k8sClient, agentCRD.Spec.Overrides, agentCRD.Namespace, OverrideTypeMCPServer)
+	if err != nil {
+		return nil, fmt.Errorf("failed to resolve MCP headers for agent %s/%s: %w", agentCRD.Namespace, agentCRD.Name, err)
+	}
+
+	queryHeadersMap, err := ResolveHeadersFromOverrides(ctx, k8sClient, queryCRD.Spec.Overrides, queryCRD.Namespace, OverrideTypeMCPServer)
+	if err != nil {
+		return nil, fmt.Errorf("failed to resolve MCP headers from query %s/%s: %w", queryCRD.Namespace, queryCRD.Name, err)
+	}
+
+	mcpSettings := queryMCPSettings
+	if mcpSettings == nil {
+		mcpSettings = make(map[string]MCPSettings)
+	}
+
+	for mcpKey, headers := range agentHeadersMap {
+		key := fmt.Sprintf("%s/%s", agentCRD.Namespace, mcpKey)
+		setting := mcpSettings[key]
+		setting.Headers = headers
+		mcpSettings[key] = setting
+	}
+
+	for mcpKey, headers := range queryHeadersMap {
+		key := fmt.Sprintf("%s/%s", queryCRD.Namespace, mcpKey)
+		setting := mcpSettings[key]
+		mergedHeaders := make(map[string]string)
+		for k, v := range setting.Headers {
+			mergedHeaders[k] = v
+		}
+		for k, v := range headers {
+			mergedHeaders[k] = v
+		}
+		setting.Headers = mergedHeaders
+		mcpSettings[key] = setting
+	}
+
+	return mcpSettings, nil
+}
+
+func MakeAgent(ctx context.Context, k8sClient client.Client, crd *arkv1alpha1.Agent, eventRecorder EventEmitter, telemetryProvider telemetry.Provider) (*Agent, error) {
+	queryCrd, ok := ctx.Value(QueryContextKey).(*arkv1alpha1.Query)
+	if !ok {
+		return nil, fmt.Errorf("missing query context for agent %s/%s", crd.Namespace, crd.Name)
+	}
+
+	modelHeaders, err := resolveModelHeadersForAgent(ctx, k8sClient, crd, queryCrd)
+	if err != nil {
+		return nil, err
+	}
+
 	var resolvedModel *Model
 
 	// A2A agents don't need models - they delegate to external A2A servers
 	if crd.Spec.ExecutionEngine == nil || crd.Spec.ExecutionEngine.Name != ExecutionEngineA2A {
 		var err error
-		resolvedModel, err = LoadModel(ctx, k8sClient, crd.Spec.ModelRef, crd.Namespace)
+		resolvedModel, err = LoadModel(ctx, k8sClient, crd.Spec.ModelRef, crd.Namespace, modelHeaders, telemetryProvider.ModelRecorder())
 		if err != nil {
 			return nil, fmt.Errorf("failed to load model for agent %s/%s: %w", crd.Namespace, crd.Name, err)
 		}
 	}
 
-	// Validate ExecutionEngine if specified
 	if crd.Spec.ExecutionEngine != nil {
 		err := ValidateExecutionEngine(ctx, k8sClient, crd.Spec.ExecutionEngine, crd.Namespace)
 		if err != nil {
@@ -306,17 +404,19 @@ func MakeAgent(ctx context.Context, k8sClient client.Client, crd *arkv1alpha1.Ag
 		}
 	}
 
-	queryCrd, ok := ctx.Value(QueryContextKey).(*arkv1alpha1.Query)
-	if !ok {
-		return nil, fmt.Errorf("missing query context for agent %s/%s", crd.Namespace, crd.Name)
-	}
 	query, err := MakeQuery(queryCrd)
 	if err != nil {
 		return nil, fmt.Errorf("failed to make query from context for agent %s/%s: %w", crd.Namespace, crd.Name, err)
 	}
-	tools := NewToolRegistry(query.McpSettings)
 
-	if err := tools.registerTools(ctx, k8sClient, crd); err != nil {
+	mcpSettings, err := resolveMCPSettingsForAgent(ctx, k8sClient, crd, queryCrd, query.McpSettings)
+	if err != nil {
+		return nil, err
+	}
+
+	tools := NewToolRegistry(mcpSettings, telemetryProvider.ToolRecorder())
+
+	if err := tools.registerTools(ctx, k8sClient, crd, telemetryProvider); err != nil {
 		return nil, err
 	}
 
@@ -329,6 +429,7 @@ func MakeAgent(ctx context.Context, k8sClient client.Client, crd *arkv1alpha1.Ag
 		Model:           resolvedModel,
 		Tools:           tools,
 		Recorder:        eventRecorder,
+		AgentRecorder:   telemetryProvider.AgentRecorder(),
 		ExecutionEngine: crd.Spec.ExecutionEngine,
 		Annotations:     crd.Annotations,
 		OutputSchema:    crd.Spec.OutputSchema,

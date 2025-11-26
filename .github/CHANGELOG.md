@@ -1,5 +1,139 @@
 # Changelog
 
+## [0.1.45](https://github.com/mckinsey/agents-at-scale-ark/compare/v0.1.44...v0.1.45) (2025-11-25)
+
+
+### Bug Fixes
+
+* ark cli helm chart version ([#498](https://github.com/mckinsey/agents-at-scale-ark/issues/498)) ([e91c9e4](https://github.com/mckinsey/agents-at-scale-ark/commit/e91c9e47848c580c1e4094b7612d081ace50ae0d))
+* ark-cli shows the correct message when default model is configured  ([81bb2a4](https://github.com/mckinsey/agents-at-scale-ark/commit/81bb2a4cec2b1742ec9146da43ad92cd31aaa221))
+* ark-status doesn't show the right message for default model ([#493](https://github.com/mckinsey/agents-at-scale-ark/issues/493)) ([81bb2a4](https://github.com/mckinsey/agents-at-scale-ark/commit/81bb2a4cec2b1742ec9146da43ad92cd31aaa221))
+* increase webhook timeout and add configurable failure policy for kind clusters ([#492](https://github.com/mckinsey/agents-at-scale-ark/issues/492)) ([53b2d5d](https://github.com/mckinsey/agents-at-scale-ark/commit/53b2d5dcba2afbbe53c361a3dcd572877629c212))
+
+## [0.1.44](https://github.com/mckinsey/agents-at-scale-ark/compare/v0.1.43...v0.1.44) (2025-11-24)
+
+
+### Features
+
+* A2A task tracking and query observability improvements ([#316](https://github.com/mckinsey/agents-at-scale-ark/issues/316)) ([464500a](https://github.com/mckinsey/agents-at-scale-ark/commit/464500ad2715da53e3b489ba2eb3f229dcaa536f))
+* Add rbac file for argo workflows ([#461](https://github.com/mckinsey/agents-at-scale-ark/issues/461)) ([86d6732](https://github.com/mckinsey/agents-at-scale-ark/commit/86d6732be43b7421c3ab3a106bab7e541f40f33b))
+* add session-id support to ark query command [ARKQB-490] ([#455](https://github.com/mckinsey/agents-at-scale-ark/issues/455)) ([db5dbe7](https://github.com/mckinsey/agents-at-scale-ark/commit/db5dbe7ab907636cd1485fbb9ca08124704081a7))
+* cluster memory install from cli ([#464](https://github.com/mckinsey/agents-at-scale-ark/issues/464)) ([afdea03](https://github.com/mckinsey/agents-at-scale-ark/commit/afdea034d1d4c17a16f7be1ec8ad4af830bc884a))
+* condition standards ([#452](https://github.com/mckinsey/agents-at-scale-ark/issues/452)) ([36ecc6c](https://github.com/mckinsey/agents-at-scale-ark/commit/36ecc6cadaac7cf9de5513f90694007aeb0aca47))
+* Fark update timeout and style ([#457](https://github.com/mckinsey/agents-at-scale-ark/issues/457)) ([70881d0](https://github.com/mckinsey/agents-at-scale-ark/commit/70881d0ac3ba0e2c080edf13d499e6ce84246fac))
+* light/dark themes follows QB design system colors ([#460](https://github.com/mckinsey/agents-at-scale-ark/issues/460)) ([2cfe470](https://github.com/mckinsey/agents-at-scale-ark/commit/2cfe4704c0fe4ad866e723672d94e945542e5d8b))
+* release cluster-memory ([#456](https://github.com/mckinsey/agents-at-scale-ark/issues/456)) ([7427fcd](https://github.com/mckinsey/agents-at-scale-ark/commit/7427fcda510f5fd8fb92261d2dcb5c120b775e55))
+* Xray blocking scan report ([#444](https://github.com/mckinsey/agents-at-scale-ark/issues/444)) ([08fb3f5](https://github.com/mckinsey/agents-at-scale-ark/commit/08fb3f5895fdc5b71a1b15025d263f6e57f9e174))
+
+
+### Bug Fixes
+
+* Adding dependent trigger for deploy workflows ([#450](https://github.com/mckinsey/agents-at-scale-ark/issues/450)) ([d03be6a](https://github.com/mckinsey/agents-at-scale-ark/commit/d03be6a10f73f8adc1dbc127b895446edd091930))
+* configure artifact repository when minio enabled, also show post-install notes ([#482](https://github.com/mckinsey/agents-at-scale-ark/issues/482)) ([6dd8296](https://github.com/mckinsey/agents-at-scale-ark/commit/6dd82967b493cc48cdad50b429b28e76a708d243))
+* disable probe traces ([#472](https://github.com/mckinsey/agents-at-scale-ark/issues/472)) ([aab0c32](https://github.com/mckinsey/agents-at-scale-ark/commit/aab0c329f98e382b6910861b2929007795f6f1aa))
+* Enable mock LLM for CI/CD e2e-quickstart ([#483](https://github.com/mckinsey/agents-at-scale-ark/issues/483)) ([b5fa897](https://github.com/mckinsey/agents-at-scale-ark/commit/b5fa8972787514c4c3cea8e0b15fb140be9d4423))
+* quickstart errors on cicd ([#462](https://github.com/mckinsey/agents-at-scale-ark/issues/462)) ([d7025a5](https://github.com/mckinsey/agents-at-scale-ark/commit/d7025a5afa5505df71a17283c95ba368eb606683))
+* team trace span boundaries to orrectly show runtimes of turns ([#473](https://github.com/mckinsey/agents-at-scale-ark/issues/473)) ([baa7288](https://github.com/mckinsey/agents-at-scale-ark/commit/baa7288e34109aaa1158c913f69ae8f0c3f5924e))
+
+## [0.1.43](https://github.com/mckinsey/agents-at-scale-ark/compare/v0.1.42...v0.1.43) (2025-11-13)
+
+
+### Features
+
+* add A2A arithmetic workflow sample ([#401](https://github.com/mckinsey/agents-at-scale-ark/issues/401)) ([7a89b0c](https://github.com/mckinsey/agents-at-scale-ark/commit/7a89b0c039d88b893a39e32e25eeb9a49ba3e1a1))
+* Add sample workflow ([#431](https://github.com/mckinsey/agents-at-scale-ark/issues/431)) ([bdedfa5](https://github.com/mckinsey/agents-at-scale-ark/commit/bdedfa526d3357c2b88f60f61fa7fd1ce282d959))
+* added cli command `ark queries delete` ([#419](https://github.com/mckinsey/agents-at-scale-ark/issues/419)) ([488c30d](https://github.com/mckinsey/agents-at-scale-ark/commit/488c30d97bf8cd0b9817a146b19b15188250948b))
+* ark cli queries list ([#416](https://github.com/mckinsey/agents-at-scale-ark/issues/416)) ([440254b](https://github.com/mckinsey/agents-at-scale-ark/commit/440254b275b20116baad097ead30ae6838d51298))
+* completion streaming output for ark cli query ([#424](https://github.com/mckinsey/agents-at-scale-ark/issues/424)) ([8ecb940](https://github.com/mckinsey/agents-at-scale-ark/commit/8ecb9402a1dc23beaaba89cb25ed5b95a43b2600))
+* enable helm chart users to attach custom cacert for controller connections ([#421](https://github.com/mckinsey/agents-at-scale-ark/issues/421)) ([2094d23](https://github.com/mckinsey/agents-at-scale-ark/commit/2094d234aae342a49601041fc130cc09877e360d))
+* header overrides ([#311](https://github.com/mckinsey/agents-at-scale-ark/issues/311)) ([e7fba56](https://github.com/mckinsey/agents-at-scale-ark/commit/e7fba567af3ac3b3c15995d74640a88580dbe34d))
+* Migrate Marketplace to External Marketplace Repository ([#428](https://github.com/mckinsey/agents-at-scale-ark/issues/428)) ([210da1e](https://github.com/mckinsey/agents-at-scale-ark/commit/210da1e327e81167a5b66293591e1b41797e5032))
+* selector with graph [ARKQB-458]  ([#410](https://github.com/mckinsey/agents-at-scale-ark/issues/410)) ([c19c1df](https://github.com/mckinsey/agents-at-scale-ark/commit/c19c1df04fb083b73e9e7f66caaf57f619bf64ec))
+* streaming integration - dashboard, error handling, A2A, HTTPRoutes ([#435](https://github.com/mckinsey/agents-at-scale-ark/issues/435)) ([8d4e47a](https://github.com/mckinsey/agents-at-scale-ark/commit/8d4e47a6e11653f24930353a93f552620df23780))
+* update marketplace service paths to include 'services/' prefix ([#442](https://github.com/mckinsey/agents-at-scale-ark/issues/442)) ([61066db](https://github.com/mckinsey/agents-at-scale-ark/commit/61066db141a0b305250f339875429326681d420c))
+
+
+### Bug Fixes
+
+* always install evaluator for evaluated E2E tests ([#417](https://github.com/mckinsey/agents-at-scale-ark/issues/417)) ([60cec9f](https://github.com/mckinsey/agents-at-scale-ark/commit/60cec9f83dbb29935460c6a2d58283989e102bc6))
+* Change to xray audit command ([#439](https://github.com/mckinsey/agents-at-scale-ark/issues/439)) ([58700c1](https://github.com/mckinsey/agents-at-scale-ark/commit/58700c1be6d7b407426d5190e0387394c9298248))
+* Use public registry for forked prs ([#354](https://github.com/mckinsey/agents-at-scale-ark/issues/354)) ([a601443](https://github.com/mckinsey/agents-at-scale-ark/commit/a601443bd91c430136c2089e32e295452791ee4f))
+
+## [0.1.42](https://github.com/mckinsey/agents-at-scale-ark/compare/v0.1.41...v0.1.42) (2025-11-06)
+
+
+### Features
+
+* add delete API and CLI command for queries and sessions ([#281](https://github.com/mckinsey/agents-at-scale-ark/issues/281)) ([d7ee0b9](https://github.com/mckinsey/agents-at-scale-ark/commit/d7ee0b92285acb821606f600d4f6dc67e2e05277))
+* add queries get command with [@latest](https://github.com/latest) support ([#402](https://github.com/mckinsey/agents-at-scale-ark/issues/402)) ([3a050b4](https://github.com/mckinsey/agents-at-scale-ark/commit/3a050b48fdc5f56bb195bb42611b747d92566f51))
+* Alternative to PyJWT in the event of cve-2025-45768 ([#388](https://github.com/mckinsey/agents-at-scale-ark/issues/388)) ([06593c6](https://github.com/mckinsey/agents-at-scale-ark/commit/06593c6040127647f72c4f37f60a6b34c09f45bf))
+* argo workflows minio plugin ([#399](https://github.com/mckinsey/agents-at-scale-ark/issues/399)) ([95cc907](https://github.com/mckinsey/agents-at-scale-ark/commit/95cc907f87e1da962b3d5bd24874f8c3abaa62eb))
+* ark cli evaluations ([#370](https://github.com/mckinsey/agents-at-scale-ark/issues/370)) ([36b3610](https://github.com/mckinsey/agents-at-scale-ark/commit/36b36100093d18d9e7e15d38c1416ae26edf627f))
+* move observability services to marketplace ([#390](https://github.com/mckinsey/agents-at-scale-ark/issues/390)) ([2900630](https://github.com/mckinsey/agents-at-scale-ark/commit/29006308543787a5baa2edbe83f4aac21c96f0cd))
+* support aws bedrock models on ark cli `ark create model` command ([#408](https://github.com/mckinsey/agents-at-scale-ark/issues/408)) ([731a402](https://github.com/mckinsey/agents-at-scale-ark/commit/731a4024677e904f018a51da11e022fbef6486c7))
+
+
+### Bug Fixes
+
+* Add retry to e2e standard & evaluated ([#396](https://github.com/mckinsey/agents-at-scale-ark/issues/396)) ([930b988](https://github.com/mckinsey/agents-at-scale-ark/commit/930b9881d8e264433504e0759dc4d588359ac837))
+* enable a2a query timeout configuration ([#326](https://github.com/mckinsey/agents-at-scale-ark/issues/326)) ([616451b](https://github.com/mckinsey/agents-at-scale-ark/commit/616451bf348d2d32de8d929804ca6d60187d445e))
+* sse support for golang mcp client ([#385](https://github.com/mckinsey/agents-at-scale-ark/issues/385)) ([5d93c8b](https://github.com/mckinsey/agents-at-scale-ark/commit/5d93c8b2dc31e027978ee0840543fc84e495c564))
+* sse transport test failing on ci ([#404](https://github.com/mckinsey/agents-at-scale-ark/issues/404)) ([670435d](https://github.com/mckinsey/agents-at-scale-ark/commit/670435d45cca68c592d81c86679eaff792d582fa))
+* **tests:** deterministic query token usage ([#386](https://github.com/mckinsey/agents-at-scale-ark/issues/386)) ([85f510c](https://github.com/mckinsey/agents-at-scale-ark/commit/85f510c288e0e55b85f11c199acc20f1dd62c9f2))
+* update repository reference in code and docs ([#411](https://github.com/mckinsey/agents-at-scale-ark/issues/411)) ([b067261](https://github.com/mckinsey/agents-at-scale-ark/commit/b067261a42e6dcdbba4434c80bd5af348c902cf2))
+
+## [0.1.41](https://github.com/mckinsey/agents-at-scale-ark/compare/v0.1.40...v0.1.41) (2025-10-30)
+
+
+### Features
+
+* add inline descriptions to target selectors in ark chat ([#367](https://github.com/mckinsey/agents-at-scale-ark/issues/367)) ([d227fd1](https://github.com/mckinsey/agents-at-scale-ark/commit/d227fd19d09d5a6afbfd61bbb578a7450a1c5291))
+* stateful filesystem mcp ([#249](https://github.com/mckinsey/agents-at-scale-ark/issues/249)) ([ffcfe6d](https://github.com/mckinsey/agents-at-scale-ark/commit/ffcfe6dd45174af8125af6e517c2beaada644dd0))
+* **workflows:** argo workflow chart, basic docs, fanout sample ([#375](https://github.com/mckinsey/agents-at-scale-ark/issues/375)) ([672f86a](https://github.com/mckinsey/agents-at-scale-ark/commit/672f86aabe416cd646089b38ea938cf0b770a227))
+
+
+### Bug Fixes
+
+* add openinference standard input and output at query root span level ([#368](https://github.com/mckinsey/agents-at-scale-ark/issues/368)) ([efb6965](https://github.com/mckinsey/agents-at-scale-ark/commit/efb696568308be8ac3f0487e1e5eb5b158e88d61))
+* update pyproject.toml version and correct the release please config ([#389](https://github.com/mckinsey/agents-at-scale-ark/issues/389)) ([5718f05](https://github.com/mckinsey/agents-at-scale-ark/commit/5718f05cfc0131e941ff211d4e3ba1d8f61842cd))
+
+## [0.1.40](https://github.com/mckinsey/agents-at-scale-ark/compare/v0.1.39...v0.1.40) (2025-10-28)
+
+
+### Features
+
+* abtract otel ([#347](https://github.com/mckinsey/agents-at-scale-ark/issues/347)) ([56fb030](https://github.com/mckinsey/agents-at-scale-ark/commit/56fb0300562a4a7f9e720dbaa8fcb53a780a59b8))
+* add empty states ([#292](https://github.com/mckinsey/agents-at-scale-ark/issues/292)) ([fde3fa6](https://github.com/mckinsey/agents-at-scale-ark/commit/fde3fa64ca919479261e1c9228277b778b34d62c))
+* add Phoenix Service documentation and HTTPRoute configuration ([#363](https://github.com/mckinsey/agents-at-scale-ark/issues/363)) ([71d03bb](https://github.com/mckinsey/agents-at-scale-ark/commit/71d03bbd572da18071452972d2d48b457307b1fc))
+* add query annotations support in completions API and streaming ([#355](https://github.com/mckinsey/agents-at-scale-ark/issues/355)) ([68e85eb](https://github.com/mckinsey/agents-at-scale-ark/commit/68e85eba0e11bc15815087057403afae7693159b))
+* adds prettier and enforces stricter linting rules ([#305](https://github.com/mckinsey/agents-at-scale-ark/issues/305)) ([48535f2](https://github.com/mckinsey/agents-at-scale-ark/commit/48535f2a2b16586914e5cd15fd036b4f9058915c))
+* Agent with Partial Tools ([#310](https://github.com/mckinsey/agents-at-scale-ark/issues/310)) ([d835524](https://github.com/mckinsey/agents-at-scale-ark/commit/d83552432aa2e05a73e19d1d1f72a21d4d7705bc))
+* completed conditions for queries and evaluations ([#325](https://github.com/mckinsey/agents-at-scale-ark/issues/325)) ([2b0d9a7](https://github.com/mckinsey/agents-at-scale-ark/commit/2b0d9a7fab12593e0080186937dfaeecf4393e85))
+* hide execution engine field behind an experimental-feature flag ([#303](https://github.com/mckinsey/agents-at-scale-ark/issues/303)) ([ef5f69e](https://github.com/mckinsey/agents-at-scale-ark/commit/ef5f69e4f626f8c6c0539f38deedbfedf5cb4bfa))
+* implement exit codes and remove auto-cleanup for queries ([#319](https://github.com/mckinsey/agents-at-scale-ark/issues/319)) ([53b40ae](https://github.com/mckinsey/agents-at-scale-ark/commit/53b40ae1def693091feea255702c22b6ac6e39f0))
+* moves model editing to dedicated update page and forms ([#335](https://github.com/mckinsey/agents-at-scale-ark/issues/335)) ([694fb63](https://github.com/mckinsey/agents-at-scale-ark/commit/694fb6380a02aeb41ef9c6abf82085f17e2c373c))
+* refines member UI and card styling in team editor ([#330](https://github.com/mckinsey/agents-at-scale-ark/issues/330)) ([070e858](https://github.com/mckinsey/agents-at-scale-ark/commit/070e858420b23653046d426e4359d7ce859bc5e5))
+* release ark cli docker image ([#340](https://github.com/mckinsey/agents-at-scale-ark/issues/340)) ([87712d9](https://github.com/mckinsey/agents-at-scale-ark/commit/87712d94060620eb92d63aca994e66e2b16a8fdd))
+* simplify query execution wait logic in ark-cli ([#357](https://github.com/mckinsey/agents-at-scale-ark/issues/357)) ([ba71385](https://github.com/mckinsey/agents-at-scale-ark/commit/ba71385b26b5f31a74ff69e35edca3d8ee307586))
+* teams agent based selector strategy &lt;- teams model based selector strategy ([#270](https://github.com/mckinsey/agents-at-scale-ark/issues/270)) ([580fb94](https://github.com/mckinsey/agents-at-scale-ark/commit/580fb94282196b8ae7834ab0ff9ff260141ec992))
+* update langfuse version to 1.5.7 and remove old package ([#318](https://github.com/mckinsey/agents-at-scale-ark/issues/318)) ([98c747a](https://github.com/mckinsey/agents-at-scale-ark/commit/98c747ad671ce5e2ce295dce84f6ee92b8ab5610))
+
+
+### Bug Fixes
+
+* a2a synchronous task handling ([#337](https://github.com/mckinsey/agents-at-scale-ark/issues/337)) ([03009d8](https://github.com/mckinsey/agents-at-scale-ark/commit/03009d86748668c67b2e8f0b79f02a553004b5a2))
+* **ark-cli:** do not show superfluous error/success content, just the ([1e58c4a](https://github.com/mckinsey/agents-at-scale-ark/commit/1e58c4a9fcdc2021fcde42f864a73b73da1e15cb))
+* **ark-cli:** properly show query error ([#343](https://github.com/mckinsey/agents-at-scale-ark/issues/343)) ([1e58c4a](https://github.com/mckinsey/agents-at-scale-ark/commit/1e58c4a9fcdc2021fcde42f864a73b73da1e15cb))
+* **ark-controller:** show query error message in conditions.Message ([1e58c4a](https://github.com/mckinsey/agents-at-scale-ark/commit/1e58c4a9fcdc2021fcde42f864a73b73da1e15cb))
+* arkqb 361 configurable mcp timeout ([#334](https://github.com/mckinsey/agents-at-scale-ark/issues/334)) ([4667174](https://github.com/mckinsey/agents-at-scale-ark/commit/4667174b21505d9195d36f6fa2c8a36b941e6c0c))
+* correct tool calling traces ([#269](https://github.com/mckinsey/agents-at-scale-ark/issues/269)) ([7557555](https://github.com/mckinsey/agents-at-scale-ark/commit/7557555205917e0ae12ed8bf820fa5681ab85ea0))
+* regenerate CRD manifests after type changes ([#345](https://github.com/mckinsey/agents-at-scale-ark/issues/345)) ([0532fd4](https://github.com/mckinsey/agents-at-scale-ark/commit/0532fd40d053219ba065d4491b97e62fddb61a66))
+* require max turns on graph teams ([#300](https://github.com/mckinsey/agents-at-scale-ark/issues/300)) ([e666260](https://github.com/mckinsey/agents-at-scale-ark/commit/e6662605fe808ce403cd930fe0a1cef31c44dd16))
+* stop Queries flipping between `canceled` and `running` phases ([#332](https://github.com/mckinsey/agents-at-scale-ark/issues/332)) ([65685c7](https://github.com/mckinsey/agents-at-scale-ark/commit/65685c78526606c87c41c6229d03fc5bf3ee7126))
+* Trailing slash and mcp path update ([#344](https://github.com/mckinsey/agents-at-scale-ark/issues/344)) ([27b647d](https://github.com/mckinsey/agents-at-scale-ark/commit/27b647d64ab34b4ac49e52e869e594a3143889eb))
+* Update documentation for debugging Docker Desktop issue ([#351](https://github.com/mckinsey/agents-at-scale-ark/issues/351)) ([37693a6](https://github.com/mckinsey/agents-at-scale-ark/commit/37693a6aef7c6a7d1ec004ca2a5c72df98e8fe10))
+* update OpenAPI dependency handling in build configuration ([#297](https://github.com/mckinsey/agents-at-scale-ark/issues/297)) ([8e98316](https://github.com/mckinsey/agents-at-scale-ark/commit/8e98316e2468a38cd3ef3ed0599aecd5fe523c7d))
+
 ## [0.1.39](https://github.com/mckinsey/agents-at-scale-ark/compare/v0.1.38...v0.1.39) (2025-10-16)
 
 

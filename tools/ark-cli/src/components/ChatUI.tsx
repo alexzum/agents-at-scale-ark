@@ -15,10 +15,8 @@ import {
 } from '../lib/chatClient.js';
 import {ArkApiClient} from '../lib/arkApiClient.js';
 import {ArkApiProxy} from '../lib/arkApiProxy.js';
-import {AgentSelector} from '../ui/AgentSelector.js';
-import {ModelSelector} from '../ui/ModelSelector.js';
-import {TeamSelector} from '../ui/TeamSelector.js';
-import {ToolSelector} from '../ui/ToolSelector.js';
+import {TargetSelector} from '../ui/TargetSelector.js';
+import {Agent, Model, Team, Tool} from '../lib/arkApiClient.js';
 import {useAsyncOperation, AsyncOperationStatus} from './AsyncOperation.js';
 import {createConnectingToArkOperation} from '../ui/asyncOperations/connectingToArk.js';
 
@@ -94,10 +92,12 @@ const generateMessageId = (): string => {
 // Configure marked with terminal renderer for markdown output
 const configureMarkdown = () => {
   marked.setOptions({
+    // @ts-ignore - TerminalRenderer types are incomplete
     renderer: new TerminalRenderer({
       showSectionPrefix: false,
       width: 80,
       reflowText: true,
+      // @ts-ignore - preserveNewlines exists but not in types
       preserveNewlines: true,
     }),
   });
@@ -135,6 +135,15 @@ const ChatUI: React.FC<ChatUIProps> = ({
   const [showTeamSelector, setShowTeamSelector] = React.useState(false);
   const [showToolSelector, setShowToolSelector] = React.useState(false);
 
+  const [agents, setAgents] = React.useState<Agent[]>([]);
+  const [models, setModels] = React.useState<Model[]>([]);
+  const [teams, setTeams] = React.useState<Team[]>([]);
+  const [tools, setTools] = React.useState<Tool[]>([]);
+  const [selectorLoading, setSelectorLoading] = React.useState(false);
+  const [selectorError, setSelectorError] = React.useState<string | undefined>(
+    undefined
+  );
+
   // Message history navigation
   const [messageHistory, setMessageHistory] = React.useState<string[]>([]);
   const [historyIndex, setHistoryIndex] = React.useState(-1);
@@ -144,6 +153,57 @@ const ChatUI: React.FC<ChatUIProps> = ({
     streamingEnabled: config?.chat?.streaming ?? true,
     currentTarget: undefined,
   });
+
+  // Track A2A context ID for conversation continuity using ref
+  const a2aContextIdRef = React.useRef<string | undefined>(undefined);
+
+  React.useEffect(() => {
+    if (showAgentSelector && agents.length === 0) {
+      setSelectorLoading(true);
+      setSelectorError(undefined);
+      arkApiClient
+        .getAgents()
+        .then(setAgents)
+        .catch((err) => setSelectorError(err.message))
+        .finally(() => setSelectorLoading(false));
+    }
+  }, [showAgentSelector, arkApiClient, agents.length]);
+
+  React.useEffect(() => {
+    if (showModelSelector && models.length === 0) {
+      setSelectorLoading(true);
+      setSelectorError(undefined);
+      arkApiClient
+        .getModels()
+        .then(setModels)
+        .catch((err) => setSelectorError(err.message))
+        .finally(() => setSelectorLoading(false));
+    }
+  }, [showModelSelector, arkApiClient, models.length]);
+
+  React.useEffect(() => {
+    if (showTeamSelector && teams.length === 0) {
+      setSelectorLoading(true);
+      setSelectorError(undefined);
+      arkApiClient
+        .getTeams()
+        .then(setTeams)
+        .catch((err) => setSelectorError(err.message))
+        .finally(() => setSelectorLoading(false));
+    }
+  }, [showTeamSelector, arkApiClient, teams.length]);
+
+  React.useEffect(() => {
+    if (showToolSelector && tools.length === 0) {
+      setSelectorLoading(true);
+      setSelectorError(undefined);
+      arkApiClient
+        .getTools()
+        .then(setTools)
+        .catch((err) => setSelectorError(err.message))
+        .finally(() => setSelectorLoading(false));
+    }
+  }, [showToolSelector, arkApiClient, tools.length]);
 
   const chatClientRef = React.useRef<ChatClient | undefined>(undefined);
 
@@ -401,11 +461,14 @@ const ChatUI: React.FC<ChatUIProps> = ({
       // Clear all messages
       setMessages([]);
 
+      // Clear A2A context ID
+      a2aContextIdRef.current = undefined;
+
       // Add system message to show the reset
       const systemMessage: SystemMessage = {
         id: generateMessageId(),
         type: 'system',
-        content: 'Message history cleared',
+        content: 'Message history and A2A context cleared',
         timestamp: new Date(),
         command: '/reset',
       };
@@ -552,8 +615,17 @@ const ChatUI: React.FC<ChatUIProps> = ({
       const fullResponse = await chatClientRef.current.sendMessage(
         target.id,
         apiMessages,
-        chatConfig,
+        {...chatConfig, a2aContextId: a2aContextIdRef.current},
         (chunk: string, toolCalls?: ToolCall[], arkMetadata?: ArkMetadata) => {
+          // Extract A2A context ID from first response
+          // Chat TUI always queries a single target, so contextId is in responses[0]
+          if (
+            arkMetadata?.completedQuery?.status?.responses?.[0]?.a2a?.contextId
+          ) {
+            a2aContextIdRef.current =
+              arkMetadata.completedQuery.status.responses[0].a2a.contextId;
+          }
+
           // Update message progressively as chunks arrive
           setMessages((prev) => {
             const newMessages = [...prev];
@@ -949,10 +1021,18 @@ const ChatUI: React.FC<ChatUIProps> = ({
   // Show agent selector if requested
   if (showAgentSelector) {
     return (
-      <AgentSelector
-        arkApiClient={arkApiClient}
-        onSelect={(agent) => {
-          // Update the target to the selected agent
+      <TargetSelector
+        targets={agents}
+        title="Select Agent"
+        subtitle="Choose an agent to start a conversation with"
+        loading={selectorLoading}
+        error={selectorError}
+        formatInlineDetail={(t) => t.description}
+        showDetailPanel={true}
+        onSelect={(target) => {
+          const agent = agents.find((a) => a.name === target.name);
+          if (!agent) return;
+
           const agentTarget: QueryTarget = {
             id: `agent/${agent.name}`,
             name: agent.name,
@@ -964,7 +1044,6 @@ const ChatUI: React.FC<ChatUIProps> = ({
           setMessages([]);
           setShowAgentSelector(false);
 
-          // Add system message about the selection
           const systemMessage: SystemMessage = {
             id: generateMessageId(),
             type: 'system',
@@ -982,10 +1061,27 @@ const ChatUI: React.FC<ChatUIProps> = ({
   // Show model selector if requested
   if (showModelSelector) {
     return (
-      <ModelSelector
-        arkApiClient={arkApiClient}
-        onSelect={(model) => {
-          // Update the target to the selected model
+      <TargetSelector
+        targets={models}
+        title="Select Model"
+        subtitle="Choose a model to start a conversation with"
+        loading={selectorLoading}
+        error={selectorError}
+        formatLabel={(t) => {
+          const model = models.find((m) => m.name === t.name);
+          return model
+            ? `${model.name}${model.type ? ` (${model.type})` : ''}`
+            : t.name;
+        }}
+        formatInlineDetail={(t) => {
+          const model = models.find((m) => m.name === t.name);
+          return model?.model;
+        }}
+        showDetailPanel={false}
+        onSelect={(target) => {
+          const model = models.find((m) => m.name === target.name);
+          if (!model) return;
+
           const modelTarget: QueryTarget = {
             id: `model/${model.name}`,
             name: model.name,
@@ -997,7 +1093,6 @@ const ChatUI: React.FC<ChatUIProps> = ({
           setMessages([]);
           setShowModelSelector(false);
 
-          // Add system message about the selection
           const systemMessage: SystemMessage = {
             id: generateMessageId(),
             type: 'system',
@@ -1015,10 +1110,24 @@ const ChatUI: React.FC<ChatUIProps> = ({
   // Show team selector if requested
   if (showTeamSelector) {
     return (
-      <TeamSelector
-        arkApiClient={arkApiClient}
-        onSelect={(team) => {
-          // Update the target to the selected team
+      <TargetSelector
+        targets={teams}
+        title="Select Team"
+        subtitle="Choose a team to start a conversation with"
+        loading={selectorLoading}
+        error={selectorError}
+        formatLabel={(t) => {
+          const team = teams.find((tm) => tm.name === t.name);
+          return team
+            ? `${team.name}${team.strategy ? ` (${team.strategy})` : ''}`
+            : t.name;
+        }}
+        formatInlineDetail={(t) => t.description}
+        showDetailPanel={true}
+        onSelect={(target) => {
+          const team = teams.find((tm) => tm.name === target.name);
+          if (!team) return;
+
           const teamTarget: QueryTarget = {
             id: `team/${team.name}`,
             name: team.name,
@@ -1030,7 +1139,6 @@ const ChatUI: React.FC<ChatUIProps> = ({
           setMessages([]);
           setShowTeamSelector(false);
 
-          // Add system message about the selection
           const systemMessage: SystemMessage = {
             id: generateMessageId(),
             type: 'system',
@@ -1048,10 +1156,18 @@ const ChatUI: React.FC<ChatUIProps> = ({
   // Show tool selector if requested
   if (showToolSelector) {
     return (
-      <ToolSelector
-        arkApiClient={arkApiClient}
-        onSelect={(tool) => {
-          // Update the target to the selected tool
+      <TargetSelector
+        targets={tools}
+        title="Select Tool"
+        subtitle="Choose a tool to start a conversation with"
+        loading={selectorLoading}
+        error={selectorError}
+        formatInlineDetail={(t) => t.description}
+        showDetailPanel={true}
+        onSelect={(target) => {
+          const tool = tools.find((tl) => tl.name === target.name);
+          if (!tool) return;
+
           const toolTarget: QueryTarget = {
             id: `tool/${tool.name}`,
             name: tool.name,
@@ -1063,7 +1179,6 @@ const ChatUI: React.FC<ChatUIProps> = ({
           setMessages([]);
           setShowToolSelector(false);
 
-          // Add system message about the selection
           const systemMessage: SystemMessage = {
             id: generateMessageId(),
             type: 'system',
