@@ -1,6 +1,6 @@
 import {
-  isExperimentalFeaturesEnabledAtom,
   storedIsA2ATasksEnabledAtom,
+  storedIsBrokerEnabledAtom,
   storedIsChatStreamingEnabledAtom,
   storedIsExperimentalDarkModeEnabledAtom,
   storedIsExperimentalExecutionEngineEnabledAtom,
@@ -9,16 +9,6 @@ import {
 import type { ExperimentalFeatureGroup } from './types';
 
 export const experimentalFeatureGroups: ExperimentalFeatureGroup[] = [
-  {
-    groupKey: 'system',
-    features: [
-      {
-        feature: 'Experimental Features',
-        description: 'Turning this off will disable experimental features',
-        atom: isExperimentalFeaturesEnabledAtom,
-      },
-    ],
-  },
   {
     groupKey: 'ui-ux',
     groupLabel: 'UI/UX',
@@ -53,6 +43,17 @@ export const experimentalFeatureGroups: ExperimentalFeatureGroup[] = [
           </span>
         ),
         atom: storedIsA2ATasksEnabledAtom,
+      },
+      {
+        feature: 'Broker',
+        description: (
+          <span>
+            Enables the experimental <span className="font-bold">Broker</span>{' '}
+            diagnostic page for viewing real-time OTEL traces, messages, and LLM
+            chunks
+          </span>
+        ),
+        atom: storedIsBrokerEnabledAtom,
       },
     ],
   },

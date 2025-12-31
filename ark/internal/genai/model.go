@@ -23,6 +23,9 @@ func ResolveModelSpec(modelSpec any, defaultNamespace string) (string, string, e
 	}
 	switch spec := modelSpec.(type) {
 	case *arkv1alpha1.AgentModelRef:
+		if spec == nil {
+			return "", "", fmt.Errorf("AgentModelRef pointer is nil")
+		}
 		modelName := spec.Name
 		namespace := spec.Namespace
 		if namespace == "" {
@@ -98,12 +101,7 @@ func loadModelCRD(ctx context.Context, k8sClient client.Client, name, namespace 
 }
 
 func resolveModelHeaders(ctx context.Context, k8sClient client.Client, headers []arkv1alpha1.Header, namespace string) (map[string]string, error) {
-	resolvedHeaders, err := ResolveHeaders(ctx, k8sClient, headers, namespace)
-	if err != nil {
-		return nil, err
-	}
-
-	return resolvedHeaders, nil
+	return ResolveHeaders(ctx, k8sClient, headers, namespace)
 }
 
 // applyHeadersToOptions applies custom headers to OpenAI client options

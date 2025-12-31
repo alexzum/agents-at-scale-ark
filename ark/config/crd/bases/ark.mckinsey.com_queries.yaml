@@ -53,6 +53,9 @@ spec:
               cancel:
                 description: When true, indicates intent to cancel the query
                 type: boolean
+              conversationId:
+                minLength: 1
+                type: string
               input:
                 description: Input can be a string (type=user) or []openai.ChatCompletionMessageParamUnion
                   (type=messages)
@@ -105,6 +108,16 @@ spec:
                                     - key
                                     type: object
                                     x-kubernetes-map-type: atomic
+                                  queryParameterRef:
+                                    properties:
+                                      name:
+                                        description: Name of the parameter from the
+                                          Query resource
+                                        minLength: 1
+                                        type: string
+                                    required:
+                                    - name
+                                    type: object
                                   secretKeyRef:
                                     description: SecretKeySelector selects a key of
                                       a Secret.
@@ -442,6 +455,9 @@ spec:
                   - type
                   type: object
                 type: array
+              conversationId:
+                minLength: 1
+                type: string
               duration:
                 type: string
               phase:

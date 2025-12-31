@@ -1,6 +1,7 @@
 import { atom } from 'jotai';
 import { describe, expect, it, vi } from 'vitest';
 
+import { A2A_TASKS_FEATURE_KEY } from '@/atoms/experimental-features';
 import {
   CONFIGURATION_SECTIONS,
   DASHBOARD_SECTIONS,
@@ -8,22 +9,22 @@ import {
   RUNTIME_SECTIONS,
   SERVICE_SECTIONS,
 } from '@/lib/constants/dashboard-icons';
-import { A2A_TASKS_FEATURE_KEY } from '@/atoms/experimental-features';
 
-vi.mock('@/atoms/experimental-features', async (importOriginal) => {
-  const actual = await importOriginal() as any;
+vi.mock('@/atoms/experimental-features', async importOriginal => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const actual = (await importOriginal()) as any;
   return {
     ...actual,
     isA2ATasksEnabledAtom: vi.fn().mockReturnValue(atom(true)),
-  }
-})
+  };
+});
 
 describe('Dashboard Sections - enabledWhen', () => {
   describe('DASHBOARD_SECTIONS filtering', () => {
     it('should return the expected total number of sections', () => {
       const allSections = Object.values(DASHBOARD_SECTIONS);
-      // 5 configurations + 5 operations + 4 runtime + 1 service = 15 total
-      expect(allSections).toHaveLength(15);
+      // 5 configurations + 6 operations + 4 runtime + 1 service = 16 total
+      expect(allSections).toHaveLength(16);
     });
   });
 
@@ -56,7 +57,7 @@ describe('Dashboard Sections - enabledWhen', () => {
 
   describe('OPERATION_SECTIONS', () => {
     it('should have the expected sections', () => {
-      expect(OPERATION_SECTIONS).toHaveLength(5);
+      expect(OPERATION_SECTIONS).toHaveLength(6);
 
       // Verify it matches the count from DASHBOARD_SECTIONS
       const opsFromDashboard = Object.values(DASHBOARD_SECTIONS).filter(
@@ -70,6 +71,7 @@ describe('Dashboard Sections - enabledWhen', () => {
       expect(opKeys).toContain('events');
       expect(opKeys).toContain('memory');
       expect(opKeys).toContain('tasks');
+      expect(opKeys).toContain('broker');
     });
 
     it('should define enabler feature for a2a-tasks section', () => {
